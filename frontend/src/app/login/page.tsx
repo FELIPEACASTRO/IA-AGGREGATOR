@@ -21,8 +21,10 @@ export default function LoginPage() {
       await login(email, password);
       router.push('/chat');
     } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
       const message =
-        err instanceof Error ? err.message : 'Erro ao fazer login';
+        axiosErr?.response?.data?.message ||
+        (err instanceof Error ? err.message : 'Erro ao fazer login');
       setError(message);
     } finally {
       setLoading(false);

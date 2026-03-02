@@ -46,11 +46,11 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<UserResponse>> register(
+    public ResponseEntity<ApiResponse<TokenResponse>> register(
             @Valid @RequestBody RegisterUserCommand command) {
-        UserResponse user = registerUserUseCase.execute(command);
+        TokenResponse token = registerUserUseCase.execute(command);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(user, "User registered successfully"));
+                .body(ApiResponse.ok(token, "User registered successfully"));
     }
 
     @PostMapping("/login")

@@ -1,5 +1,7 @@
 package com.ia.aggregator.infrastructure.auth.security;
 
+import com.ia.aggregator.domain.auth.vo.UserStatus;
+import com.ia.aggregator.domain.auth.vo.UserStatus;
 import com.ia.aggregator.infrastructure.auth.persistence.entity.UserJpaEntity;
 import com.ia.aggregator.infrastructure.auth.persistence.repository.UserJpaRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -36,9 +38,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     }
 
     private UserDetails buildUserDetails(UserJpaEntity user) {
-        boolean isLocked = "SUSPENDED".equals(user.getStatus());
-        boolean isEnabled = "ACTIVE".equals(user.getStatus())
-                || "PENDING_VERIFICATION".equals(user.getStatus());
+        boolean isLocked = user.getStatus() == UserStatus.SUSPENDED;
+        boolean isEnabled = user.getStatus() == UserStatus.ACTIVE
+                || user.getStatus() == UserStatus.PENDING_VERIFICATION;
 
         return new AuthenticatedUser(
                 user.getId(),

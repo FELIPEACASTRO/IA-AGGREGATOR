@@ -7,6 +7,7 @@ import com.ia.aggregator.infrastructure.auth.persistence.mapper.UserPersistenceM
 import com.ia.aggregator.infrastructure.auth.persistence.repository.UserJpaRepository;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -57,6 +58,9 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public void deleteById(UUID id) {
-        jpaRepository.deleteById(id);
+        jpaRepository.findById(id).ifPresent(entity -> {
+            entity.setDeletedAt(Instant.now());
+            jpaRepository.save(entity);
+        });
     }
 }

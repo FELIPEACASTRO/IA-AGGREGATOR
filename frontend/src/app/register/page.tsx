@@ -33,8 +33,10 @@ export default function RegisterPage() {
       await register(email, password, fullName);
       router.push('/chat');
     } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
       const message =
-        err instanceof Error ? err.message : 'Erro ao criar conta';
+        axiosErr?.response?.data?.message ||
+        (err instanceof Error ? err.message : 'Erro ao criar conta');
       setError(message);
     } finally {
       setLoading(false);

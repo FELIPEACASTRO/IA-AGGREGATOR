@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 /**
  * Global exception handler that converts domain/business exceptions
  * to standardized API error responses.
+ * Uses ErrorCode.httpStatus directly for correct HTTP status mapping.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -25,19 +26,22 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiErrorResponse> handleBusinessException(BusinessException ex) {
-        log.warn("Business error: [{}] {}", ex.getErrorCode(), ex.getMessage());
+        String message = ex.getDetail() != null ? ex.getDetail() : ex.getMessage();
+        log.warn("Business error: [{}] {}", ex.getErrorCode().getCode(), message);
 
-        HttpStatus status = mapBusinessErrorToStatus(ex.getErrorCode().getCode());
+        HttpStatus status = HttpStatus.valueOf(ex.getErrorCode().getHttpStatus());
 
         return ResponseEntity.status(status)
-                .body(ApiErrorResponse.of(ex.getErrorCode().getCode(), ex.getMessage()));
+                .body(ApiErrorResponse.of(ex.getErrorCode().getCode(), message));
     }
 
     @ExceptionHandler(TechnicalException.class)
     public ResponseEntity<ApiErrorResponse> handleTechnicalException(TechnicalException ex) {
-        log.error("Technical error: [{}] {}", ex.getErrorCode(), ex.getMessage(), ex);
+        log.error("Technical error: [{}] {}", ex.getErrorCode().getCode(), ex.getMessage(), ex);
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        HttpStatus status = HttpStatus.valueOf(ex.getErrorCode().getHttpStatus());
+
+        return ResponseEntity.status(status)
                 .body(ApiErrorResponse.of(ex.getErrorCode().getCode(), "An internal error occurred"));
     }
 
@@ -58,28 +62,5 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiErrorResponse.of("GEN_001", "An unexpected error occurred"));
-    }
-
-    private HttpStatus mapBusinessErrorToStatus(String errorCode) {
-        if (errorCode == null) return HttpStatus.BAD_REQUEST;
-
-        if (errorCode.startsWith("AUTH_001") || errorCode.startsWith("AUTH_002")
-                || errorCode.startsWith("AUTH_003")) {
-            return HttpStatus.UNAUTHORIZED;
-        }
-        if (errorCode.startsWith("AUTH_004") || errorCode.startsWith("AUTH_005")) {
-            return HttpStatus.FORBIDDEN;
-        }
-        if (errorCode.contains("NOT_FOUND")) {
-            return HttpStatus.NOT_FOUND;
-        }
-        if (errorCode.contains("DUPLICATE") || errorCode.contains("ALREADY_EXISTS")) {
-            return HttpStatus.CONFLICT;
-        }
-        if (errorCode.startsWith("BILL_005") || errorCode.startsWith("BILL_006")) {
-            return HttpStatus.PAYMENT_REQUIRED;
-        }
-
-        return HttpStatus.BAD_REQUEST;
     }
 }

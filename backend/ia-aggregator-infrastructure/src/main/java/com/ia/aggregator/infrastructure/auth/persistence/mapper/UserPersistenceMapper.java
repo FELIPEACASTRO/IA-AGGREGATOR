@@ -1,9 +1,6 @@
 package com.ia.aggregator.infrastructure.auth.persistence.mapper;
 
 import com.ia.aggregator.domain.auth.entity.User;
-import com.ia.aggregator.domain.auth.vo.AuthProvider;
-import com.ia.aggregator.domain.auth.vo.UserRole;
-import com.ia.aggregator.domain.auth.vo.UserStatus;
 import com.ia.aggregator.infrastructure.auth.persistence.entity.UserJpaEntity;
 import org.springframework.stereotype.Component;
 
@@ -22,9 +19,9 @@ public class UserPersistenceMapper {
         entity.setPasswordHash(domain.getPasswordHash());
         entity.setFullName(domain.getFullName());
         entity.setAvatarUrl(domain.getAvatarUrl());
-        entity.setRole(domain.getRole().name());
-        entity.setStatus(domain.getStatus().name());
-        entity.setAuthProvider(domain.getAuthProvider().name());
+        entity.setRole(domain.getRole());
+        entity.setStatus(domain.getStatus());
+        entity.setAuthProvider(domain.getAuthProvider());
         entity.setProviderUserId(domain.getProviderUserId());
         entity.setLocale(domain.getLocale());
         entity.setTimezone(domain.getTimezone());
@@ -44,9 +41,9 @@ public class UserPersistenceMapper {
                 jpa.getPasswordHash(),
                 jpa.getFullName(),
                 jpa.getAvatarUrl(),
-                UserRole.valueOf(jpa.getRole()),
-                UserStatus.valueOf(jpa.getStatus()),
-                AuthProvider.valueOf(jpa.getAuthProvider()),
+                jpa.getRole(),
+                jpa.getStatus(),
+                jpa.getAuthProvider(),
                 jpa.getProviderUserId(),
                 jpa.getLocale(),
                 jpa.getTimezone(),
