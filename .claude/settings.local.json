@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install python-docx)",
+      "Bash(python -c \":*)",
+      "Bash(diff \"Guia_Abrangente_de_Documentação_para_Sistemas_de_T.txt\" \"Guia_Abrangente_de_Documentação_para_Sistemas_de_T\\(1\\).txt\")",
+      "Bash(diff \"Sistema_Parceiros_Cupons_Spec_Completa.txt\" \"Sistema_Parceiros_Cupons_Spec_Completa\\(1\\).txt\")"
+    ]
+  }
+}
