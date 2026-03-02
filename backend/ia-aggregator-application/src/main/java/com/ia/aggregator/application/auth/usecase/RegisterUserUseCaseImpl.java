@@ -38,13 +38,18 @@ public class RegisterUserUseCaseImpl implements RegisterUserUseCase {
     public TokenResponse execute(RegisterUserCommand command) {
         // Check for duplicate email
         if (userRepository.existsByEmail(command.email())) {
-            throw new BusinessException(ErrorCode.AUTH_003,
-                    "Email already registered: " + command.email());
+            throw new BusinessException(ErrorCode.AUTH_003, "Email already registered");
         }
 
         // Create domain entity
         String hashedPassword = passwordEncoder.encode(command.password());
         User user = User.register(command.email(), hashedPassword, command.fullName());
+
+        // Handle referral code
+        if (command.referralCode() != null && !command.referralCode().isBlank()) {
+            userRepository.findByReferralCode(command.referralCode().trim());
+            // Referral tracking: referrer found (future: credit referral bonus)
+        }
 
         // Persist
         User savedUser = userRepository.save(user);

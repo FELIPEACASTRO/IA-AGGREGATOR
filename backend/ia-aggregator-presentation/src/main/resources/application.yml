@@ -99,8 +99,6 @@ logging:
     root: INFO
     com.ia.aggregator: DEBUG
     org.springframework.security: INFO
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 
@@ -136,9 +134,29 @@ spring:
   data:
     redis:
       host: localhost
-      port: 6370
+      port: 6379
 
 logging:
   level:
     com.ia.aggregator: DEBUG
     org.hibernate.SQL: DEBUG
+
+---
+# =============================================================================
+# Production Profile
+# =============================================================================
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  jpa:
+    properties:
+      hibernate:
+        format_sql: false
+
+logging:
+  level:
+    root: WARN
+    com.ia.aggregator: INFO
+    org.springframework.security: WARN

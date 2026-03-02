@@ -37,7 +37,7 @@ class GetCurrentUserUseCaseImplTest {
                 userId, null, "user@test.com", "hash",
                 "John Doe", "https://avatar.url", UserRole.USER, UserStatus.ACTIVE,
                 AuthProvider.LOCAL, null, "pt-BR", "UTC",
-                "REF12345", true, null, Instant.now(), Instant.now()
+                "REF12345", true, null, 0, null, Instant.now(), Instant.now()
         );
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 

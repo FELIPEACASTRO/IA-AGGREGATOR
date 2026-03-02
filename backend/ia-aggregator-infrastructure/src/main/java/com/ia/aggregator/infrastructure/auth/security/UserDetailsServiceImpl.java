@@ -1,7 +1,6 @@
 package com.ia.aggregator.infrastructure.auth.security;
 
 import com.ia.aggregator.domain.auth.vo.UserStatus;
-import com.ia.aggregator.domain.auth.vo.UserStatus;
 import com.ia.aggregator.infrastructure.auth.persistence.entity.UserJpaEntity;
 import com.ia.aggregator.infrastructure.auth.persistence.repository.UserJpaRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

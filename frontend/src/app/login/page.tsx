@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -89,9 +90,9 @@ export default function LoginPage() {
 
         <p className="text-center text-sm text-[var(--muted-foreground)]">
           Não tem uma conta?{' '}
-          <a href="/register" className="text-[var(--primary)] hover:underline">
+          <Link href="/register" className="text-[var(--primary)] hover:underline">
             Criar conta
-          </a>
+          </Link>
         </p>
       </div>
     </main>

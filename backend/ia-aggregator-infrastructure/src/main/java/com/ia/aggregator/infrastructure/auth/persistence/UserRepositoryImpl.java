@@ -28,7 +28,17 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public User save(User user) {
-        UserJpaEntity jpaEntity = mapper.toJpaEntity(user);
+        UserJpaEntity jpaEntity;
+
+        // Load-then-merge: preserve JPA-only fields (displayName, phone, metadata, etc.)
+        var existing = jpaRepository.findById(user.getId());
+        if (existing.isPresent()) {
+            jpaEntity = existing.get();
+            mapper.updateJpaEntity(jpaEntity, user);
+        } else {
+            jpaEntity = mapper.toJpaEntity(user);
+        }
+
         UserJpaEntity saved = jpaRepository.save(jpaEntity);
         return mapper.toDomainEntity(saved);
     }

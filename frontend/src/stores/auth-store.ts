@@ -16,7 +16,7 @@ interface AuthState {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, fullName: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   fetchUser: () => Promise<void>;
 }
 
@@ -46,10 +46,17 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user: userRes.data.data });
   },
 
-  logout: () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    set({ user: null, isAuthenticated: false });
+  logout: async () => {
+    try {
+      const refreshToken = localStorage.getItem('refresh_token');
+      if (refreshToken) {
+        await api.post('/auth/logout', { refreshToken }).catch(() => {});
+      }
+    } finally {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      set({ user: null, isAuthenticated: false });
+    }
   },
 
   fetchUser: async () => {
@@ -62,7 +69,14 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { data } = await api.get('/auth/me');
       set({ user: data.data, isAuthenticated: true, isLoading: false });
     } catch {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
 }));
+
+// Auto-hydrate on module load (client-side only)
+if (typeof window !== 'undefined') {
+  useAuthStore.getState().fetchUser();
+}

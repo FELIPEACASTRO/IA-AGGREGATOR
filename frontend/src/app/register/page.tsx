@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
@@ -132,9 +133,9 @@ export default function RegisterPage() {
 
         <p className="text-center text-sm text-[var(--muted-foreground)]">
           Já tem uma conta?{' '}
-          <a href="/login" className="text-[var(--primary)] hover:underline">
+          <Link href="/login" className="text-[var(--primary)] hover:underline">
             Entrar
-          </a>
+          </Link>
         </p>
       </div>
     </main>

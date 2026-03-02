@@ -11,9 +11,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.core.MethodParameter;
+import org.springframework.http.HttpMethod;
 
 import java.lang.reflect.Method;
+
+import org.springframework.security.access.AccessDeniedException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -142,5 +148,78 @@ class GlobalExceptionHandlerTest {
         assertEquals("GEN_001", response.getBody().getErrorCode());
         assertEquals("An unexpected error occurred", response.getBody().getMessage());
         assertFalse(response.getBody().isSuccess());
+    }
+
+    // ── AccessDeniedException ────────────────────────────────────────────
+
+    @Test
+    void handleAccessDenied_shouldReturn403() {
+        AccessDeniedException ex = new AccessDeniedException("forbidden");
+
+        ResponseEntity<ApiErrorResponse> response = handler.handleAccessDenied(ex);
+
+        assertEquals(403, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals("AUTH_005", response.getBody().getErrorCode());
+        assertEquals("Insufficient permissions", response.getBody().getMessage());
+    }
+
+    // ── HttpRequestMethodNotSupportedException ───────────────────────────
+
+    @Test
+    void handleMethodNotSupported_shouldReturn405() {
+        HttpRequestMethodNotSupportedException ex =
+                new HttpRequestMethodNotSupportedException("DELETE");
+
+        ResponseEntity<ApiErrorResponse> response = handler.handleMethodNotSupported(ex);
+
+        assertEquals(405, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals("GEN_006", response.getBody().getErrorCode());
+        assertTrue(response.getBody().getMessage().contains("DELETE"));
+    }
+
+    // ── MissingServletRequestParameterException ──────────────────────────
+
+    @Test
+    void handleMissingParam_shouldReturn400() {
+        MissingServletRequestParameterException ex =
+                new MissingServletRequestParameterException("token", "String");
+
+        ResponseEntity<ApiErrorResponse> response = handler.handleMissingParam(ex);
+
+        assertEquals(400, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals("GEN_002", response.getBody().getErrorCode());
+        assertTrue(response.getBody().getMessage().contains("token"));
+    }
+
+    // ── NoResourceFoundException ─────────────────────────────────────────
+
+    @Test
+    void handleNotFound_shouldReturn404() {
+        NoResourceFoundException ex =
+                new NoResourceFoundException(HttpMethod.GET, "/api/v1/nonexistent");
+
+        ResponseEntity<ApiErrorResponse> response = handler.handleNotFound(ex);
+
+        assertEquals(404, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals("GEN_003", response.getBody().getErrorCode());
+        assertEquals("Resource not found", response.getBody().getMessage());
+    }
+
+    // ── IllegalArgumentException ─────────────────────────────────────────
+
+    @Test
+    void handleIllegalArgument_shouldReturn400() {
+        IllegalArgumentException ex = new IllegalArgumentException("Invalid input value");
+
+        ResponseEntity<ApiErrorResponse> response = handler.handleIllegalArgument(ex);
+
+        assertEquals(400, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals("GEN_002", response.getBody().getErrorCode());
+        assertEquals("Invalid input value", response.getBody().getMessage());
     }
 }

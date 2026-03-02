@@ -195,7 +195,7 @@ class UserTest {
                 "Full Name", "https://avatar.url",
                 UserRole.ADMIN, UserStatus.ACTIVE, AuthProvider.LOCAL,
                 null, "en-US", "UTC",
-                "REF12345", true, now, now, now
+                "REF12345", true, now, 0, null, now, now
         );
 
         assertEquals(id, user.getId());
@@ -233,6 +233,137 @@ class UserTest {
         assertNotEquals(user1, user2);
         assertEquals(user1, user1);
         assertNotEquals(user1, null);
+    }
+
+    // ── register() validation ────────────────────────────────────────────
+
+    @Test
+    void register_shouldRejectNullEmail() {
+        assertThrows(IllegalArgumentException.class, () -> User.register(null, "hash", "Name"));
+    }
+
+    @Test
+    void register_shouldRejectBlankEmail() {
+        assertThrows(IllegalArgumentException.class, () -> User.register("  ", "hash", "Name"));
+    }
+
+    @Test
+    void register_shouldRejectNullPasswordHash() {
+        assertThrows(IllegalArgumentException.class, () -> User.register("a@b.com", null, "Name"));
+    }
+
+    @Test
+    void register_shouldRejectBlankPasswordHash() {
+        assertThrows(IllegalArgumentException.class, () -> User.register("a@b.com", "", "Name"));
+    }
+
+    @Test
+    void register_shouldRejectNullFullName() {
+        assertThrows(IllegalArgumentException.class, () -> User.register("a@b.com", "hash", null));
+    }
+
+    @Test
+    void register_shouldRejectBlankFullName() {
+        assertThrows(IllegalArgumentException.class, () -> User.register("a@b.com", "hash", "   "));
+    }
+
+    // ── registerOAuth() validation ───────────────────────────────────────
+
+    @Test
+    void registerOAuth_shouldRejectNullEmail() {
+        assertThrows(IllegalArgumentException.class,
+                () -> User.registerOAuth(null, "Name", AuthProvider.GOOGLE, "id", null));
+    }
+
+    @Test
+    void registerOAuth_shouldRejectNullFullName() {
+        assertThrows(IllegalArgumentException.class,
+                () -> User.registerOAuth("a@b.com", null, AuthProvider.GOOGLE, "id", null));
+    }
+
+    @Test
+    void registerOAuth_shouldRejectNullProvider() {
+        assertThrows(IllegalArgumentException.class,
+                () -> User.registerOAuth("a@b.com", "Name", null, "id", null));
+    }
+
+    @Test
+    void registerOAuth_shouldRejectNullProviderUserId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> User.registerOAuth("a@b.com", "Name", AuthProvider.GOOGLE, null, null));
+    }
+
+    @Test
+    void registerOAuth_shouldRejectBlankProviderUserId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> User.registerOAuth("a@b.com", "Name", AuthProvider.GOOGLE, "  ", null));
+    }
+
+    // ── Brute-force protection ───────────────────────────────────────────
+
+    @Test
+    void recordFailedLogin_shouldIncrementCount() {
+        User user = createActiveUser();
+        assertEquals(0, user.getFailedLoginCount());
+
+        user.recordFailedLogin();
+        assertEquals(1, user.getFailedLoginCount());
+
+        user.recordFailedLogin();
+        assertEquals(2, user.getFailedLoginCount());
+    }
+
+    @Test
+    void recordFailedLogin_shouldLockAfterFiveAttempts() {
+        User user = createActiveUser();
+
+        for (int i = 0; i < 4; i++) {
+            user.recordFailedLogin();
+            assertFalse(user.isLocked(), "Should not be locked after " + (i + 1) + " failures");
+        }
+
+        user.recordFailedLogin(); // 5th attempt
+        assertTrue(user.isLocked());
+        assertNotNull(user.getLockedUntil());
+    }
+
+    @Test
+    void isLocked_shouldReturnFalseWhenNotLocked() {
+        User user = createActiveUser();
+        assertFalse(user.isLocked());
+    }
+
+    @Test
+    void recordLogin_shouldResetFailedCountAndLock() {
+        User user = createActiveUser();
+        // Simulate 3 failed attempts
+        user.recordFailedLogin();
+        user.recordFailedLogin();
+        user.recordFailedLogin();
+        assertEquals(3, user.getFailedLoginCount());
+
+        user.recordLogin();
+
+        assertEquals(0, user.getFailedLoginCount());
+        assertNull(user.getLockedUntil());
+        assertNotNull(user.getLastLoginAt());
+    }
+
+    @Test
+    void reconstitute_shouldPreserveBruteForceFields() {
+        UUID id = UUID.randomUUID();
+        Instant now = Instant.now();
+        Instant lockTime = now.plusSeconds(1800);
+
+        User user = User.reconstitute(
+                id, null, "user@test.com", "hash",
+                "Name", null, UserRole.USER, UserStatus.ACTIVE,
+                AuthProvider.LOCAL, null, "pt-BR", "UTC",
+                "REF", true, null, 3, lockTime, now, now
+        );
+
+        assertEquals(3, user.getFailedLoginCount());
+        assertEquals(lockTime, user.getLockedUntil());
     }
 
     // Helper

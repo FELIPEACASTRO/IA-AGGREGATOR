@@ -47,7 +47,7 @@ class RefreshTokenUseCaseImplTest {
                 userId, null, "user@test.com", "hash",
                 "Name", null, UserRole.USER, UserStatus.ACTIVE,
                 AuthProvider.LOCAL, null, "pt-BR", "UTC",
-                "REF", true, null, Instant.now(), Instant.now()
+                "REF", true, null, 0, null, Instant.now(), Instant.now()
         );
     }
 
@@ -103,7 +103,7 @@ class RefreshTokenUseCaseImplTest {
                 userId, null, "user@test.com", "hash",
                 "Name", null, UserRole.USER, UserStatus.INACTIVE,
                 AuthProvider.LOCAL, null, "pt-BR", "UTC",
-                "REF", true, null, Instant.now(), Instant.now()
+                "REF", true, null, 0, null, Instant.now(), Instant.now()
         );
         RefreshTokenCommand command = new RefreshTokenCommand("valid-token");
 

@@ -50,7 +50,7 @@ class LoginUseCaseImplTest {
                 UUID.randomUUID(), null, "user@test.com", "hashedPwd",
                 "John Doe", null, UserRole.USER, UserStatus.ACTIVE,
                 AuthProvider.LOCAL, null, "pt-BR", "America/Sao_Paulo",
-                "REF12345", true, null, Instant.now(), Instant.now()
+                "REF12345", true, null, 0, null, Instant.now(), Instant.now()
         );
     }
 
@@ -86,7 +86,7 @@ class LoginUseCaseImplTest {
                 UUID.randomUUID(), null, "user@test.com", "hash",
                 "Name", null, UserRole.USER, UserStatus.SUSPENDED,
                 AuthProvider.LOCAL, null, "pt-BR", "UTC",
-                "REF", true, null, Instant.now(), Instant.now()
+                "REF", true, null, 0, null, Instant.now(), Instant.now()
         );
         when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(suspended));
 
@@ -102,7 +102,7 @@ class LoginUseCaseImplTest {
                 UUID.randomUUID(), null, "user@test.com", "hash",
                 "Name", null, UserRole.USER, UserStatus.PENDING_VERIFICATION,
                 AuthProvider.LOCAL, null, "pt-BR", "UTC",
-                "REF", false, null, Instant.now(), Instant.now()
+                "REF", false, null, 0, null, Instant.now(), Instant.now()
         );
         when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(pending));
 
@@ -116,11 +116,45 @@ class LoginUseCaseImplTest {
     void execute_shouldThrowWhenPasswordDoesNotMatch() {
         when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(activeUser));
         when(passwordEncoder.matches("password", "hashedPwd")).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
         BusinessException ex = assertThrows(BusinessException.class,
                 () -> useCase.execute(validCommand));
 
         assertEquals(ErrorCode.AUTH_001, ex.getErrorCode());
+        verify(userRepository).save(any(User.class)); // should save after recording failed login
+    }
+
+    @Test
+    void execute_shouldThrowWhenOAuthUserTriesPasswordLogin() {
+        User oauthUser = User.reconstitute(
+                UUID.randomUUID(), null, "user@test.com", null,
+                "OAuth User", null, UserRole.USER, UserStatus.ACTIVE,
+                AuthProvider.GOOGLE, "google-123", "pt-BR", "UTC",
+                "REF", true, null, 0, null, Instant.now(), Instant.now()
+        );
+        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(oauthUser));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> useCase.execute(validCommand));
+
+        assertEquals(ErrorCode.AUTH_001, ex.getErrorCode());
+    }
+
+    @Test
+    void execute_shouldThrowWhenAccountIsLocked() {
+        User lockedUser = User.reconstitute(
+                UUID.randomUUID(), null, "user@test.com", "hashedPwd",
+                "Locked User", null, UserRole.USER, UserStatus.ACTIVE,
+                AuthProvider.LOCAL, null, "pt-BR", "UTC",
+                "REF", true, null, 5, Instant.now().plusSeconds(1800), Instant.now(), Instant.now()
+        );
+        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(lockedUser));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> useCase.execute(validCommand));
+
+        assertEquals(ErrorCode.AUTH_002, ex.getErrorCode());
     }
 
     @Test

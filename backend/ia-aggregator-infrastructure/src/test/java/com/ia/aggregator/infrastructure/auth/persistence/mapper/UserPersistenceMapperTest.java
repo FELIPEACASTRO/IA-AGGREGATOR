@@ -37,6 +37,8 @@ class UserPersistenceMapperTest {
         assertEquals(user.getReferralCode(), jpa.getReferralCode());
         assertEquals(user.isEmailVerified(), jpa.isEmailVerified());
         assertEquals(user.getLastLoginAt(), jpa.getLastLoginAt());
+        assertEquals(user.getFailedLoginCount(), jpa.getFailedLoginCount());
+        assertEquals(user.getLockedUntil(), jpa.getLockedUntil());
     }
 
     @Test
@@ -60,6 +62,8 @@ class UserPersistenceMapperTest {
         assertEquals(jpa.getReferralCode(), user.getReferralCode());
         assertEquals(jpa.isEmailVerified(), user.isEmailVerified());
         assertEquals(jpa.getLastLoginAt(), user.getLastLoginAt());
+        assertEquals(jpa.getFailedLoginCount(), user.getFailedLoginCount());
+        assertEquals(jpa.getLockedUntil(), user.getLockedUntil());
     }
 
     @Test
@@ -97,7 +101,7 @@ class UserPersistenceMapperTest {
                 "Test User", "https://avatar.url",
                 UserRole.ADMIN, UserStatus.ACTIVE, AuthProvider.LOCAL,
                 null, "pt-BR", "UTC",
-                "REF12345", true, now, now, now
+                "REF12345", true, now, 0, null, now, now
         );
     }
 
@@ -117,6 +121,8 @@ class UserPersistenceMapperTest {
         jpa.setReferralCode("REF12345");
         jpa.setEmailVerified(true);
         jpa.setLastLoginAt(Instant.now());
+        jpa.setFailedLoginCount(2);
+        jpa.setLockedUntil(null);
         jpa.setCreatedAt(Instant.now());
         jpa.setUpdatedAt(Instant.now());
         return jpa;

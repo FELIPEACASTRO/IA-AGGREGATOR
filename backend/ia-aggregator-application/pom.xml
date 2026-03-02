@@ -35,12 +35,6 @@
             <artifactId>spring-tx</artifactId>
         </dependency>
 
-        <!-- MapStruct -->
-        <dependency>
-            <groupId>org.mapstruct</groupId>
-            <artifactId>mapstruct</artifactId>
-        </dependency>
-
         <!-- Validation -->
         <dependency>
             <groupId>jakarta.validation</groupId>

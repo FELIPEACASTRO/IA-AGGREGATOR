@@ -24,26 +24,32 @@ import java.util.UUID;
 public class JwtTokenProvider implements TokenProvider {
 
     private static final Logger log = LoggerFactory.getLogger(JwtTokenProvider.class);
-    private static final long ACCESS_TOKEN_EXPIRY_MS = Duration.ofMinutes(15).toMillis();
-    private static final long REFRESH_TOKEN_EXPIRY_MS = Duration.ofDays(7).toMillis();
     private static final String REFRESH_TOKEN_PREFIX = "refresh_token:";
+    private static final String ISSUER = "ia-aggregator";
 
     private final SecretKey signingKey;
     private final StringRedisTemplate redisTemplate;
+    private final long accessTokenExpiryMs;
+    private final long refreshTokenExpiryMs;
 
     public JwtTokenProvider(@Value("${app.security.jwt.secret}") String jwtSecret,
+                            @Value("${app.security.jwt.access-token-expiry:15m}") Duration accessTokenExpiry,
+                            @Value("${app.security.jwt.refresh-token-expiry:7d}") Duration refreshTokenExpiry,
                             StringRedisTemplate redisTemplate) {
         this.signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
         this.redisTemplate = redisTemplate;
+        this.accessTokenExpiryMs = accessTokenExpiry.toMillis();
+        this.refreshTokenExpiryMs = refreshTokenExpiry.toMillis();
     }
 
     @Override
     public String generateAccessToken(UUID userId, String email, String role) {
         Date now = new Date();
-        Date expiry = new Date(now.getTime() + ACCESS_TOKEN_EXPIRY_MS);
+        Date expiry = new Date(now.getTime() + accessTokenExpiryMs);
 
         return Jwts.builder()
                 .subject(userId.toString())
+                .issuer(ISSUER)
                 .claim("email", email)
                 .claim("role", role)
                 .issuedAt(now)
@@ -56,11 +62,12 @@ public class JwtTokenProvider implements TokenProvider {
     public String generateRefreshToken(UUID userId) {
         String tokenId = UUID.randomUUID().toString();
         Date now = new Date();
-        Date expiry = new Date(now.getTime() + REFRESH_TOKEN_EXPIRY_MS);
+        Date expiry = new Date(now.getTime() + refreshTokenExpiryMs);
 
         String token = Jwts.builder()
                 .subject(userId.toString())
                 .id(tokenId)
+                .issuer(ISSUER)
                 .claim("type", "refresh")
                 .issuedAt(now)
                 .expiration(expiry)
@@ -71,7 +78,7 @@ public class JwtTokenProvider implements TokenProvider {
         redisTemplate.opsForValue().set(
                 REFRESH_TOKEN_PREFIX + tokenId,
                 userId.toString(),
-                Duration.ofDays(7)
+                Duration.ofMillis(refreshTokenExpiryMs)
         );
 
         return token;

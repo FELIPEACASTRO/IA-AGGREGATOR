@@ -29,6 +29,11 @@ public class User extends BaseEntity {
     private String referralCode;
     private boolean emailVerified;
     private Instant lastLoginAt;
+    private int failedLoginCount;
+    private Instant lockedUntil;
+
+    private static final int MAX_FAILED_ATTEMPTS = 5;
+    private static final long LOCK_DURATION_MINUTES = 30;
 
     // Private constructor — use factory methods
     private User() {
@@ -39,10 +44,20 @@ public class User extends BaseEntity {
      * Register a new user with email/password.
      */
     public static User register(String email, String passwordHash, String fullName) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+        if (passwordHash == null || passwordHash.isBlank()) {
+            throw new IllegalArgumentException("Password hash is required");
+        }
+        if (fullName == null || fullName.isBlank()) {
+            throw new IllegalArgumentException("Full name is required");
+        }
+
         User user = new User();
         user.email = email.toLowerCase().trim();
         user.passwordHash = passwordHash;
-        user.fullName = fullName;
+        user.fullName = fullName.trim();
         user.role = UserRole.USER;
         user.status = UserStatus.PENDING_VERIFICATION;
         user.authProvider = AuthProvider.LOCAL;
@@ -59,9 +74,22 @@ public class User extends BaseEntity {
      * Register via OAuth provider (Google, GitHub).
      */
     public static User registerOAuth(String email, String fullName, AuthProvider provider, String providerUserId, String avatarUrl) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+        if (fullName == null || fullName.isBlank()) {
+            throw new IllegalArgumentException("Full name is required");
+        }
+        if (provider == null) {
+            throw new IllegalArgumentException("Auth provider is required");
+        }
+        if (providerUserId == null || providerUserId.isBlank()) {
+            throw new IllegalArgumentException("Provider user ID is required");
+        }
+
         User user = new User();
         user.email = email.toLowerCase().trim();
-        user.fullName = fullName;
+        user.fullName = fullName.trim();
         user.authProvider = provider;
         user.providerUserId = providerUserId;
         user.avatarUrl = avatarUrl;
@@ -84,7 +112,8 @@ public class User extends BaseEntity {
                                      UserStatus status, AuthProvider authProvider,
                                      String providerUserId, String locale, String timezone,
                                      String referralCode, boolean emailVerified,
-                                     Instant lastLoginAt, Instant createdAt, Instant updatedAt) {
+                                     Instant lastLoginAt, int failedLoginCount,
+                                     Instant lockedUntil, Instant createdAt, Instant updatedAt) {
         User user = new User();
         user.setId(id);
         user.orgId = orgId;
@@ -101,6 +130,8 @@ public class User extends BaseEntity {
         user.referralCode = referralCode;
         user.emailVerified = emailVerified;
         user.lastLoginAt = lastLoginAt;
+        user.failedLoginCount = failedLoginCount;
+        user.lockedUntil = lockedUntil;
         user.setCreatedAt(createdAt);
         user.setUpdatedAt(updatedAt);
         return user;
@@ -116,7 +147,21 @@ public class User extends BaseEntity {
 
     public void recordLogin() {
         this.lastLoginAt = Instant.now();
+        this.failedLoginCount = 0;
+        this.lockedUntil = null;
         markUpdated();
+    }
+
+    public void recordFailedLogin() {
+        this.failedLoginCount++;
+        if (this.failedLoginCount >= MAX_FAILED_ATTEMPTS) {
+            this.lockedUntil = Instant.now().plusSeconds(LOCK_DURATION_MINUTES * 60);
+        }
+        markUpdated();
+    }
+
+    public boolean isLocked() {
+        return this.lockedUntil != null && Instant.now().isBefore(this.lockedUntil);
     }
 
     public void changePassword(String newPasswordHash) {
@@ -177,4 +222,6 @@ public class User extends BaseEntity {
     public String getReferralCode() { return referralCode; }
     public boolean isEmailVerified() { return emailVerified; }
     public Instant getLastLoginAt() { return lastLoginAt; }
+    public int getFailedLoginCount() { return failedLoginCount; }
+    public Instant getLockedUntil() { return lockedUntil; }
 }

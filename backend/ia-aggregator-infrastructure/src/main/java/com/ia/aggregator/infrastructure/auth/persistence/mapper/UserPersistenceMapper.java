@@ -11,9 +11,22 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserPersistenceMapper {
 
+    /**
+     * Creates a NEW JPA entity from a domain entity.
+     * Use only for INSERT (new user). For UPDATE, use updateJpaEntity().
+     */
     public UserJpaEntity toJpaEntity(User domain) {
         UserJpaEntity entity = new UserJpaEntity();
         entity.setId(domain.getId());
+        updateJpaEntity(entity, domain);
+        return entity;
+    }
+
+    /**
+     * Updates an EXISTING JPA entity with domain fields.
+     * Preserves JPA-only fields (displayName, phone, metadata, etc.).
+     */
+    public void updateJpaEntity(UserJpaEntity entity, User domain) {
         entity.setPersonalOrgId(domain.getOrgId());
         entity.setEmail(domain.getEmail());
         entity.setPasswordHash(domain.getPasswordHash());
@@ -28,9 +41,10 @@ public class UserPersistenceMapper {
         entity.setReferralCode(domain.getReferralCode());
         entity.setEmailVerified(domain.isEmailVerified());
         entity.setLastLoginAt(domain.getLastLoginAt());
+        entity.setFailedLoginCount(domain.getFailedLoginCount());
+        entity.setLockedUntil(domain.getLockedUntil());
         entity.setCreatedAt(domain.getCreatedAt());
         entity.setUpdatedAt(domain.getUpdatedAt());
-        return entity;
     }
 
     public User toDomainEntity(UserJpaEntity jpa) {
@@ -50,6 +64,8 @@ public class UserPersistenceMapper {
                 jpa.getReferralCode(),
                 jpa.isEmailVerified(),
                 jpa.getLastLoginAt(),
+                jpa.getFailedLoginCount(),
+                jpa.getLockedUntil(),
                 jpa.getCreatedAt(),
                 jpa.getUpdatedAt()
         );

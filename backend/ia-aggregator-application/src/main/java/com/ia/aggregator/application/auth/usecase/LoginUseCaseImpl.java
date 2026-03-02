@@ -36,6 +36,17 @@ public class LoginUseCaseImpl implements LoginUseCase {
                 .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_001,
                         "Invalid email or password"));
 
+        // Check brute-force lock
+        if (user.isLocked()) {
+            throw new BusinessException(ErrorCode.AUTH_002, "Account temporarily locked due to too many failed attempts");
+        }
+
+        // Only local (email/password) users can login this way
+        if (!user.isLocalAuth()) {
+            throw new BusinessException(ErrorCode.AUTH_001,
+                    "This account uses " + user.getAuthProvider().getDbValue() + " login");
+        }
+
         if (!user.isActive()) {
             if (user.getStatus() == com.ia.aggregator.domain.auth.vo.UserStatus.SUSPENDED) {
                 throw new BusinessException(ErrorCode.AUTH_002, "Account is suspended");
@@ -47,6 +58,8 @@ public class LoginUseCaseImpl implements LoginUseCase {
         }
 
         if (!passwordEncoder.matches(command.password(), user.getPasswordHash())) {
+            user.recordFailedLogin();
+            userRepository.save(user);
             throw new BusinessException(ErrorCode.AUTH_001, "Invalid email or password");
         }
 
