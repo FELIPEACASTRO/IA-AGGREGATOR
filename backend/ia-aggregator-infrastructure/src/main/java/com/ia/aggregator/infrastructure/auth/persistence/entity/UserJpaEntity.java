@@ -81,7 +81,7 @@ public class UserJpaEntity {
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
 
-    @Column(name = "last_login_ip")
+    @Column(name = "last_login_ip", columnDefinition = "inet")
     private String lastLoginIp;
 
     @Column(name = "failed_login_count", nullable = false)

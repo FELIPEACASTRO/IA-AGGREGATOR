@@ -9,6 +9,7 @@ import com.ia.aggregator.common.exception.ErrorCode;
 import com.ia.aggregator.domain.auth.entity.User;
 import com.ia.aggregator.domain.auth.repository.UserRepository;
 import com.ia.aggregator.domain.auth.service.PasswordEncoder;
+import com.ia.aggregator.domain.auth.vo.UserStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,16 +52,19 @@ public class LoginUseCaseImpl implements LoginUseCase {
             if (user.getStatus() == com.ia.aggregator.domain.auth.vo.UserStatus.SUSPENDED) {
                 throw new BusinessException(ErrorCode.AUTH_002, "Account is suspended");
             }
-            if (user.getStatus() == com.ia.aggregator.domain.auth.vo.UserStatus.PENDING_VERIFICATION) {
-                throw new BusinessException(ErrorCode.AUTH_006, "Email not verified");
+            if (user.getStatus() != UserStatus.PENDING_VERIFICATION) {
+                throw new BusinessException(ErrorCode.AUTH_001, "Account is not active");
             }
-            throw new BusinessException(ErrorCode.AUTH_001, "Account is not active");
         }
 
         if (!passwordEncoder.matches(command.password(), user.getPasswordHash())) {
             user.recordFailedLogin();
             userRepository.save(user);
             throw new BusinessException(ErrorCode.AUTH_001, "Invalid email or password");
+        }
+
+        if (user.getStatus() == UserStatus.PENDING_VERIFICATION) {
+            user.verifyEmail();
         }
 
         // Generate tokens

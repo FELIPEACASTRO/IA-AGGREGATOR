@@ -38,7 +38,7 @@ export default function RegisterPage() {
     try {
       await register(email, password, fullName);
       trackEvent('auth_register_success');
-      router.push('/chat');
+      router.push('/welcome');
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } };
       const message =

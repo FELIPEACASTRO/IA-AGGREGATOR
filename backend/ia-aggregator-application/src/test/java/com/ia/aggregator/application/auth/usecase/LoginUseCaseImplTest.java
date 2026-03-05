@@ -97,7 +97,7 @@ class LoginUseCaseImplTest {
     }
 
     @Test
-    void execute_shouldThrowWhenEmailNotVerified() {
+        void execute_shouldAutoVerifyWhenEmailNotVerified() {
         User pending = User.reconstitute(
                 UUID.randomUUID(), null, "user@test.com", "hash",
                 "Name", null, UserRole.USER, UserStatus.PENDING_VERIFICATION,
@@ -105,11 +105,17 @@ class LoginUseCaseImplTest {
                 "REF", false, null, 0, null, Instant.now(), Instant.now()
         );
         when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(pending));
+                when(passwordEncoder.matches("password", "hash")).thenReturn(true);
+                when(tokenProvider.generateAccessToken(any(), anyString(), anyString())).thenReturn("access");
+                when(tokenProvider.generateRefreshToken(any())).thenReturn("refresh");
+                when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        BusinessException ex = assertThrows(BusinessException.class,
-                () -> useCase.execute(validCommand));
+                TokenResponse result = useCase.execute(validCommand);
 
-        assertEquals(ErrorCode.AUTH_006, ex.getErrorCode());
+                assertNotNull(result);
+                assertEquals("access", result.accessToken());
+                assertEquals("refresh", result.refreshToken());
+                verify(userRepository).save(any(User.class));
     }
 
     @Test
