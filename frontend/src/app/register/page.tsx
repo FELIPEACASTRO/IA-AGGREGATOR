@@ -4,6 +4,11 @@ import { useState } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { AuthShell } from '@/components/app/auth-shell';
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { trackEvent } from '@/lib/analytics';
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
@@ -32,12 +37,14 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(email, password, fullName);
+      trackEvent('auth_register_success');
       router.push('/chat');
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } };
       const message =
         axiosErr?.response?.data?.message ||
         (err instanceof Error ? err.message : 'Erro ao criar conta');
+      trackEvent('auth_register_error', { message });
       setError(message);
     } finally {
       setLoading(false);
@@ -45,99 +52,82 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Criar Conta</h1>
-          <p className="text-[var(--muted-foreground)] mt-2">
-            Comece a usar o IA Aggregator
-          </p>
+    <AuthShell title="Criar Conta" subtitle="Configure seu acesso à plataforma IA Aggregator">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error ? <Alert variant="error">{error}</Alert> : null}
+
+        <div className="space-y-2">
+          <label htmlFor="fullName" className="text-sm font-medium">
+            Nome Completo
+          </label>
+          <Input
+            id="fullName"
+            type="text"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+            placeholder="Seu nome completo"
+            autoComplete="name"
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="p-3 text-sm text-[var(--destructive)] bg-red-50 dark:bg-red-950/20 rounded-lg">
-              {error}
-            </div>
-          )}
+        <div className="space-y-2">
+          <label htmlFor="email" className="text-sm font-medium">
+            Email
+          </label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            placeholder="seu@email.com"
+            autoComplete="email"
+          />
+        </div>
 
-          <div className="space-y-2">
-            <label htmlFor="fullName" className="text-sm font-medium">
-              Nome Completo
-            </label>
-            <input
-              id="fullName"
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
-              className="w-full px-4 py-2 border border-[var(--border)] rounded-lg bg-[var(--background)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
-              placeholder="Seu nome completo"
-            />
-          </div>
+        <div className="space-y-2">
+          <label htmlFor="password" className="text-sm font-medium">
+            Senha
+          </label>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={8}
+            placeholder="Mínimo 8 caracteres"
+            autoComplete="new-password"
+          />
+        </div>
 
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-2 border border-[var(--border)] rounded-lg bg-[var(--background)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
-              placeholder="seu@email.com"
-            />
-          </div>
+        <div className="space-y-2">
+          <label htmlFor="confirmPassword" className="text-sm font-medium">
+            Confirmar Senha
+          </label>
+          <Input
+            id="confirmPassword"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            placeholder="Repita sua senha"
+            autoComplete="new-password"
+          />
+        </div>
 
-          <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium">
-              Senha
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-              className="w-full px-4 py-2 border border-[var(--border)] rounded-lg bg-[var(--background)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
-              placeholder="Mínimo 8 caracteres"
-            />
-          </div>
+        <Button type="submit" disabled={loading} className="w-full">
+          {loading ? 'Criando conta...' : 'Criar Conta'}
+        </Button>
+      </form>
 
-          <div className="space-y-2">
-            <label htmlFor="confirmPassword" className="text-sm font-medium">
-              Confirmar Senha
-            </label>
-            <input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              className="w-full px-4 py-2 border border-[var(--border)] rounded-lg bg-[var(--background)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
-              placeholder="Repita sua senha"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg font-medium hover:opacity-90 transition disabled:opacity-50"
-          >
-            {loading ? 'Criando conta...' : 'Criar Conta'}
-          </button>
-        </form>
-
-        <p className="text-center text-sm text-[var(--muted-foreground)]">
-          Já tem uma conta?{' '}
-          <Link href="/login" className="text-[var(--primary)] hover:underline">
-            Entrar
-          </Link>
-        </p>
-      </div>
-    </main>
+      <p className="text-center text-sm text-[var(--muted-foreground)]">
+        Já tem uma conta?{' '}
+        <Link href="/login" className="text-[var(--primary)] hover:underline">
+          Entrar
+        </Link>
+      </p>
+    </AuthShell>
   );
 }

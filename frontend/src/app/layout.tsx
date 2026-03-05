@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { ToastViewport } from '@/components/ui/toast-viewport';
 
 export const metadata: Metadata = {
   title: 'IA Aggregator',
@@ -13,7 +14,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body>
+        {children}
+        <ToastViewport />
+      </body>
     </html>
   );
 }

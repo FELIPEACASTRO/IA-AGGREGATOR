@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
+                    .requestMatchers("/api/v1/analytics/events").permitAll()
                         .requestMatchers("/api/v1/auth/verify-email/**").permitAll()
                         .requestMatchers("/api/v1/auth/password-reset/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/billing/plans/**").permitAll()

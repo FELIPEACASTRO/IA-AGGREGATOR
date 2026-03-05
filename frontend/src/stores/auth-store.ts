@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import api from '@/lib/api';
+import api, { clearAuthCookies, setAuthCookies } from '@/lib/api';
 
 interface User {
   id: string;
@@ -29,6 +29,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     const { data } = await api.post('/auth/login', { email, password });
     localStorage.setItem('access_token', data.data.accessToken);
     localStorage.setItem('refresh_token', data.data.refreshToken);
+    setAuthCookies(data.data.accessToken, data.data.refreshToken);
     set({ isAuthenticated: true });
 
     // Fetch user profile
@@ -40,6 +41,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     const { data } = await api.post('/auth/register', { email, password, fullName });
     localStorage.setItem('access_token', data.data.accessToken);
     localStorage.setItem('refresh_token', data.data.refreshToken);
+    setAuthCookies(data.data.accessToken, data.data.refreshToken);
     set({ isAuthenticated: true });
 
     const userRes = await api.get('/auth/me');
@@ -55,6 +57,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     } finally {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
+      clearAuthCookies();
       set({ user: null, isAuthenticated: false });
     }
   },
@@ -71,6 +74,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
+      clearAuthCookies();
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },

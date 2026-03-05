@@ -82,4 +82,28 @@ class AnthropicModelProviderMockWebServerTest {
         assertEquals(ErrorCode.AI_002, ex.getErrorCode());
         assertEquals(2, mockWebServer.getRequestCount());
     }
+
+    @Test
+    void generate_shouldFailFastWhenCircuitBreakerIsOpen() {
+        CircuitBreakerRegistry registry = CircuitBreakerRegistry.ofDefaults();
+        registry.circuitBreaker("aiProviderAnthropic").transitionToOpenState();
+
+        AnthropicModelProvider provider = new AnthropicModelProvider(
+                new ObjectMapper(),
+                registry,
+                "test-key",
+                mockWebServer.url("/").toString().replaceAll("/$", ""),
+                5_000,
+                2,
+                10,
+                512,
+                List.of("claude-3-5-haiku")
+        );
+
+        TechnicalException ex = assertThrows(TechnicalException.class,
+                () -> provider.generate("hello", "claude-3-5-haiku"));
+
+        assertEquals(ErrorCode.AI_002, ex.getErrorCode());
+        assertEquals(0, mockWebServer.getRequestCount());
+    }
 }

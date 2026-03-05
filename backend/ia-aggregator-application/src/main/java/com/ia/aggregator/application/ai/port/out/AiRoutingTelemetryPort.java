@@ -7,4 +7,6 @@ public interface AiRoutingTelemetryPort {
     void recordSuccess(String model, String provider, boolean fallbackUsed, int attempts);
 
     void recordFailure(String model, String provider, String errorCode);
+
+    void recordGuardrailBlocked(String stage, String model, String provider, String reason);
 }

@@ -79,4 +79,27 @@ class OpenAiModelProviderMockWebServerTest {
         assertEquals(ErrorCode.AI_002, ex.getErrorCode());
         assertEquals(2, mockWebServer.getRequestCount());
     }
+
+    @Test
+    void generate_shouldFailFastWhenCircuitBreakerIsOpen() {
+        CircuitBreakerRegistry registry = CircuitBreakerRegistry.ofDefaults();
+        registry.circuitBreaker("aiProviderOpenai").transitionToOpenState();
+
+        OpenAiModelProvider provider = new OpenAiModelProvider(
+                new ObjectMapper(),
+                registry,
+                "test-key",
+                mockWebServer.url("/").toString().replaceAll("/$", ""),
+                5_000,
+                2,
+                10,
+                List.of("gpt-4o-mini")
+        );
+
+        TechnicalException ex = assertThrows(TechnicalException.class,
+                () -> provider.generate("hello", "gpt-4o-mini"));
+
+        assertEquals(ErrorCode.AI_002, ex.getErrorCode());
+        assertEquals(0, mockWebServer.getRequestCount());
+    }
 }

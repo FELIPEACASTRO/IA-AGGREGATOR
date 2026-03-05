@@ -80,9 +80,17 @@ app:
   cors:
     allowed-origins:
       - http://localhost:3000
+      - http://localhost:3001
       - https://iaggregator.com.br
       - https://www.iaggregator.com.br
   ai:
+    guardrails:
+      max-prompt-length: ${AI_MAX_PROMPT_LENGTH:5000}
+      blocked-patterns: ${AI_BLOCKED_PATTERNS:(?i).*\\b(ignore\\s+previous\\s+instructions|system\\s+override|jailbreak|bypass\\s+policy)\\b.*}
+      prompt-action: ${AI_PROMPT_ACTION:block}
+      max-output-length: ${AI_MAX_OUTPUT_LENGTH:8000}
+      output-blocked-patterns: ${AI_OUTPUT_BLOCKED_PATTERNS:(?i).*\\b(api\\s*key|private\\s*key|token)\\b.*}
+      output-action: ${AI_OUTPUT_ACTION:block}
     routing:
       default-model: ${AI_DEFAULT_MODEL:gpt-4o-mini}
       fallback-models: ${AI_FALLBACK_MODELS:claude-3-5-haiku,gemini-1.5-flash}
@@ -109,6 +117,105 @@ app:
         retry-attempts: ${GEMINI_RETRY_ATTEMPTS:2}
         retry-backoff-ms: ${GEMINI_RETRY_BACKOFF_MS:250}
         supported-models: ${GEMINI_SUPPORTED_MODELS:gemini-1.5-flash}
+      openrouter:
+        api-key: ${OPENROUTER_API_KEY:}
+        base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api}
+        timeout-ms: ${OPENROUTER_TIMEOUT_MS:15000}
+        retry-attempts: ${OPENROUTER_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${OPENROUTER_RETRY_BACKOFF_MS:250}
+        supported-models: ${OPENROUTER_SUPPORTED_MODELS:openai/gpt-4o-mini,anthropic/claude-3.5-haiku,google/gemini-1.5-flash}
+      cohere:
+        api-key: ${COHERE_API_KEY:}
+        base-url: ${COHERE_BASE_URL:https://api.cohere.com}
+        timeout-ms: ${COHERE_TIMEOUT_MS:15000}
+        retry-attempts: ${COHERE_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${COHERE_RETRY_BACKOFF_MS:250}
+        supported-models: ${COHERE_SUPPORTED_MODELS:command-r,command-r-plus}
+      deepseek:
+        api-key: ${DEEPSEEK_API_KEY:}
+        base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com/v1}
+        timeout-ms: ${DEEPSEEK_TIMEOUT_MS:15000}
+        retry-attempts: ${DEEPSEEK_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${DEEPSEEK_RETRY_BACKOFF_MS:250}
+        supported-models: ${DEEPSEEK_SUPPORTED_MODELS:deepseek-chat,deepseek-reasoner}
+      groq:
+        api-key: ${GROQ_API_KEY:}
+        base-url: ${GROQ_BASE_URL:https://api.groq.com/openai/v1}
+        timeout-ms: ${GROQ_TIMEOUT_MS:15000}
+        retry-attempts: ${GROQ_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${GROQ_RETRY_BACKOFF_MS:250}
+        supported-models: ${GROQ_SUPPORTED_MODELS:llama-3.1-8b-instant,llama-3.1-70b-versatile}
+      mistral:
+        api-key: ${MISTRAL_API_KEY:}
+        base-url: ${MISTRAL_BASE_URL:https://api.mistral.ai}
+        timeout-ms: ${MISTRAL_TIMEOUT_MS:15000}
+        retry-attempts: ${MISTRAL_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${MISTRAL_RETRY_BACKOFF_MS:250}
+        supported-models: ${MISTRAL_SUPPORTED_MODELS:mistral-small-latest,mistral-large-latest}
+      perplexity:
+        api-key: ${PERPLEXITY_API_KEY:}
+        base-url: ${PERPLEXITY_BASE_URL:https://api.perplexity.ai}
+        timeout-ms: ${PERPLEXITY_TIMEOUT_MS:15000}
+        retry-attempts: ${PERPLEXITY_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${PERPLEXITY_RETRY_BACKOFF_MS:250}
+        supported-models: ${PERPLEXITY_SUPPORTED_MODELS:sonar,sonar-pro}
+      together:
+        api-key: ${TOGETHER_API_KEY:}
+        base-url: ${TOGETHER_BASE_URL:https://api.together.xyz/v1}
+        timeout-ms: ${TOGETHER_TIMEOUT_MS:15000}
+        retry-attempts: ${TOGETHER_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${TOGETHER_RETRY_BACKOFF_MS:250}
+        supported-models: ${TOGETHER_SUPPORTED_MODELS:meta-llama/Llama-3.1-8B-Instruct-Turbo,meta-llama/Llama-3.1-70B-Instruct-Turbo}
+      fireworks:
+        api-key: ${FIREWORKS_API_KEY:}
+        base-url: ${FIREWORKS_BASE_URL:https://api.fireworks.ai/inference/v1}
+        timeout-ms: ${FIREWORKS_TIMEOUT_MS:15000}
+        retry-attempts: ${FIREWORKS_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${FIREWORKS_RETRY_BACKOFF_MS:250}
+        supported-models: ${FIREWORKS_SUPPORTED_MODELS:accounts/fireworks/models/llama-v3p1-8b-instruct,accounts/fireworks/models/llama-v3p1-70b-instruct}
+      xai:
+        api-key: ${XAI_API_KEY:}
+        base-url: ${XAI_BASE_URL:https://api.x.ai/v1}
+        timeout-ms: ${XAI_TIMEOUT_MS:15000}
+        retry-attempts: ${XAI_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${XAI_RETRY_BACKOFF_MS:250}
+        supported-models: ${XAI_SUPPORTED_MODELS:grok-2-latest,grok-3-latest}
+      azure-openai:
+        api-key: ${AZURE_OPENAI_API_KEY:}
+        base-url: ${AZURE_OPENAI_BASE_URL:}
+        api-version: ${AZURE_OPENAI_API_VERSION:2024-06-01}
+        timeout-ms: ${AZURE_OPENAI_TIMEOUT_MS:15000}
+        retry-attempts: ${AZURE_OPENAI_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${AZURE_OPENAI_RETRY_BACKOFF_MS:250}
+        supported-deployments: ${AZURE_OPENAI_SUPPORTED_DEPLOYMENTS:}
+      nvidia:
+        api-key: ${NVIDIA_API_KEY:}
+        base-url: ${NVIDIA_BASE_URL:https://integrate.api.nvidia.com/v1}
+        timeout-ms: ${NVIDIA_TIMEOUT_MS:15000}
+        retry-attempts: ${NVIDIA_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${NVIDIA_RETRY_BACKOFF_MS:250}
+        supported-models: ${NVIDIA_SUPPORTED_MODELS:meta/llama-3.1-8b-instruct,meta/llama-3.1-70b-instruct}
+      cerebras:
+        api-key: ${CEREBRAS_API_KEY:}
+        base-url: ${CEREBRAS_BASE_URL:https://api.cerebras.ai/v1}
+        timeout-ms: ${CEREBRAS_TIMEOUT_MS:15000}
+        retry-attempts: ${CEREBRAS_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${CEREBRAS_RETRY_BACKOFF_MS:250}
+        supported-models: ${CEREBRAS_SUPPORTED_MODELS:llama3.1-8b,llama3.1-70b}
+      sambanova:
+        api-key: ${SAMBANOVA_API_KEY:}
+        base-url: ${SAMBANOVA_BASE_URL:https://api.sambanova.ai/v1}
+        timeout-ms: ${SAMBANOVA_TIMEOUT_MS:15000}
+        retry-attempts: ${SAMBANOVA_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${SAMBANOVA_RETRY_BACKOFF_MS:250}
+        supported-models: ${SAMBANOVA_SUPPORTED_MODELS:Meta-Llama-3.1-8B-Instruct,Meta-Llama-3.1-70B-Instruct}
+      novita:
+        api-key: ${NOVITA_API_KEY:}
+        base-url: ${NOVITA_BASE_URL:https://api.novita.ai/v3/openai}
+        timeout-ms: ${NOVITA_TIMEOUT_MS:15000}
+        retry-attempts: ${NOVITA_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${NOVITA_RETRY_BACKOFF_MS:250}
+        supported-models: ${NOVITA_SUPPORTED_MODELS:meta-llama/llama-3.1-8b-instruct,meta-llama/llama-3.1-70b-instruct}
 
 resilience4j:
   circuitbreaker:
@@ -126,6 +233,90 @@ resilience4j:
         wait-duration-in-open-state: 20s
         permitted-number-of-calls-in-half-open-state: 5
       aiProviderGemini:
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 5
+      aiProviderOpenrouter:
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 5
+      aiProviderCohere:
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 5
+      aiProviderDeepseek:
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 5
+      aiProviderGroq:
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 5
+      aiProviderMistral:
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 5
+      aiProviderPerplexity:
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 5
+      aiProviderTogether:
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 5
+      aiProviderFireworks:
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 5
+      aiProviderXai:
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 5
+      aiProviderAzureOpenai:
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 5
+      aiProviderNvidia:
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 5
+      aiProviderCerebras:
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 5
+      aiProviderSambanova:
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 5
+      aiProviderNovita:
         sliding-window-size: 20
         minimum-number-of-calls: 10
         failure-rate-threshold: 50

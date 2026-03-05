@@ -39,4 +39,15 @@ public class MicrometerAiRoutingTelemetryAdapter implements AiRoutingTelemetryPo
                 "errorCode", errorCode
         ).increment();
     }
+
+    @Override
+    public void recordGuardrailBlocked(String stage, String model, String provider, String reason) {
+        meterRegistry.counter(
+                "ai.guardrail.blocked",
+                "stage", stage,
+                "model", model,
+                "provider", provider,
+                "reason", reason
+        ).increment();
+    }
 }

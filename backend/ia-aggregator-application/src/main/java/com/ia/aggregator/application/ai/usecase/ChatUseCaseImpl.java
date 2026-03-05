@@ -6,6 +6,8 @@ import com.ia.aggregator.application.ai.port.in.ChatUseCase;
 import com.ia.aggregator.application.ai.port.out.AiModelProvider;
 import com.ia.aggregator.application.ai.port.out.AiRoutingTelemetryPort;
 import com.ia.aggregator.application.ai.port.out.ChatModelRoutingPolicy;
+import com.ia.aggregator.application.ai.port.out.OutputGuardrailPort;
+import com.ia.aggregator.application.ai.port.out.PromptGuardrailPort;
 import com.ia.aggregator.common.exception.BusinessException;
 import com.ia.aggregator.common.exception.ErrorCode;
 import com.ia.aggregator.common.exception.TechnicalException;
@@ -19,17 +21,35 @@ public class ChatUseCaseImpl implements ChatUseCase {
     private final List<AiModelProvider> providers;
     private final ChatModelRoutingPolicy routingPolicy;
     private final AiRoutingTelemetryPort telemetryPort;
+    private final PromptGuardrailPort promptGuardrailPort;
+    private final OutputGuardrailPort outputGuardrailPort;
 
     public ChatUseCaseImpl(List<AiModelProvider> providers,
                            ChatModelRoutingPolicy routingPolicy,
-                           AiRoutingTelemetryPort telemetryPort) {
+                           AiRoutingTelemetryPort telemetryPort,
+                           PromptGuardrailPort promptGuardrailPort,
+                           OutputGuardrailPort outputGuardrailPort) {
         this.providers = providers;
         this.routingPolicy = routingPolicy;
         this.telemetryPort = telemetryPort;
+        this.promptGuardrailPort = promptGuardrailPort;
+        this.outputGuardrailPort = outputGuardrailPort;
     }
 
     @Override
     public ChatResponse execute(ChatCommand command) {
+        try {
+            promptGuardrailPort.validate(command.prompt());
+        } catch (BusinessException ex) {
+            telemetryPort.recordGuardrailBlocked(
+                    "prompt",
+                    resolveModelTag(command.preferredModel()),
+                    "pre_provider",
+                    resolveGuardrailReason(ex)
+            );
+            throw ex;
+        }
+
         List<String> orderedModels = routingPolicy.resolveOrderedModels(command);
         if (orderedModels.isEmpty()) {
             throw new BusinessException(ErrorCode.AI_001, "No model available for routing");
@@ -57,6 +77,17 @@ public class ChatUseCaseImpl implements ChatUseCase {
 
                 try {
                     String content = provider.generate(command.prompt(), model);
+                    try {
+                        outputGuardrailPort.validate(content);
+                    } catch (BusinessException ex) {
+                        telemetryPort.recordGuardrailBlocked(
+                                "output",
+                                model,
+                                provider.providerName(),
+                                resolveGuardrailReason(ex)
+                        );
+                        throw ex;
+                    }
                     boolean fallbackUsed = attempts > 1 || modelIndex > 0;
                     telemetryPort.recordSuccess(model, provider.providerName(), fallbackUsed, attempts);
                     return new ChatResponse(content, model, provider.providerName(), fallbackUsed, attempts);
@@ -76,5 +107,13 @@ public class ChatUseCaseImpl implements ChatUseCase {
         }
 
         throw new TechnicalException(ErrorCode.AI_002, "All providers failed to generate response");
+    }
+
+    private static String resolveModelTag(String preferredModel) {
+        return preferredModel == null || preferredModel.isBlank() ? "auto" : preferredModel;
+    }
+
+    private static String resolveGuardrailReason(BusinessException ex) {
+        return ex.getErrorCode().getCode();
     }
 }
