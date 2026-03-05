@@ -71,10 +71,10 @@ describe('ChatPage', () => {
     chatStoreState.stopGenerating = jest.fn();
   });
 
-  it('creates a new conversation when clicking + Nova Conversa', () => {
+  it('creates a new conversation when clicking Nova Conversa', () => {
     render(<ChatPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: /\+ nova conversa/i }));
+    fireEvent.click(screen.getByRole('button', { name: /nova conversa/i }));
 
     expect(chatStoreState.createConversation).toHaveBeenCalledTimes(1);
   });
@@ -82,7 +82,7 @@ describe('ChatPage', () => {
   it('sends message when pressing Enter in textarea', async () => {
     render(<ChatPage />);
 
-    const textarea = screen.getByPlaceholderText(/digite sua mensagem/i);
+    const textarea = screen.getByPlaceholderText(/envie uma mensagem/i);
     fireEvent.change(textarea, { target: { value: 'Mensagem de teste' } });
     fireEvent.keyDown(textarea, { key: 'Enter', code: 'Enter', shiftKey: false });
 
@@ -106,7 +106,7 @@ describe('ChatPage', () => {
     searchPrompt = 'Prompt vindo da biblioteca';
     render(<ChatPage />);
 
-    const textarea = screen.getByPlaceholderText(/digite sua mensagem/i) as HTMLTextAreaElement;
+    const textarea = screen.getByPlaceholderText(/envie uma mensagem/i) as HTMLTextAreaElement;
 
     await waitFor(() => {
       expect(textarea.value).toBe('Prompt vindo da biblioteca');

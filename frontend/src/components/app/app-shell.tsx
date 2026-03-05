@@ -376,8 +376,8 @@ export function AppShell({ title, subtitle, children, headerActions, noPadding }
             id="main-content"
             className={cn(
               noPadding
-                ? 'flex-1 overflow-hidden'
-                : 'flex-1 px-4 py-4 md:px-6 md:py-6'
+                ? 'flex-1 overflow-hidden pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0'
+                : 'flex-1 px-4 py-4 pb-[calc(5rem+env(safe-area-inset-bottom))] md:px-6 md:py-6'
             )}
           >
             {children}

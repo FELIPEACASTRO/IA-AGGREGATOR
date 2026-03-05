@@ -3,6 +3,8 @@ import AnalyticsDiagnosticsPage from './page';
 
 const getTrackedEventsMock = jest.fn();
 const clearTrackedEventsMock = jest.fn();
+const flushTrackedEventsMock = jest.fn();
+const apiGetMock = jest.fn();
 const toastInfoMock = jest.fn();
 const toastSuccessMock = jest.fn();
 const toastErrorMock = jest.fn();
@@ -29,6 +31,14 @@ jest.mock('@/stores/auth-store', () => ({
 jest.mock('@/lib/analytics', () => ({
   getTrackedEvents: () => getTrackedEventsMock(),
   clearTrackedEvents: () => clearTrackedEventsMock(),
+  flushTrackedEvents: (...args: unknown[]) => flushTrackedEventsMock(...args),
+}));
+
+jest.mock('@/lib/api', () => ({
+  __esModule: true,
+  default: {
+    get: (...args: unknown[]) => apiGetMock(...args),
+  },
 }));
 
 jest.mock('@/stores/toast-store', () => ({
@@ -43,16 +53,16 @@ describe('AnalyticsDiagnosticsPage', () => {
   beforeEach(() => {
     getTrackedEventsMock.mockReset();
     clearTrackedEventsMock.mockReset();
+    flushTrackedEventsMock.mockReset();
+    apiGetMock.mockReset();
     toastInfoMock.mockReset();
     toastSuccessMock.mockReset();
     toastErrorMock.mockReset();
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({ data: [] }),
-    } as Response);
+
+    apiGetMock.mockResolvedValue({ data: { data: [] } });
     URL.createObjectURL = jest.fn(() => 'blob:analytics-history');
     URL.revokeObjectURL = jest.fn();
+    localStorage.clear();
   });
 
   it('renders tracked events and summary counters', () => {
@@ -85,15 +95,15 @@ describe('AnalyticsDiagnosticsPage', () => {
   });
 
   it('sends analytics report successfully', async () => {
-    getTrackedEventsMock.mockReturnValue([
-      { event: 'chat_retry', timestamp: new Date().toISOString() },
-    ]);
+    getTrackedEventsMock.mockReturnValue([{ event: 'chat_retry', timestamp: new Date().toISOString() }]);
+    flushTrackedEventsMock.mockResolvedValueOnce(true);
 
     render(<AnalyticsDiagnosticsPage />);
     fireEvent.click(screen.getByRole('button', { name: 'Enviar relatório' }));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalled();
+      expect(flushTrackedEventsMock).toHaveBeenCalledTimes(1);
+      expect(flushTrackedEventsMock).toHaveBeenCalledWith('frontend-manual-1');
       expect(toastSuccessMock).toHaveBeenCalledWith(
         'Relatório enviado',
         'Eventos enviados para o endpoint de analytics.'
@@ -102,41 +112,33 @@ describe('AnalyticsDiagnosticsPage', () => {
   });
 
   it('shows error toast when report submission fails', async () => {
-    getTrackedEventsMock.mockReturnValue([
-      { event: 'chat_retry', timestamp: new Date().toISOString() },
-    ]);
-    (global.fetch as jest.Mock)
-      .mockResolvedValueOnce({ ok: false, status: 500 } as Response)
-      .mockResolvedValueOnce({ ok: false, status: 503 } as Response)
-      .mockResolvedValueOnce({ ok: false, status: 429 } as Response);
+    getTrackedEventsMock.mockReturnValue([{ event: 'chat_retry', timestamp: new Date().toISOString() }]);
+    flushTrackedEventsMock.mockResolvedValue(false);
 
     render(<AnalyticsDiagnosticsPage />);
     fireEvent.click(screen.getByRole('button', { name: 'Enviar relatório' }));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(3);
+      expect(flushTrackedEventsMock).toHaveBeenCalledTimes(3);
       expect(toastErrorMock).toHaveBeenCalledWith(
         'Falha ao enviar relatório',
         'Configure o endpoint e tente novamente.'
       );
-    });
+    }, { timeout: 3000 });
   });
 
   it('retries transient failures and succeeds on a later attempt', async () => {
-    getTrackedEventsMock.mockReturnValue([
-      { event: 'chat_retry', timestamp: new Date().toISOString() },
-    ]);
-
-    (global.fetch as jest.Mock)
-      .mockResolvedValueOnce({ ok: false, status: 503 } as Response)
-      .mockResolvedValueOnce({ ok: false, status: 429 } as Response)
-      .mockResolvedValueOnce({ ok: true, status: 200 } as Response);
+    getTrackedEventsMock.mockReturnValue([{ event: 'chat_retry', timestamp: new Date().toISOString() }]);
+    flushTrackedEventsMock
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true);
 
     render(<AnalyticsDiagnosticsPage />);
     fireEvent.click(screen.getByRole('button', { name: 'Enviar relatório' }));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(3);
+      expect(flushTrackedEventsMock).toHaveBeenCalledTimes(3);
       expect(toastSuccessMock).toHaveBeenCalledWith(
         'Relatório enviado',
         'Eventos enviados para o endpoint de analytics.'
@@ -144,31 +146,21 @@ describe('AnalyticsDiagnosticsPage', () => {
     });
   });
 
-  it('does not retry for non-retryable status', async () => {
-    getTrackedEventsMock.mockReturnValue([
-      { event: 'chat_retry', timestamp: new Date().toISOString() },
-    ]);
-
-    (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 400 } as Response);
+  it('does not attempt to send when there are no events', async () => {
+    getTrackedEventsMock.mockReturnValue([]);
 
     render(<AnalyticsDiagnosticsPage />);
     fireEvent.click(screen.getByRole('button', { name: 'Enviar relatório' }));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(1);
-      expect(toastErrorMock).toHaveBeenCalledWith(
-        'Falha ao enviar relatório',
-        'Configure o endpoint e tente novamente.'
-      );
+      expect(flushTrackedEventsMock).not.toHaveBeenCalled();
     });
   });
 
   it('loads persisted reports from backend', async () => {
     getTrackedEventsMock.mockReturnValue([]);
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => ({
+    apiGetMock.mockResolvedValueOnce({
+      data: {
         data: [
           {
             id: 'r-1',
@@ -177,29 +169,25 @@ describe('AnalyticsDiagnosticsPage', () => {
             receivedAt: new Date().toISOString(),
           },
         ],
-      }),
-    } as Response);
+      },
+    });
 
     render(<AnalyticsDiagnosticsPage />);
     fireEvent.click(screen.getByRole('button', { name: 'Carregar histórico' }));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalled();
+      expect(apiGetMock).toHaveBeenCalledTimes(1);
       expect(screen.getByText(/frontend · 4 evento\(s\)/i)).toBeInTheDocument();
       expect(toastSuccessMock).toHaveBeenCalledWith('Histórico carregado', '1 relatório(s) persistido(s).');
     });
 
-    const requestUrl = String((global.fetch as jest.Mock).mock.calls[0][0]);
+    const requestUrl = String(apiGetMock.mock.calls[0][0]);
     expect(requestUrl).toContain('page=0');
   });
 
   it('applies date range and sort controls when loading persisted reports', async () => {
     getTrackedEventsMock.mockReturnValue([]);
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => ({ data: [] }),
-    } as Response);
+    apiGetMock.mockResolvedValueOnce({ data: { data: [] } });
 
     render(<AnalyticsDiagnosticsPage />);
 
@@ -219,10 +207,10 @@ describe('AnalyticsDiagnosticsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Carregar histórico' }));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(apiGetMock).toHaveBeenCalledTimes(1);
     });
 
-    const requestUrl = String((global.fetch as jest.Mock).mock.calls[0][0]);
+    const requestUrl = String(apiGetMock.mock.calls[0][0]);
     expect(requestUrl).toContain('page=0');
     expect(requestUrl).toContain('from=2026-03-01T00%3A00%3A00Z');
     expect(requestUrl).toContain('to=2026-03-02T23%3A59%3A59Z');
@@ -232,23 +220,19 @@ describe('AnalyticsDiagnosticsPage', () => {
 
   it('loads more persisted reports when requesting next page', async () => {
     getTrackedEventsMock.mockReturnValue([]);
-    (global.fetch as jest.Mock)
+    apiGetMock
       .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
+        data: {
           data: new Array(20).fill(null).map((_, index) => ({
             id: `r-${index}`,
             source: 'frontend',
             totalEvents: index + 1,
             receivedAt: new Date().toISOString(),
           })),
-        }),
-      } as Response)
+        },
+      })
       .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
+        data: {
           data: [
             {
               id: 'r-next',
@@ -257,31 +241,31 @@ describe('AnalyticsDiagnosticsPage', () => {
               receivedAt: new Date().toISOString(),
             },
           ],
-        }),
-      } as Response);
+        },
+      });
 
     render(<AnalyticsDiagnosticsPage />);
     fireEvent.click(screen.getByRole('button', { name: 'Carregar histórico' }));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(apiGetMock).toHaveBeenCalledTimes(1);
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Carregar mais histórico' }));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(apiGetMock).toHaveBeenCalledTimes(2);
       expect(screen.getByText(/frontend · 99 evento\(s\)/i)).toBeInTheDocument();
       expect(toastSuccessMock).toHaveBeenCalledWith('Mais histórico carregado', '1 relatório(s) persistido(s).');
     });
 
-    expect(String((global.fetch as jest.Mock).mock.calls[0][0])).toContain('page=0');
-    expect(String((global.fetch as jest.Mock).mock.calls[1][0])).toContain('page=1');
+    expect(String(apiGetMock.mock.calls[0][0])).toContain('page=0');
+    expect(String(apiGetMock.mock.calls[1][0])).toContain('page=1');
   });
 
   it('shows error when persisted reports loading fails', async () => {
     getTrackedEventsMock.mockReturnValue([]);
-    (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 500 } as Response);
+    apiGetMock.mockRejectedValueOnce(new Error('Network error'));
 
     render(<AnalyticsDiagnosticsPage />);
     fireEvent.click(screen.getByRole('button', { name: 'Carregar histórico' }));
@@ -296,11 +280,9 @@ describe('AnalyticsDiagnosticsPage', () => {
 
   it('loads persisted report events on drill-down', async () => {
     getTrackedEventsMock.mockReturnValue([]);
-    (global.fetch as jest.Mock)
+    apiGetMock
       .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
+        data: {
           data: [
             {
               id: 'r-1',
@@ -309,12 +291,10 @@ describe('AnalyticsDiagnosticsPage', () => {
               receivedAt: new Date().toISOString(),
             },
           ],
-        }),
-      } as Response)
+        },
+      })
       .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
+        data: {
           data: [
             {
               id: 'e-1',
@@ -325,8 +305,8 @@ describe('AnalyticsDiagnosticsPage', () => {
               metadata: { model: 'gpt-4o-mini' },
             },
           ],
-        }),
-      } as Response);
+        },
+      });
 
     render(<AnalyticsDiagnosticsPage />);
     fireEvent.click(screen.getByRole('button', { name: 'Carregar histórico' }));
@@ -340,20 +320,18 @@ describe('AnalyticsDiagnosticsPage', () => {
     await waitFor(() => {
       expect(screen.getByText('chat_send_start')).toBeInTheDocument();
       expect(toastSuccessMock).toHaveBeenCalledWith('Detalhes carregados', '1 evento(s) do relatório.');
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(apiGetMock).toHaveBeenCalledTimes(2);
     });
 
-    expect((global.fetch as jest.Mock).mock.calls[1][0]).toContain('limit=50');
-    expect((global.fetch as jest.Mock).mock.calls[1][0]).toContain('offset=0');
+    expect(String(apiGetMock.mock.calls[1][0])).toContain('limit=50');
+    expect(String(apiGetMock.mock.calls[1][0])).toContain('offset=0');
   });
 
   it('shows error when report detail loading fails', async () => {
     getTrackedEventsMock.mockReturnValue([]);
-    (global.fetch as jest.Mock)
+    apiGetMock
       .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
+        data: {
           data: [
             {
               id: 'r-1',
@@ -362,9 +340,9 @@ describe('AnalyticsDiagnosticsPage', () => {
               receivedAt: new Date().toISOString(),
             },
           ],
-        }),
-      } as Response)
-      .mockResolvedValueOnce({ ok: false, status: 500 } as Response);
+        },
+      })
+      .mockRejectedValueOnce(new Error('Request failed'));
 
     render(<AnalyticsDiagnosticsPage />);
     fireEvent.click(screen.getByRole('button', { name: 'Carregar histórico' }));
@@ -386,11 +364,8 @@ describe('AnalyticsDiagnosticsPage', () => {
   it('exports persisted reports as CSV', async () => {
     getTrackedEventsMock.mockReturnValue([]);
     const clickSpy = jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
-
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => ({
+    apiGetMock.mockResolvedValueOnce({
+      data: {
         data: [
           {
             id: 'r-1',
@@ -400,8 +375,8 @@ describe('AnalyticsDiagnosticsPage', () => {
             counters: { chat_send_start: 2 },
           },
         ],
-      }),
-    } as Response);
+      },
+    });
 
     render(<AnalyticsDiagnosticsPage />);
     fireEvent.click(screen.getByRole('button', { name: 'Carregar histórico' }));
@@ -419,5 +394,4 @@ describe('AnalyticsDiagnosticsPage', () => {
 
     clickSpy.mockRestore();
   });
-
 });

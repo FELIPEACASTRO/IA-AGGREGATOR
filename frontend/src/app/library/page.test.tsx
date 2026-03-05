@@ -70,7 +70,7 @@ describe('LibraryPage', () => {
   it('filters conversations by search query', () => {
     render(<LibraryPage />);
 
-    fireEvent.change(screen.getByLabelText(/buscar na biblioteca/i), {
+    fireEvent.change(screen.getByPlaceholderText(/buscar/i), {
       target: { value: 'Resumo' },
     });
 

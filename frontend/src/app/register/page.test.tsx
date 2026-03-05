@@ -68,7 +68,7 @@ describe('RegisterPage', () => {
 
     await waitFor(() => {
       expect(registerMock).toHaveBeenCalledWith('user@test.com', 'Password123!', 'User Test');
-      expect(pushMock).toHaveBeenCalledWith('/chat');
+      expect(pushMock).toHaveBeenCalledWith('/welcome');
     });
   });
 

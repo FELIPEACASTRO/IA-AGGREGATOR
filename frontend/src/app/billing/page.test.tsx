@@ -24,9 +24,9 @@ describe('BillingPage', () => {
   it('renders billing summary cards and action', () => {
     render(<BillingPage />);
 
-    expect(screen.getByText('Plano Atual')).toBeInTheDocument();
-    expect(screen.getByText('Uso Mensal')).toBeInTheDocument();
-    expect(screen.getByText('Crédito Restante')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /solicitar upgrade/i })).toBeInTheDocument();
+    expect(screen.getByText('Plano e uso')).toBeInTheDocument();
+    expect(screen.getByText('Tokens usados')).toBeInTheDocument();
+    expect(screen.getByText('Reset em')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /fazer upgrade|falar com vendas/i }).length).toBeGreaterThan(0);
   });
 });

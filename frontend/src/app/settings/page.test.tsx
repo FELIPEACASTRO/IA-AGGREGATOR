@@ -24,15 +24,15 @@ describe('SettingsPage', () => {
   it('prefills full name from auth store', () => {
     render(<SettingsPage />);
 
-    const input = screen.getByLabelText(/nome de exibição/i) as HTMLInputElement;
+    const input = screen.getByLabelText(/nome de exibi/i) as HTMLInputElement;
     expect(input.value).toBe('Docker Admin');
   });
 
   it('allows updating full name and locale', () => {
     render(<SettingsPage />);
 
-    const nameInput = screen.getByLabelText(/nome de exibição/i) as HTMLInputElement;
-    const localeSelect = screen.getByLabelText(/idioma padrão/i) as HTMLSelectElement;
+    const nameInput = screen.getByLabelText(/nome de exibi/i) as HTMLInputElement;
+    const localeSelect = screen.getByLabelText(/idioma/i) as HTMLSelectElement;
 
     fireEvent.change(nameInput, { target: { value: 'Novo Nome' } });
     fireEvent.change(localeSelect, { target: { value: 'en-US' } });

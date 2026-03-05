@@ -35,7 +35,7 @@ describe('LoginPage', () => {
     render(<LoginPage />);
 
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'user@test.com' } });
-    fireEvent.change(screen.getByLabelText(/senha/i), { target: { value: 'Password123!' } });
+    fireEvent.change(screen.getByLabelText(/^senha$/i), { target: { value: 'Password123!' } });
     fireEvent.click(screen.getByRole('button', { name: 'Entrar' }));
 
     await waitFor(() => {
@@ -49,7 +49,7 @@ describe('LoginPage', () => {
     render(<LoginPage />);
 
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'user@test.com' } });
-    fireEvent.change(screen.getByLabelText(/senha/i), { target: { value: 'wrong-pass' } });
+    fireEvent.change(screen.getByLabelText(/^senha$/i), { target: { value: 'wrong-pass' } });
     fireEvent.click(screen.getByRole('button', { name: 'Entrar' }));
 
     expect(await screen.findByText('Credenciais inválidas')).toBeInTheDocument();
@@ -68,7 +68,7 @@ describe('LoginPage', () => {
     render(<LoginPage />);
 
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'user@test.com' } });
-    fireEvent.change(screen.getByLabelText(/senha/i), { target: { value: 'Password123!' } });
+    fireEvent.change(screen.getByLabelText(/^senha$/i), { target: { value: 'Password123!' } });
     fireEvent.click(screen.getByRole('button', { name: 'Entrar' }));
 
     expect(screen.getByRole('button', { name: 'Entrando...' })).toBeDisabled();
