@@ -1,0 +1,27 @@
+﻿{
+  "literalValues": [
+    "all",
+    "width",
+    "border-color,box-shadow,background-color",
+    "transform,opacity,box-shadow,background-color,border-color,color"
+  ],
+  "patterns": [
+    "^-?\\d*\\.?\\d+(px|rem|em|%|vh|vw|dvh|dvw|fr)$",
+    "^-?\\d*\\.?\\d+$",
+    "^var\\(--[a-z0-9-]+\\)$",
+    "^rgba?\\([^\\n]+\\)$",
+    "^hsla?\\([^\\n]+\\)$",
+    "^calc\\([^\\n]+\\)$",
+    "^clamp\\([^\\n]+\\)$",
+    "^min\\([^\\n]+\\)$",
+    "^max\\([^\\n]+\\)$",
+    "^linear-gradient\\([^\\n]+\\)$",
+    "^inset_[^\\n]+$",
+    "^0_[^\\n]+$",
+    "^[0-9.]+fr_[0-9.]+fr$",
+    "^\\d+px_\\d+fr$",
+    "^\\d+px_minmax\\([^\\n]+\\)$",
+    "^minmax\\([^\\n]+\\)_minmax\\([^\\n]+\\)$"
+  ]
+}
+

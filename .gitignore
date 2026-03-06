@@ -39,3 +39,8 @@ docker-compose.override.yml
 
 # Claude worktrees (dev artifacts)
 .claude/
+
+# Local browser audit artifacts
+.playwright-cli/
+output/playwright/
+output/lighthouse/

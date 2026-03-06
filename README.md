@@ -28,3 +28,15 @@ Esse comando:
 - Maven (`mvn` no PATH)
 - Node.js + npm
 - Docker Desktop
+
+## Qualidade do frontend (ondas 3/4)
+
+Na pasta `frontend`, os comandos principais sao:
+
+- `npm run lint` (ESLint + validacao de valores arbitrarios Tailwind)
+- `npm run type-check`
+- `npm run test -- --runInBand`
+- `npm run build`
+- `npm run perf:budget` (budget de JS por rota)
+- `npm run test:quality` (smoke Playwright com baseline visual + teclado)
+- `npm run quality:ci` (pipeline consolidado local, mesmo contrato do CI)
