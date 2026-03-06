@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import AnalyticsDiagnosticsPage from './page';
+import AnalyticsDiagnosticsPage from './debug/diagnostics-page';
 
 const getTrackedEventsMock = jest.fn();
 const clearTrackedEventsMock = jest.fn();
