@@ -1,0 +1,775 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("CODEX_DATABASE_URL")
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum OAuthProvider {
+  GITHUB
+  SLACK
+  LINEAR
+}
+
+enum ConnectorStatus {
+  CONNECTED
+  DISCONNECTED
+  ERROR
+}
+
+enum TaskMode {
+  ASK
+  CODE
+}
+
+enum TaskStatus {
+  draft
+  queued
+  preparing_environment
+  downloading_repository
+  cloning_repository
+  running_setup
+  running_maintenance
+  running_agent
+  validating
+  generating_diff
+  waiting_for_followup
+  pr_ready
+  completed
+  failed
+  cancelled
+  archived
+}
+
+enum EnvironmentCacheStatus {
+  cold
+  preparing
+  warm
+  invalidated
+  reset_pending
+  failed
+}
+
+enum PullRequestStatus {
+  none
+  draft
+  open
+  merged
+  closed
+  update_pending
+  failed
+}
+
+enum InternetMode {
+  OFF
+  LIMITED
+  UNRESTRICTED
+}
+
+enum LogPhase {
+  provisioning
+  repo_download
+  setup
+  maintenance
+  agent
+  validation
+  pr_push
+}
+
+enum CreditLedgerType {
+  PURCHASE
+  CONSUMPTION
+  ADJUSTMENT
+  REFUND
+}
+
+enum BillingIntentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum ReviewSeverity {
+  P0
+  P1
+  P2
+  P3
+}
+
+model User {
+  id                String           @id @default(cuid())
+  email             String           @unique
+  name              String
+  avatarUrl         String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  memberships       Membership[]
+  sessions          Session[]
+  oauthConnections  OAuthConnection[]
+  tasks             Task[]
+  githubReviews     GitHubReviewRun[]
+  auditLogs         AuditLog[]
+}
+
+model Workspace {
+  id                      String                    @id @default(cuid())
+  slug                    String                    @unique
+  name                    String
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  memberships             Membership[]
+  githubInstallations     GitHubInstallation[]
+  repositories            GitRepository[]
+  environments            Environment[]
+  tasks                   Task[]
+  codeReviewPolicies      CodeReviewPolicy[]
+  reviewGuidelineSources  ReviewGuidelineSource[]
+  slackInstalls           SlackInstall[]
+  linearInstalls          LinearInstall[]
+  usageEntries            UsageEntry[]
+  creditBalance           CreditBalance?
+  creditLedger            CreditLedgerEntry[]
+  billingIntents          BillingIntent[]
+  analyticsAggregates     AnalyticsAggregate[]
+  complianceExportJobs    ComplianceExportJob[]
+  managedConfigs          ManagedConfig[]
+  assumptions             AssumptionLog[]
+  auditLogs               AuditLog[]
+}
+
+model Membership {
+  id          String         @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        MembershipRole
+  createdAt   DateTime       @default(now())
+  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+}
+
+model Session {
+  id             String   @id @default(cuid())
+  userId         String
+  tokenHash      String   @unique
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  lastSeenAt     DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model OAuthConnection {
+  id            String         @id @default(cuid())
+  userId        String
+  provider      OAuthProvider
+  externalId    String
+  accessToken   String?
+  refreshToken  String?
+  scopes        String[]
+  status        ConnectorStatus @default(CONNECTED)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, externalId])
+}
+
+model GitHubInstallation {
+  id                    String          @id @default(cuid())
+  workspaceId           String
+  accountLogin          String
+  installationExternalId String         @unique
+  status                ConnectorStatus @default(DISCONNECTED)
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  workspace             Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model GitRepository {
+  id            String                 @id @default(cuid())
+  workspaceId   String
+  fullName      String                 @unique
+  provider      String                 @default("github")
+  defaultBranch String                 @default("main")
+  cloneUrl      String?
+  isAuthorized  Boolean                @default(false)
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  workspace     Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  permissions   RepositoryPermission[]
+  branchCache   RepositoryBranchCache[]
+  environments  EnvironmentRepoMap[]
+  tasks         Task[]
+  policies      CodeReviewPolicy[]
+  triageRules   TriageRule[]
+}
+
+model RepositoryPermission {
+  id            String   @id @default(cuid())
+  repositoryId  String
+  principal     String
+  canRead       Boolean  @default(true)
+  canWrite      Boolean  @default(false)
+  canReview     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  repository    GitRepository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+}
+
+model RepositoryBranchCache {
+  id            String   @id @default(cuid())
+  repositoryId  String
+  branchName    String
+  commitSha     String?
+  syncedAt      DateTime @default(now())
+  repository    GitRepository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, branchName])
+}
+
+model Environment {
+  id                  String                    @id @default(cuid())
+  workspaceId         String
+  name                String
+  description         String?
+  defaultBranch       String                    @default("main")
+  baseImage           String                    @default("ubuntu:22.04")
+  automaticSetup      Boolean                   @default(true)
+  setupScript         String?
+  maintenanceScript   String?
+  envScope            String                    @default("workspace")
+  internetMode        InternetMode              @default(OFF)
+  domainAllowlist     String[]
+  allowedHttpMethods  String[]
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  workspace           Workspace                 @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  repoMap             EnvironmentRepoMap[]
+  runtimePins         EnvironmentRuntimePin[]
+  variables           EnvironmentVariable[]
+  secrets             EnvironmentSecret[]
+  caches              EnvironmentCache[]
+  internetPolicies    InternetPolicy[]
+  executions          EnvironmentExecutionHistory[]
+  tasks               Task[]
+
+  @@unique([workspaceId, name])
+}
+
+model EnvironmentRepoMap {
+  id              String      @id @default(cuid())
+  environmentId   String
+  repositoryId    String
+  branch          String?
+  commitSha       String?
+  priority        Int         @default(0)
+  createdAt       DateTime    @default(now())
+  environment     Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  repository      GitRepository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+}
+
+model EnvironmentRuntimePin {
+  id              String      @id @default(cuid())
+  environmentId   String
+  runtime         String
+  version         String
+  createdAt       DateTime    @default(now())
+  environment     Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+
+  @@unique([environmentId, runtime])
+}
+
+model EnvironmentVariable {
+  id              String      @id @default(cuid())
+  environmentId   String
+  key             String
+  value           String
+  createdAt       DateTime    @default(now())
+  environment     Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+
+  @@unique([environmentId, key])
+}
+
+model EnvironmentSecret {
+  id                 String      @id @default(cuid())
+  environmentId      String
+  key                String
+  encryptedValue     String
+  setupOnly          Boolean     @default(true)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  environment        Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+
+  @@unique([environmentId, key])
+}
+
+model EnvironmentCache {
+  id                 String                 @id @default(cuid())
+  environmentId      String
+  status             EnvironmentCacheStatus @default(cold)
+  cacheKey           String
+  invalidationReason String?
+  warmedAt           DateTime?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  environment        Environment            @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+}
+
+model InternetPolicy {
+  id                 String      @id @default(cuid())
+  environmentId      String
+  mode               InternetMode
+  domainAllowlist    String[]
+  allowedHttpMethods String[]
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  environment        Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+}
+
+model EnvironmentExecutionHistory {
+  id                 String      @id @default(cuid())
+  environmentId      String
+  taskId             String?
+  status             String
+  durationMs         Int?
+  errorMessage       String?
+  createdAt          DateTime    @default(now())
+  environment        Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id                    String                @id @default(cuid())
+  workspaceId           String
+  repositoryId          String?
+  environmentId         String?
+  createdById           String
+  title                 String
+  prompt                String
+  mode                  TaskMode
+  status                TaskStatus            @default(queued)
+  sourceRef             String?
+  baseBranch            String?
+  resultBranch          String?
+  baseCommitSha         String?
+  internetMode          InternetMode          @default(OFF)
+  bestOfN               Int                   @default(1)
+  attemptIndex          Int                   @default(1)
+  startedAt             DateTime?
+  completedAt           DateTime?
+  failedAt              DateTime?
+  errorMessage          String?
+  archivedAt            DateTime?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  workspace             Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  repository            GitRepository?        @relation(fields: [repositoryId], references: [id], onDelete: SetNull)
+  environment           Environment?          @relation(fields: [environmentId], references: [id], onDelete: SetNull)
+  createdBy             User                  @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  input                 TaskInput?
+  runs                  TaskRun[]
+  followUps             TaskFollowUp[]
+  events                TaskEvent[]
+  logs                  TaskLogChunk[]
+  artifacts             TaskArtifact[]
+  evidences             TaskEvidenceCitation[]
+  diffSnapshot          DiffSnapshot?
+  pullRequest           PullRequest?
+  archiveRecord         TaskArchiveRecord?
+}
+
+model TaskInput {
+  id                String    @id @default(cuid())
+  taskId            String    @unique
+  attachments       String[]
+  imageInputs       String[]
+  voiceTranscript   String?
+  createdAt         DateTime  @default(now())
+  task              Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model TaskRun {
+  id                String     @id @default(cuid())
+  taskId            String
+  runNumber         Int
+  status            TaskStatus
+  startedAt         DateTime?
+  completedAt       DateTime?
+  failureReason     String?
+  createdAt         DateTime   @default(now())
+  task              Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, runNumber])
+}
+
+model TaskFollowUp {
+  id                String     @id @default(cuid())
+  taskId            String
+  mode              TaskMode
+  prompt            String
+  createdById       String
+  createdAt         DateTime   @default(now())
+  task              Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model TaskEvent {
+  id                String     @id @default(cuid())
+  taskId            String
+  eventType         String
+  status            TaskStatus?
+  message           String?
+  metadata          Json?
+  createdAt         DateTime   @default(now())
+  task              Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, createdAt])
+}
+
+model TaskLogChunk {
+  id                String     @id @default(cuid())
+  taskId            String
+  phase             LogPhase
+  line              String
+  lineNumber        Int
+  isError           Boolean    @default(false)
+  createdAt         DateTime   @default(now())
+  task              Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, phase, lineNumber])
+}
+
+model TaskArtifact {
+  id                String     @id @default(cuid())
+  taskId            String
+  artifactType      String
+  title             String
+  contentType       String
+  url               String
+  metadata          Json?
+  createdAt         DateTime   @default(now())
+  task              Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model TaskEvidenceCitation {
+  id                String     @id @default(cuid())
+  taskId            String
+  label             String
+  sourceType        String
+  sourceRef         String
+  lineStart         Int?
+  lineEnd           Int?
+  createdAt         DateTime   @default(now())
+  task              Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model DiffSnapshot {
+  id                String     @id @default(cuid())
+  taskId            String     @unique
+  summary           String?
+  patch             String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  task              Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  files             DiffFile[]
+}
+
+model DiffFile {
+  id                String       @id @default(cuid())
+  diffSnapshotId    String
+  path              String
+  changeType        String
+  additions         Int          @default(0)
+  deletions         Int          @default(0)
+  createdAt         DateTime     @default(now())
+  diffSnapshot      DiffSnapshot @relation(fields: [diffSnapshotId], references: [id], onDelete: Cascade)
+  hunks             DiffHunk[]
+}
+
+model DiffHunk {
+  id                String    @id @default(cuid())
+  diffFileId        String
+  header            String
+  content           String
+  createdAt         DateTime  @default(now())
+  diffFile          DiffFile  @relation(fields: [diffFileId], references: [id], onDelete: Cascade)
+}
+
+model PullRequest {
+  id                String          @id @default(cuid())
+  taskId            String          @unique
+  repositoryId      String?
+  externalNumber    Int?
+  title             String
+  body              String
+  url               String?
+  branch            String?
+  status            PullRequestStatus @default(none)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  task              Task            @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model TaskArchiveRecord {
+  id                String    @id @default(cuid())
+  taskId            String    @unique
+  archivedById      String
+  archivedAt        DateTime  @default(now())
+  reason            String?
+  task              Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model CodeReviewPolicy {
+  id                      String   @id @default(cuid())
+  workspaceId             String
+  repositoryId            String
+  enabled                 Boolean  @default(false)
+  automaticReviews        Boolean  @default(false)
+  minSeverity             ReviewSeverity @default(P2)
+  agentsMdPrecedence      Boolean  @default(true)
+  oneOffFocusEnabled      Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  workspace               Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  repository              GitRepository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  reviewRuns              GitHubReviewRun[]
+
+  @@unique([workspaceId, repositoryId])
+}
+
+model GitHubReviewRun {
+  id                String        @id @default(cuid())
+  workspaceId       String
+  policyId          String?
+  repositoryId      String?
+  initiatedById     String?
+  source            String
+  status            String
+  summary           String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  findings          ReviewFinding[]
+  policy            CodeReviewPolicy? @relation(fields: [policyId], references: [id], onDelete: SetNull)
+  initiatedBy       User?         @relation(fields: [initiatedById], references: [id], onDelete: SetNull)
+}
+
+model ReviewFinding {
+  id                String         @id @default(cuid())
+  reviewRunId       String
+  title             String
+  body              String
+  severity          ReviewSeverity
+  filePath          String?
+  lineStart         Int?
+  lineEnd           Int?
+  createdAt         DateTime       @default(now())
+  reviewRun         GitHubReviewRun @relation(fields: [reviewRunId], references: [id], onDelete: Cascade)
+}
+
+model ReviewGuidelineSource {
+  id                String    @id @default(cuid())
+  workspaceId       String
+  sourceType        String
+  sourceRef         String
+  content           String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  workspace         Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model SlackInstall {
+  id                String          @id @default(cuid())
+  workspaceId       String
+  teamId            String
+  teamName          String
+  botUserId         String?
+  status            ConnectorStatus @default(DISCONNECTED)
+  postFinalReply    Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  workspace         Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  bindings          SlackWorkspaceBinding[]
+
+  @@unique([workspaceId, teamId])
+}
+
+model SlackWorkspaceBinding {
+  id                String       @id @default(cuid())
+  slackInstallId    String
+  channelId         String
+  channelName       String
+  defaultEnvironmentId String?
+  createdAt         DateTime     @default(now())
+  slackInstall      SlackInstall @relation(fields: [slackInstallId], references: [id], onDelete: Cascade)
+}
+
+model SlackEventLog {
+  id                String    @id @default(cuid())
+  workspaceId       String
+  eventType         String
+  rawPayload        Json
+  status            String
+  errorMessage      String?
+  createdAt         DateTime  @default(now())
+}
+
+model LinearInstall {
+  id                String          @id @default(cuid())
+  workspaceId       String
+  organizationId    String
+  organizationName  String
+  status            ConnectorStatus @default(DISCONNECTED)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  workspace         Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  bindings          LinearWorkspaceBinding[]
+
+  @@unique([workspaceId, organizationId])
+}
+
+model LinearWorkspaceBinding {
+  id                String        @id @default(cuid())
+  linearInstallId   String
+  teamId            String
+  defaultEnvironmentId String?
+  createdAt         DateTime      @default(now())
+  linearInstall     LinearInstall @relation(fields: [linearInstallId], references: [id], onDelete: Cascade)
+}
+
+model LinearEventLog {
+  id                String    @id @default(cuid())
+  workspaceId       String
+  eventType         String
+  rawPayload        Json
+  status            String
+  errorMessage      String?
+  createdAt         DateTime  @default(now())
+}
+
+model TriageRule {
+  id                String   @id @default(cuid())
+  workspaceId       String
+  repositoryId      String?
+  source            String
+  condition         String
+  targetEnvironmentId String?
+  isEnabled         Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  repository        GitRepository? @relation(fields: [repositoryId], references: [id], onDelete: SetNull)
+}
+
+model UsageEntry {
+  id                String   @id @default(cuid())
+  workspaceId       String
+  taskId            String?
+  repositoryId      String?
+  metric            String
+  amount            Float
+  unit              String
+  period            String
+  createdAt         DateTime @default(now())
+  workspace         Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model CreditBalance {
+  id                String   @id @default(cuid())
+  workspaceId       String   @unique
+  balance           Float    @default(0)
+  includedUsageLeft Float    @default(0)
+  updatedAt         DateTime @updatedAt
+  workspace         Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model CreditLedgerEntry {
+  id                String           @id @default(cuid())
+  workspaceId       String
+  type              CreditLedgerType
+  amount            Float
+  description       String
+  relatedTaskId     String?
+  createdAt         DateTime         @default(now())
+  workspace         Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model BillingIntent {
+  id                String             @id @default(cuid())
+  workspaceId       String
+  amount            Float
+  currency          String             @default("USD")
+  status            BillingIntentStatus @default(PENDING)
+  providerRef       String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  workspace         Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id                String    @id @default(cuid())
+  workspaceId       String?
+  userId            String?
+  action            String
+  targetType        String
+  targetId          String?
+  metadata          Json?
+  createdAt         DateTime  @default(now())
+  workspace         Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  user              User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model AnalyticsAggregate {
+  id                String    @id @default(cuid())
+  workspaceId       String
+  metricDate        DateTime
+  productArea       String
+  metricName        String
+  metricValue       Float
+  metadata          Json?
+  createdAt         DateTime  @default(now())
+  workspace         Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, metricDate, productArea, metricName])
+}
+
+model ComplianceExportJob {
+  id                String    @id @default(cuid())
+  workspaceId       String
+  status            String
+  exportType        String
+  downloadUrl       String?
+  requestedBy       String?
+  createdAt         DateTime  @default(now())
+  finishedAt        DateTime?
+  workspace         Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model ManagedConfig {
+  id                String    @id @default(cuid())
+  workspaceId       String
+  configKey         String
+  configValue       Json
+  isLocked          Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  workspace         Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, configKey])
+}
+
+model AssumptionLog {
+  id                String    @id @default(cuid())
+  workspaceId       String
+  category          String
+  decision          String
+  rationale         String
+  impact            String
+  createdAt         DateTime  @default(now())
+  workspace         Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}

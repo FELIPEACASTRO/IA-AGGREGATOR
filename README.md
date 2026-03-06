@@ -1,42 +1,72 @@
-# IA-AGGREGATOR
+# IA-AGGREGATOR / Lume Codex Cloud
 
-## Subir tudo com um comando
+Monorepo com backend Java (auth/ai/analytics) e frontend Next.js com módulo de cloud coding agents (`/codex`).
 
-No PowerShell, execute na raiz do projeto:
+## Stack
+- Frontend: Next.js 15, React 19, TypeScript, Tailwind v4
+- Cloud task runtime: Prisma + PostgreSQL, Redis + BullMQ, SSE
+- Backend existente: Spring Boot (auth e serviços de IA)
 
-`powershell -ExecutionPolicy Bypass -File .\scripts\start-solution.ps1`
+## Subir solução completa
+No PowerShell (raiz do projeto):
 
-Esse comando:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start-solution.ps1
+```
 
-- sobe Postgres e Redis com Docker Compose;
-- aguarda health check dos containers;
-- executa build completo de backend e frontend;
-- inicia backend em `http://localhost:8080` e frontend em `http://localhost:3001`;
-- roda um smoke test básico no final.
+Sem rebuild:
 
-### Execução mais rápida (sem rebuild)
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start-solution.ps1 -SkipBuild
+```
 
-`powershell -ExecutionPolicy Bypass -File .\scripts\start-solution.ps1 -SkipBuild`
+Parar:
 
-### Parar tudo
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\stop-solution.ps1
+```
 
-`powershell -ExecutionPolicy Bypass -File .\scripts\stop-solution.ps1`
+## Bootstrap do módulo Codex Cloud
+Na pasta `frontend`:
 
-## Pré-requisitos
+```powershell
+$env:CODEX_DATABASE_URL='postgresql://ia_aggregator:ia_aggregator@localhost:5432/ia_aggregator?schema=codex'
+npm install
+npm run codex:bootstrap
+npm run dev
+```
 
-- Java 21+
-- Maven (`mvn` no PATH)
-- Node.js + npm
-- Docker Desktop
+## Principais rotas
+- `/codex`
+- `/codex/tasks/[taskId]`
+- `/codex/settings/connectors`
+- `/codex/settings/environments`
+- `/codex/settings/code-review`
+- `/codex/settings/usage`
+- `/codex/settings/analytics`
+- `/admin/settings`
 
-## Qualidade do frontend (ondas 3/4)
+## Qualidade (frontend)
+```powershell
+npm --prefix frontend run lint
+npm --prefix frontend run type-check
+npm --prefix frontend run build
+npm --prefix frontend run test -- --runInBand
+```
 
-Na pasta `frontend`, os comandos principais sao:
+## Documentação técnica
+Arquivos gerados na raiz:
+- `PRODUCT_SPEC.md`
+- `PARITY_MATRIX.md`
+- `ASSUMPTIONS.md`
+- `ROUTES.md`
+- `DATA_MODEL.md`
+- `API_CONTRACT.md`
+- `EVENT_MODEL.md`
+- `STATE_MACHINES.md`
+- `SECURITY.md`
+- `CONNECTORS.md`
+- `RUNBOOK.md`
+- `TEST_PLAN.md`
+- `CHANGELOG_IMPLEMENTATION.md`
 
-- `npm run lint` (ESLint + validacao de valores arbitrarios Tailwind)
-- `npm run type-check`
-- `npm run test -- --runInBand`
-- `npm run build`
-- `npm run perf:budget` (budget de JS por rota)
-- `npm run test:quality` (smoke Playwright com baseline visual + teclado)
-- `npm run quality:ci` (pipeline consolidado local, mesmo contrato do CI)

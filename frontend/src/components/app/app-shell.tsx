@@ -10,6 +10,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { CommandPalette, useCommandPalette } from '@/components/ui/command-palette';
 import {
   Bot,
+  Cloud,
   House,
   MessageSquare,
   BookOpen,
@@ -35,6 +36,7 @@ type AppShellProps = {
 };
 
 const navItems = [
+  { href: '/codex', label: 'Codex Cloud', icon: Cloud },
   { href: '/home', label: 'Home', icon: House },
   { href: '/chat', label: 'Chat', icon: MessageSquare },
   { href: '/library', label: 'Biblioteca', icon: BookOpen },
