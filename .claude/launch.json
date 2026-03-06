@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "frontend",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd /d C:\\Users\\davis\\Workspace\\CLAUDE\\IA-AGGREGATOR\\.claude\\worktrees\\wizardly-solomon\\frontend && npm run dev"],
       "port": 3000
     },
     {
@@ -12,12 +12,6 @@
       "runtimeExecutable": "mvn",
       "runtimeArgs": ["spring-boot:run", "-pl", "backend"],
       "port": 8080
-    },
-    {
-      "name": "storybook",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "storybook"],
-      "port": 6006
     }
   ]
 }

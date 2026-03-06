@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
@@ -19,8 +19,12 @@ import {
   ArrowUp, Plus, WandSparkles, Copy, Check, RefreshCw,
   ThumbsUp, ThumbsDown, LayoutGrid, MessageSquare,
   Pin, Trash2, Pencil, MoreHorizontal,
-  Zap, Brain, Scale, Search,
+  Zap, Brain, Scale, Search, ArrowDown,
 } from 'lucide-react';
+
+/* ═══════════════════════════════════════════════════════
+   MODEL CONFIG
+   ═══════════════════════════════════════════════════════ */
 
 type Tier = 'fast' | 'balanced' | 'powerful';
 
@@ -41,17 +45,21 @@ const MODEL_META: Record<string, { tier: Tier; color: string }> = {
 };
 
 const TIER_CONFIG: Record<Tier, { icon: React.ElementType; label: string; color: string }> = {
-  fast:     { icon: Zap,   label: 'Rápido',      color: 'text-[var(--success)]'       },
-  balanced: { icon: Scale, label: 'Equilibrado',  color: 'text-[var(--warning)]'       },
-  powerful: { icon: Brain, label: 'Poderoso',     color: 'text-[var(--brand-primary)]' },
+  fast:     { icon: Zap,   label: 'Rapido',      color: 'text-[var(--success)]' },
+  balanced: { icon: Scale, label: 'Equilibrado', color: 'text-[var(--warning)]' },
+  powerful: { icon: Brain, label: 'Poderoso',    color: 'text-[var(--brand-primary)]' },
 };
 
 const quickActions = [
   'Resuma os pontos principais em 5 bullets executivos.',
-  'Monte um plano de ação com etapas, responsaveis e riscos.',
+  'Monte um plano de acao com etapas e responsaveis.',
   'Reescreva em tom profissional e objetivo.',
-  'Compare duas alternativas e recomende com justificativa.',
+  'Compare alternativas e recomende com justificativa.',
 ];
+
+/* ═══════════════════════════════════════════════════════
+   LAZY CANVAS
+   ═══════════════════════════════════════════════════════ */
 
 const ChatCanvasBoard = dynamic(
   () => import('@/components/chat/chat-canvas-board').then((mod) => mod.ChatCanvasBoard),
@@ -69,6 +77,10 @@ const ChatCanvasBoard = dynamic(
   }
 );
 
+/* ═══════════════════════════════════════════════════════
+   STREAMING INDICATOR
+   ═══════════════════════════════════════════════════════ */
+
 function StreamingIndicator({ model }: { model?: string }) {
   const color = model ? MODEL_META[model]?.color : undefined;
   return (
@@ -76,17 +88,21 @@ function StreamingIndicator({ model }: { model?: string }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className="flex items-center gap-3 rounded-2xl bg-[var(--surface-1)] border border-[var(--border)] px-4 py-3 max-w-fit"
+      className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)] px-4 py-3 max-w-fit"
     >
       <div className="flex items-center gap-1 h-4">
         <span className="pulse-dot" style={color ? { background: color } : undefined} />
         <span className="pulse-dot" style={color ? { background: color } : undefined} />
         <span className="pulse-dot" style={color ? { background: color } : undefined} />
       </div>
-      <span className="text-[var(--text-xs)] text-[var(--muted-foreground)]">Gerando resposta</span>
+      <span className="text-[var(--text-xs)] text-[var(--foreground-secondary)]">Gerando resposta</span>
     </motion.div>
   );
 }
+
+/* ═══════════════════════════════════════════════════════
+   MESSAGE ACTIONS
+   ═══════════════════════════════════════════════════════ */
 
 function MessageActions({
   message, isCopied, onCopy, onRegenerate, onFeedback, feedback,
@@ -101,13 +117,13 @@ function MessageActions({
   return (
     <div className="mt-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--dur-fast)]">
       <button onClick={onCopy} title="Copiar mensagem"
-        className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] px-2 py-1 text-[var(--text-xs)] text-[var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)] transition-colors">
+        className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] px-2 py-1 text-[var(--text-xs)] text-[var(--foreground-secondary)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--foreground)] transition-colors">
         {isCopied ? <Check className="h-3 w-3 text-[var(--success)]" /> : <Copy className="h-3 w-3" />}
         {isCopied ? 'Copiado!' : 'Copiar'}
       </button>
       {message.role === 'assistant' && onRegenerate && (
         <button onClick={onRegenerate} title="Regenerar"
-          className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] px-2 py-1 text-[var(--text-xs)] text-[var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)] transition-colors">
+          className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] px-2 py-1 text-[var(--text-xs)] text-[var(--foreground-secondary)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--foreground)] transition-colors">
           <RefreshCw className="h-3 w-3" />Regenerar
         </button>
       )}
@@ -115,14 +131,14 @@ function MessageActions({
         <>
           <button onClick={() => onFeedback('up')} title="Util"
             className={cn('rounded-[var(--radius-sm)] p-1.5 transition-colors',
-              feedback === 'up' ? 'text-[var(--success)] bg-[var(--surface-2)]'
-                : 'text-[var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[var(--success)]')}>
+              feedback === 'up' ? 'text-[var(--success)] bg-[rgba(0,212,170,0.1)]'
+                : 'text-[var(--foreground-secondary)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--success)]')}>
             <ThumbsUp className="h-3 w-3" />
           </button>
-          <button onClick={() => onFeedback('down')} title="Não útil"
+          <button onClick={() => onFeedback('down')} title="Nao util"
             className={cn('rounded-[var(--radius-sm)] p-1.5 transition-colors',
-              feedback === 'down' ? 'text-[var(--destructive)] bg-[var(--surface-2)]'
-                : 'text-[var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[var(--destructive)]')}>
+              feedback === 'down' ? 'text-[var(--destructive)] bg-[rgba(255,92,111,0.1)]'
+                : 'text-[var(--foreground-secondary)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--destructive)]')}>
             <ThumbsDown className="h-3 w-3" />
           </button>
         </>
@@ -130,6 +146,10 @@ function MessageActions({
     </div>
   );
 }
+
+/* ═══════════════════════════════════════════════════════
+   CONTEXT INDICATOR
+   ═══════════════════════════════════════════════════════ */
 
 function ContextIndicator({
   messages,
@@ -142,25 +162,22 @@ function ContextIndicator({
 }) {
   const used = messages.reduce((s, m) => s + Math.round(m.content.length / 4), 0);
   const pct = Math.min(100, Math.round((used / maxTokens) * 100));
-  const tone =
-    pct >= 95
-      ? 'text-[var(--destructive)]'
-      : pct >= 80
-        ? 'text-[var(--warning)]'
-        : 'text-[var(--muted-foreground)]';
+  const tone = pct >= 95 ? 'text-[var(--destructive)]' : pct >= 80 ? 'text-[var(--warning)]' : 'text-[var(--foreground-muted)]';
 
   return (
     <div
-      className="inline-flex items-center gap-2 rounded-[var(--radius-pill)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-3 py-1.5 text-[var(--text-xs)] text-[var(--muted-foreground)]"
+      className="inline-flex items-center gap-2 rounded-[var(--radius-pill)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] px-3 py-1.5 text-[var(--text-xs)] text-[var(--foreground-secondary)]"
       title={t('chat.context.title', { used, max: maxTokens, pct })}
     >
       <span>{t('chat.context.used', { used: used.toLocaleString('pt-BR') })}</span>
-      <span className={cn('text-[10px] tabular-nums shrink-0', tone)}>
-        {pct}%
-      </span>
+      <span className={cn('text-[10px] tabular-nums shrink-0', tone)}>{pct}%</span>
     </div>
   );
 }
+
+/* ═══════════════════════════════════════════════════════
+   CONVERSATION SIDEBAR ITEM
+   ═══════════════════════════════════════════════════════ */
 
 function ConversationItem({ conversation, isActive, onSelect, onRename, onPin, onDelete }: {
   conversation: { id: string; title: string; model: string; pinned: boolean };
@@ -170,8 +187,8 @@ function ConversationItem({ conversation, isActive, onSelect, onRename, onPin, o
   return (
     <div role="button" tabIndex={0} onClick={onSelect}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); } }}
-      className={cn('group relative flex w-full cursor-pointer items-start gap-2 rounded-[var(--radius-md)] px-3 py-2 text-left transition-all select-none',
-        isActive ? 'bg-[var(--surface-3)] translate-x-0.5' : 'text-[var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]')}>
+      className={cn('group relative flex w-full cursor-pointer items-start gap-2 rounded-[var(--radius-md)] px-3 py-2.5 text-left transition-all select-none',
+        isActive ? 'bg-[rgba(124,106,255,0.08)]' : 'hover:bg-[rgba(255,255,255,0.03)]')}>
       <div className="min-w-0 flex-1 overflow-hidden">
         <p className={cn('truncate text-[var(--text-sm)] font-medium leading-snug',
           isActive ? 'text-[var(--brand-primary)]' : 'text-[var(--foreground)]')}>
@@ -179,13 +196,13 @@ function ConversationItem({ conversation, isActive, onSelect, onRename, onPin, o
         </p>
         <div className="mt-0.5 flex items-center gap-1.5">
           {conversation.pinned && <Pin className="h-2.5 w-2.5 shrink-0 text-[var(--brand-primary)]" />}
-          <p className="truncate text-[10px] text-[var(--subtle-foreground)]">{conversation.model}</p>
+          <p className="truncate text-[10px] text-[var(--foreground-muted)]">{conversation.model}</p>
         </div>
       </div>
       <div className="relative shrink-0">
         <button onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}
-          className={cn('inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-sm)] p-1 text-[var(--muted-foreground)] transition-colors opacity-0 group-hover:opacity-100 md:h-7 md:w-7',
-            isActive && 'opacity-100', 'hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]')}
+          className={cn('inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-[var(--foreground-secondary)] transition-all opacity-0 group-hover:opacity-100',
+            isActive && 'opacity-100', 'hover:bg-[rgba(255,255,255,0.06)] hover:text-[var(--foreground)]')}
           aria-label="Opcoes">
           <MoreHorizontal className="h-3.5 w-3.5" />
         </button>
@@ -197,16 +214,16 @@ function ConversationItem({ conversation, isActive, onSelect, onRename, onPin, o
                 exit={{ opacity: 0, scale: 0.95, y: -4 }} transition={{ duration: 0.12 }}
                 className="glass absolute right-0 top-8 z-50 min-w-[140px] rounded-[var(--radius-md)] shadow-[var(--shadow-lg)] overflow-hidden">
                 <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onRename(); }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-[var(--text-xs)] text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors">
+                  className="flex w-full items-center gap-2 px-3 py-2 text-[var(--text-xs)] text-[var(--foreground)] hover:bg-[rgba(255,255,255,0.04)] transition-colors">
                   <Pencil className="h-3 w-3" /> Renomear
                 </button>
                 <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onPin(); }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-[var(--text-xs)] text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors">
+                  className="flex w-full items-center gap-2 px-3 py-2 text-[var(--text-xs)] text-[var(--foreground)] hover:bg-[rgba(255,255,255,0.04)] transition-colors">
                   <Pin className="h-3 w-3" /> {conversation.pinned ? 'Desafixar' : 'Fixar'}
                 </button>
                 <div className="my-0.5 h-px bg-[var(--border)]" />
                 <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete(); }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-[var(--text-xs)] text-[var(--destructive)] hover:bg-[var(--surface-2)] transition-colors">
+                  className="flex w-full items-center gap-2 px-3 py-2 text-[var(--text-xs)] text-[var(--destructive)] hover:bg-[rgba(255,92,111,0.06)] transition-colors">
                   <Trash2 className="h-3 w-3" /> Excluir
                 </button>
               </motion.div>
@@ -217,6 +234,10 @@ function ConversationItem({ conversation, isActive, onSelect, onRename, onPin, o
     </div>
   );
 }
+
+/* ═══════════════════════════════════════════════════════
+   CHAT PAGE CONTENT
+   ═══════════════════════════════════════════════════════ */
 
 function ChatPageContent() {
   const t = useTranslations();
@@ -282,40 +303,29 @@ function ChatPageContent() {
     [availableModels],
   );
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) router.push('/login');
-  }, [isLoading, isAuthenticated, router]);
-  useEffect(() => {
-    const prompt = searchParams.get('prompt');
-    if (prompt) { setInput(prompt); inputRef.current?.focus(); }
-  }, [searchParams]);
-  useEffect(() => {
-    if (activeConversation) setCanvasOrder(activeConversation.messages.map((m) => m.id));
-  }, [activeConversation]);
-  useEffect(() => {
-    if (!canvasMode && !autoScrollPaused) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [activeConversation?.messages, canvasMode, autoScrollPaused]);
-  useEffect(() => {
-    if (activeConversationId) inputRef.current?.focus();
-  }, [activeConversationId]);
+  /* ── Effects ── */
+  useEffect(() => { if (!isLoading && !isAuthenticated) router.push('/login'); }, [isLoading, isAuthenticated, router]);
+  useEffect(() => { const prompt = searchParams.get('prompt'); if (prompt) { setInput(prompt); inputRef.current?.focus(); } }, [searchParams]);
+  useEffect(() => { if (activeConversation) setCanvasOrder(activeConversation.messages.map((m) => m.id)); }, [activeConversation]);
+  useEffect(() => { if (!canvasMode && !autoScrollPaused) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [activeConversation?.messages, canvasMode, autoScrollPaused]);
+  useEffect(() => { if (activeConversationId) inputRef.current?.focus(); }, [activeConversationId]);
+
   useEffect(() => {
     let canceled = false;
     const loadCapabilities = async () => {
       try {
         const response = await fetch('/api/models/capabilities', { cache: 'no-store' });
         const payload = (await response.json()) as { data?: { models?: Array<{ id: string; maxContextTokens: number }> } };
-        if (canceled) return;
-        const entries = payload.data?.models ?? [];
-        setModelMaxTokens(Object.fromEntries(entries.map((model) => [model.id, model.maxContextTokens])));
-      } catch {
-        if (!canceled) setModelMaxTokens({});
-      }
+        if (!canceled) {
+          const entries = payload.data?.models ?? [];
+          setModelMaxTokens(Object.fromEntries(entries.map((model) => [model.id, model.maxContextTokens])));
+        }
+      } catch { if (!canceled) setModelMaxTokens({}); }
     };
     loadCapabilities();
-    return () => {
-      canceled = true;
-    };
+    return () => { canceled = true; };
   }, []);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
@@ -328,6 +338,7 @@ function ChatPageContent() {
     return () => window.removeEventListener('keydown', handler);
   }, [createConversation]);
 
+  /* ── Handlers ── */
   const handleSend = async () => {
     const trimmed = input.trim();
     if (!trimmed || isSending) return;
@@ -368,7 +379,6 @@ function ChatPageContent() {
     if (!last) { toast.info('Nada para reenviar', 'Envie uma mensagem primeiro.'); return; }
     trackEvent('chat_retry');
     await sendMessage(last.content);
-    toast.info('Reenviando prompt');
   };
 
   const handleCopy = async (id: string, content: string) => {
@@ -378,9 +388,7 @@ function ChatPageContent() {
       setTimeout(() => setCopiedId(null), 1600);
       trackEvent('chat_copy_message');
       toast.success('Copiado');
-    } catch {
-      toast.error('Falha ao copiar', 'Permissao negada pelo navegador.');
-    }
+    } catch { toast.error('Falha ao copiar'); }
   };
 
   const handleFeedback = (msgId: string, type: 'up' | 'down') => {
@@ -389,19 +397,21 @@ function ChatPageContent() {
     toast.success(type === 'up' ? 'Obrigado pelo feedback!' : 'Feedback registrado');
   };
 
+  /* ── Loading / Auth Guard ── */
   if (isLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center">
+      <main className="flex min-h-screen items-center justify-center bg-[var(--background)]">
         <div className="flex gap-1"><span className="pulse-dot" /><span className="pulse-dot" /><span className="pulse-dot" /></div>
       </main>
     );
   }
   if (!isAuthenticated) return null;
 
+  /* ── Render ── */
   return (
     <AppShell
       title="Chat"
-      subtitle={`${user?.fullName?.split(' ')[0] || 'Usuário'} · ${conversations.length} conversa${conversations.length !== 1 ? 's' : ''}`}
+      subtitle={`${user?.fullName?.split(' ')[0] || 'Usuario'} · ${conversations.length} conversa${conversations.length !== 1 ? 's' : ''}`}
       noPadding
       headerActions={
         <div className="flex items-center gap-2 flex-wrap">
@@ -411,24 +421,15 @@ function ChatPageContent() {
           <div className="flex rounded-[var(--radius-md)] border border-[var(--border)] overflow-hidden">
             <button onClick={() => setCanvasMode(false)}
               className={cn('flex items-center gap-1.5 px-2.5 py-1.5 text-[var(--text-xs)] transition-colors',
-                !canvasMode ? 'bg-[var(--brand-primary)] text-white' : 'text-[var(--muted-foreground)] hover:bg-[var(--surface-2)]')}>
+                !canvasMode ? 'bg-[var(--brand-primary)] text-white' : 'text-[var(--foreground-secondary)] hover:bg-[rgba(255,255,255,0.04)]')}>
               <MessageSquare className="h-3.5 w-3.5" />Chat
             </button>
             <button onClick={() => setCanvasMode(true)}
               className={cn('flex items-center gap-1.5 px-2.5 py-1.5 text-[var(--text-xs)] transition-colors',
-                canvasMode ? 'bg-[var(--brand-primary)] text-white' : 'text-[var(--muted-foreground)] hover:bg-[var(--surface-2)]')}>
+                canvasMode ? 'bg-[var(--brand-primary)] text-white' : 'text-[var(--foreground-secondary)] hover:bg-[rgba(255,255,255,0.04)]')}>
               <LayoutGrid className="h-3.5 w-3.5" />Canvas
             </button>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleRetry} disabled={!activeConversation || isSending} className="hidden sm:inline-flex">
-            Tentar novamente
-          </Button>
-          <Button variant="ghost" size="sm"
-            onClick={() => { if (!activeConversationId) return; clearConversationMessages(activeConversationId); trackEvent('chat_clear'); toast.success('Conversa limpa'); }}
-            disabled={!activeConversation || activeConversation.messages.length === 0}
-            className="hidden sm:inline-flex">
-            Limpar
-          </Button>
           {isSending && (
             <Button variant="ghost" size="sm" onClick={() => { stopGenerating(); trackEvent('chat_stop_generation'); }}>Parar</Button>
           )}
@@ -436,28 +437,33 @@ function ChatPageContent() {
       }
     >
       <div className="flex h-full min-h-0">
-        <aside className="hidden w-72 shrink-0 border-r border-[var(--border)] flex-col overflow-hidden lg:flex bg-[var(--surface-1)]">
+        {/* ── Conversation Sidebar ── */}
+        <aside className="hidden w-72 shrink-0 border-r border-[var(--border)] flex-col overflow-hidden lg:flex bg-[var(--background)]">
           <div className="p-3 border-b border-[var(--border)]">
             <button onClick={() => { createConversation(); setCanvasMode(false); }}
-              className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--brand-primary)] px-3 py-2 text-[var(--text-sm)] font-medium text-white hover:opacity-90 active:scale-[0.98] transition-all">
-              <Plus className="h-4 w-4" />Nova Conversa
+              className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-md)] px-3 py-2.5 text-[var(--text-sm)] font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-[var(--brand-glow)]"
+              style={{ background: 'var(--brand-gradient)' }}>
+              <Plus className="h-4 w-4" />Nova conversa
             </button>
           </div>
+
           <div className="px-3 py-2 border-b border-[var(--border)]">
             <div className="relative">
-              <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar conversas..."
-                className="w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-1.5 pl-8 text-[var(--text-sm)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--ring)]" />
-              <Search className="pointer-events-none absolute left-2.5 top-2 h-3.5 w-3.5 text-[var(--muted-foreground)]" />
+              <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar conversas..."
+                className="lume-field w-full py-2 pl-8 text-[var(--text-sm)]" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--foreground-muted)]" />
             </div>
           </div>
+
           <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
             {filteredConversations.length === 0 ? (
-              <p className="px-3 py-6 text-center text-[var(--text-xs)] text-[var(--muted-foreground)]">Nenhuma conversa encontrada.</p>
+              <p className="px-3 py-6 text-center text-[var(--text-xs)] text-[var(--foreground-muted)]">Nenhuma conversa encontrada.</p>
             ) : (
               filteredConversations.map((conv) => (
                 <ConversationItem key={conv.id} conversation={conv} isActive={conv.id === activeConversationId}
                   onSelect={() => { setActiveConversation(conv.id); setCanvasMode(false); }}
-                  onRename={() => { const t = window.prompt('Renomear:', conv.title); if (t?.trim()) renameConversation(conv.id, t.trim()); }}
+                  onRename={() => { const name = window.prompt('Renomear:', conv.title); if (name?.trim()) renameConversation(conv.id, name.trim()); }}
                   onPin={() => toggleConversationPinned(conv.id)}
                   onDelete={() => { if (window.confirm('Excluir conversa?')) { deleteConversation(conv.id); toast.success('Conversa excluida'); } }}
                 />
@@ -466,15 +472,15 @@ function ChatPageContent() {
           </div>
         </aside>
 
+        {/* ── Chat Area ── */}
         <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div
             ref={messagesContainerRef}
             className="flex-1 overflow-y-auto"
             onScroll={() => {
-              const target = messagesContainerRef.current;
-              if (!target) return;
-              const distanceFromBottom = target.scrollHeight - target.scrollTop - target.clientHeight;
-              setAutoScrollPaused(distanceFromBottom > 140);
+              const el = messagesContainerRef.current;
+              if (!el) return;
+              setAutoScrollPaused(el.scrollHeight - el.scrollTop - el.clientHeight > 140);
             }}
           >
             {canvasMode && activeConversation && activeConversation.messages.length > 0 ? (
@@ -486,12 +492,19 @@ function ChatPageContent() {
                 onCopy={handleCopy}
               />
             ) : !activeConversation || activeConversation.messages.length === 0 ? (
+              /* ── Empty State ── */
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                 className="flex h-full flex-col items-center justify-center p-6 text-center">
-                <h2 className="text-[var(--text-2xl)] font-semibold gradient-text">Como posso ajudar hoje?</h2>
-                <p className="mt-2 text-[var(--text-sm)] text-[var(--muted-foreground)]">Selecione um modelo abaixo ou envie sua mensagem.</p>
-                <div className="mt-6 grid w-full max-w-2xl gap-2 sm:grid-cols-2 md:grid-cols-3">
+                <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-[20px] bg-[rgba(124,106,255,0.08)] text-[var(--brand-primary)]">
+                  <MessageSquare className="h-7 w-7" />
+                </div>
+                <h2 className="text-[var(--text-2xl)] font-bold tracking-[-0.03em] text-[var(--foreground)]">Como posso ajudar?</h2>
+                <p className="mt-2 max-w-md text-[var(--text-sm)] text-[var(--foreground-secondary)]">
+                  Selecione um modelo para comecar ou envie sua mensagem diretamente.
+                </p>
+
+                <div className="mt-8 grid w-full max-w-2xl gap-2 sm:grid-cols-2 md:grid-cols-3">
                   {featuredModels.map((model) => {
                     const meta = MODEL_META[model.id];
                     const tier = meta?.tier ?? 'balanced';
@@ -499,9 +512,9 @@ function ChatPageContent() {
                     return (
                       <motion.button key={model.id} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
                         onClick={() => { setSelectedModel(model.id); createConversation(); setTimeout(() => inputRef.current?.focus(), 50); }}
-                        className="flex flex-col items-start gap-1 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-1)] px-4 py-3 text-left transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)]">
-                        <span className="text-[var(--text-sm)] font-semibold">{model.label}</span>
-                        <span className="text-[var(--text-xs)] text-[var(--muted-foreground)]">{model.provider}</span>
+                        className="flex flex-col items-start gap-1.5 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)] px-4 py-3.5 text-left transition-all hover:border-[var(--border-hover)] hover:bg-[var(--card-hover)]">
+                        <span className="text-[var(--text-sm)] font-semibold text-[var(--foreground)]">{model.label}</span>
+                        <span className="text-[var(--text-xs)] text-[var(--foreground-secondary)]">{model.provider}</span>
                         <span className={cn('mt-1 inline-flex items-center gap-1 text-[10px]', TIER_CONFIG[tier].color)}>
                           <TierIcon className="h-2.5 w-2.5" />{TIER_CONFIG[tier].label}
                         </span>
@@ -511,22 +524,23 @@ function ChatPageContent() {
                 </div>
               </motion.div>
             ) : (
+              /* ── Messages ── */
               <div className="space-y-4 p-4 md:p-6 max-w-4xl mx-auto w-full">
                 <AnimatePresence initial={false}>
                   {activeConversation.messages.map((msg) => (
-                    <motion.div key={msg.id} initial={{ opacity: 0, y: 12, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                    <motion.div key={msg.id} initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                       className={cn('flex group', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
-                      <article className={cn('max-w-[88%] rounded-2xl px-4 py-3 md:max-w-[72%]',
-                        msg.role === 'user' && 'rounded-br-md bg-[var(--brand-primary)] text-white',
-                        msg.role === 'assistant' && 'rounded-bl-md bg-[var(--surface-1)] border border-[var(--border)] text-[var(--foreground)]',
-                        msg.role === 'error' && 'border border-[var(--destructive)]/30 bg-[var(--destructive)]/5 text-[var(--destructive)]')}>
+                      <article className={cn('max-w-[88%] rounded-[var(--radius-xl)] px-4 py-3 md:max-w-[72%]',
+                        msg.role === 'user' && 'rounded-br-[var(--radius-sm)] bg-[var(--brand-primary)] text-white',
+                        msg.role === 'assistant' && 'rounded-bl-[var(--radius-sm)] border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)]',
+                        msg.role === 'error' && 'border border-[rgba(255,92,111,0.3)] bg-[rgba(255,92,111,0.05)] text-[var(--destructive)]')}>
                         <MessageContent content={msg.content} role={msg.role} />
                         {msg.role === 'assistant' && (msg.modelUsed || msg.providerUsed || msg.fallbackUsed) && (
                           <div className="mt-2 flex flex-wrap gap-1.5">
-                            {msg.modelUsed && <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--surface-2)] px-2 py-0.5 text-[10px] text-[var(--muted-foreground)]">{msg.modelUsed}</span>}
-                            {msg.providerUsed && <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--surface-2)] px-2 py-0.5 text-[10px] text-[var(--muted-foreground)]">{msg.providerUsed}</span>}
-                            {msg.fallbackUsed && <span className="inline-flex items-center rounded-full bg-[var(--warning)]/15 px-2 py-0.5 text-[10px] text-[var(--warning)]">fallback</span>}
+                            {msg.modelUsed && <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-2 py-0.5 text-[10px] text-[var(--foreground-muted)]">{msg.modelUsed}</span>}
+                            {msg.providerUsed && <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-2 py-0.5 text-[10px] text-[var(--foreground-muted)]">{msg.providerUsed}</span>}
+                            {msg.fallbackUsed && <span className="inline-flex items-center rounded-full bg-[rgba(251,191,36,0.12)] px-2 py-0.5 text-[10px] text-[var(--warning)]">fallback</span>}
                           </div>
                         )}
                         <MessageActions message={msg} isCopied={copiedId === msg.id}
@@ -540,21 +554,15 @@ function ChatPageContent() {
                 </AnimatePresence>
                 <AnimatePresence>
                   {isSending && (
-                    <div className="flex justify-start">
-                      <StreamingIndicator model={currentModel} />
-                    </div>
+                    <div className="flex justify-start"><StreamingIndicator model={currentModel} /></div>
                   )}
                 </AnimatePresence>
                 {autoScrollPaused && (
                   <div className="sticky bottom-4 z-10 flex justify-center">
                     <button
-                      onClick={() => {
-                        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-                        setAutoScrollPaused(false);
-                      }}
-                      className="rounded-[var(--radius-pill)] border border-[var(--border)] bg-[var(--surface-1)] px-4 py-2 text-[var(--text-xs)] font-semibold text-[var(--foreground)] shadow-[var(--shadow-md)]"
-                    >
-                      ↓ {t('chat.floatingNewMessages')}
+                      onClick={() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); setAutoScrollPaused(false); }}
+                      className="inline-flex items-center gap-2 rounded-[var(--radius-pill)] border border-[var(--border)] bg-[var(--card)] px-4 py-2 text-[var(--text-xs)] font-semibold text-[var(--foreground)] shadow-[var(--shadow-md)] transition-all hover:shadow-[var(--shadow-lg)]">
+                      <ArrowDown className="h-3 w-3" /> {t('chat.floatingNewMessages')}
                     </button>
                   </div>
                 )}
@@ -563,15 +571,18 @@ function ChatPageContent() {
             )}
           </div>
 
+          {/* ── Input Bar ── */}
           <div className="border-t border-[var(--border)] bg-[var(--background)] p-3 md:p-4">
             <div className="mx-auto w-full max-w-3xl">
-              <div className="flex min-h-[56px] items-end gap-2 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-1)] px-3 py-2.5 shadow-[var(--shadow-md)] transition-all focus-within:border-[var(--ring)] focus-within:shadow-[var(--shadow-brand)]">
+              <div className="flex min-h-[56px] items-end gap-2 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 shadow-[var(--shadow-sm)] transition-all focus-within:border-[rgba(124,106,255,0.3)] focus-within:shadow-[var(--shadow-brand)]">
                 <button type="button" aria-label={t('chat.attachFile')}
-                  className="mb-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] text-[var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)] transition-colors">
+                  className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] text-[var(--foreground-secondary)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--foreground)] transition-colors">
                   <Plus className="h-4 w-4" />
                 </button>
                 <div className="mb-0.5 w-[180px] shrink-0">
-                  <Dropdown options={modelOptions} value={currentModel} onChange={(val) => { setSelectedModel(val); trackEvent('chat_change_model', { model: val }); }} triggerClassName="h-11 min-w-full text-xs" />
+                  <Dropdown options={modelOptions} value={currentModel}
+                    onChange={(val) => { setSelectedModel(val); trackEvent('chat_change_model', { model: val }); }}
+                    triggerClassName="h-10 min-w-full text-xs" />
                 </div>
                 <Textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown} rows={1} placeholder={t('chat.messagePlaceholder')}
@@ -579,21 +590,24 @@ function ChatPageContent() {
                   className="flex-1 border-0 bg-transparent p-0 text-[var(--text-sm)] focus:ring-0 resize-none min-h-8" />
                 <motion.button type="button" onClick={handleSend} disabled={!input.trim() || isSending}
                   whileTap={{ scale: 0.94 }} aria-label={t('chat.sendMessage')}
-                  className="mb-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--brand-primary)] text-white shadow-[var(--shadow-brand)] transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none">
+                  className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] text-white shadow-[var(--shadow-brand)] transition-all hover:shadow-[var(--brand-glow)] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+                  style={{ background: 'var(--brand-gradient)' }}>
                   <ArrowUp className="h-4 w-4" />
                 </motion.button>
               </div>
+
+              {/* Quick actions */}
               <div className="mt-2.5 flex flex-wrap gap-1.5">
                 {quickActions.map((action) => (
                   <button key={action} type="button" onClick={() => { setInput(action); inputRef.current?.focus(); }}
-                    className="inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] border border-[var(--border)] bg-[var(--surface-1)] px-3 py-1.5 text-[var(--text-xs)] text-[var(--muted-foreground)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--foreground)]">
+                    className="inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-[var(--text-xs)] text-[var(--foreground-secondary)] transition-colors hover:border-[var(--border-hover)] hover:text-[var(--foreground)]">
                     <WandSparkles className="h-3 w-3 shrink-0 text-[var(--brand-primary)]" />
                     <span className="truncate max-w-[200px]">{action}</span>
                   </button>
                 ))}
               </div>
-              <p className="mt-1.5 text-center text-[10px] text-[var(--subtle-foreground)]">
-                Seta cima/baixo = histórico · Enter envia · Shift+Enter = nova linha · Ctrl+N = nova conversa
+              <p className="mt-1.5 text-center text-[10px] text-[var(--foreground-muted)]">
+                Seta cima/baixo = historico · Enter envia · Shift+Enter = nova linha · Ctrl+N = nova conversa
               </p>
             </div>
           </div>
@@ -603,10 +617,14 @@ function ChatPageContent() {
   );
 }
 
+/* ═══════════════════════════════════════════════════════
+   PAGE EXPORT
+   ═══════════════════════════════════════════════════════ */
+
 export default function ChatPage() {
   return (
     <Suspense fallback={
-      <main className="flex min-h-screen items-center justify-center">
+      <main className="flex min-h-screen items-center justify-center bg-[var(--background)]">
         <div className="flex gap-1"><span className="pulse-dot" /><span className="pulse-dot" /><span className="pulse-dot" /></div>
       </main>
     }>
@@ -614,6 +632,3 @@ export default function ChatPage() {
     </Suspense>
   );
 }
-
-
-

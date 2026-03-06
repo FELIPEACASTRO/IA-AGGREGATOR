@@ -1,5 +1,5 @@
-﻿import type { Metadata, Viewport } from 'next';
-import { Plus_Jakarta_Sans, Sora, Geist_Mono } from 'next/font/google';
+import type { Metadata, Viewport } from 'next';
+import { Outfit, Bricolage_Grotesque, JetBrains_Mono } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import './globals.css';
 import { ToastViewport } from '@/components/ui/toast-viewport';
@@ -9,9 +9,9 @@ import { SkipToContent } from '@/components/app/skip-to-content';
 import { AuthBootstrap } from '@/components/app/auth-bootstrap';
 import { defaultLocale, defaultMessages } from '@/i18n/config';
 
-const bodyFont = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-body' });
-const displayFont = Sora({ subsets: ['latin'], variable: '--font-display' });
-const monoFont = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' });
+const bodyFont = Outfit({ subsets: ['latin'], variable: '--font-body', display: 'swap' });
+const displayFont = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
+const monoFont = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono', display: 'swap' });
 
 export const metadata: Metadata = {
   title: {
@@ -31,8 +31,8 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#08111f' },
-    { media: '(prefers-color-scheme: dark)', color: '#08111f' },
+    { media: '(prefers-color-scheme: light)', color: '#fafafe' },
+    { media: '(prefers-color-scheme: dark)', color: '#07070e' },
   ],
 };
 
