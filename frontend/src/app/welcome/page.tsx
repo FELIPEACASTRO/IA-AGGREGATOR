@@ -1,275 +1,138 @@
-'use client';
+﻿'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useAuthStore } from '@/stores/auth-store';
-import { useChatStore } from '@/stores/chat-store';
-import { trackEvent } from '@/lib/analytics';
-import { cn } from '@/lib/cn';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-  BarChart3, FileText, Target, Sparkles, Bot,
-  ArrowRight, Check, Zap, Scale, Brain,
-  MessageSquare, ChevronRight,
+  ArrowRight,
+  BarChart3,
+  Bot,
+  Brain,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  MessageSquare,
+  Scale,
+  Sparkles,
+  Target,
+  Zap,
 } from 'lucide-react';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/cn';
+import { trackEvent } from '@/lib/analytics';
+import { useAuthStore } from '@/stores/auth-store';
+import { useChatStore } from '@/stores/chat-store';
 
 type Goal = 'analysis' | 'writing' | 'planning' | 'general';
 type Tier = 'fast' | 'balanced' | 'powerful';
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
+type GoalCard = {
+  id: Goal;
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  colorClass: string;
+  suggestedModel: string;
+  prompts: string[];
+};
 
-const goals = [
-  {
-    id: 'analysis' as Goal,
-    label: 'Análise & Relatórios',
-    desc: 'Extraia insights de dados e gere relatórios executivos.',
-    icon: BarChart3,
-    color: 'text-[var(--brand-primary)]',
-    bg: 'bg-[var(--brand-primary)]/10',
-    border: 'border-[var(--brand-primary)]',
-    shadow: 'shadow-[0_0_0_2px_var(--brand-primary)]',
-    suggestedModel: 'gpt-4.1-mini',
-    prompts: [
-      'Crie um resumo executivo com os 5 principais insights sobre:',
-      'Analise estes dados e identifique tendências e anomalias:',
-      'Compare estes dois períodos e explique as principais variações:',
-    ],
-  },
-  {
-    id: 'writing' as Goal,
-    label: 'Escrita & Comunicação',
-    desc: 'Redija e-mails, relatórios e conteúdo com tom profissional.',
-    icon: FileText,
-    color: 'text-[var(--brand-secondary)]',
-    bg: 'bg-[var(--brand-secondary)]/10',
-    border: 'border-[var(--brand-secondary)]',
-    shadow: 'shadow-[0_0_0_2px_var(--brand-secondary)]',
-    suggestedModel: 'claude-3-5-haiku',
-    prompts: [
-      'Escreva um e-mail profissional e objetivo sobre:',
-      'Reescreva este texto tornando-o mais claro e persuasivo:',
-      'Crie um comunicado formal para toda a empresa sobre:',
-    ],
-  },
-  {
-    id: 'planning' as Goal,
-    label: 'Planejamento & Projetos',
-    desc: 'Monte planos de ação, sprints e roadmaps estruturados.',
-    icon: Target,
-    color: 'text-[var(--success)]',
-    bg: 'bg-[var(--success)]/10',
-    border: 'border-[var(--success)]',
-    shadow: 'shadow-[0_0_0_2px_var(--success)]',
-    suggestedModel: 'gpt-4o-mini',
-    prompts: [
-      'Monte um plano de ação detalhado com etapas, donos e riscos para:',
-      'Crie um roadmap de produto para os próximos 3 meses focado em:',
-      'Divida este objetivo em milestones semanais e defina critérios de sucesso:',
-    ],
-  },
-  {
-    id: 'general' as Goal,
-    label: 'Assistente Geral',
-    desc: 'Pesquise, explore ideias e resolva qualquer desafio.',
-    icon: Sparkles,
-    color: 'text-[var(--warning)]',
-    bg: 'bg-[var(--warning)]/10',
-    border: 'border-[var(--warning)]',
-    shadow: 'shadow-[0_0_0_2px_var(--warning)]',
-    suggestedModel: 'deepseek-chat',
-    prompts: [
-      'Explique de forma simples e com exemplos práticos o conceito de:',
-      'Quais são os 5 fatores mais críticos para o sucesso em:',
-      'Compare as principais abordagens disponíveis para resolver:',
-    ],
-  },
-];
-
-const models = [
-  { id: 'gpt-4o-mini',          label: 'GPT-4o mini',     provider: 'OpenAI',    tier: 'fast' as Tier,     color: '#10a37f' },
-  { id: 'claude-3-5-haiku',     label: 'Claude Haiku',    provider: 'Anthropic', tier: 'fast' as Tier,     color: '#d4763b' },
-  { id: 'gemini-1.5-flash',     label: 'Gemini Flash',    provider: 'Google',    tier: 'fast' as Tier,     color: '#4285F4' },
-  { id: 'deepseek-chat',        label: 'DeepSeek Chat',   provider: 'DeepSeek',  tier: 'balanced' as Tier, color: '#6366f1' },
-  { id: 'llama-3.1-70b-versatile', label: 'Llama 70B',   provider: 'Meta',      tier: 'balanced' as Tier, color: '#0667d0' },
-  { id: 'command-r-plus',       label: 'Command R+',      provider: 'Cohere',    tier: 'powerful' as Tier, color: '#39d353' },
-];
-
-const tierConfig: Record<Tier, { icon: React.ElementType; label: string; color: string }> = {
-  fast:     { icon: Zap,   label: 'Rápido',      color: 'text-[var(--success)]'       },
-  balanced: { icon: Scale, label: 'Equilibrado',  color: 'text-[var(--warning)]'       },
-  powerful: { icon: Brain, label: 'Poderoso',     color: 'text-[var(--brand-primary)]' },
+type ModelCard = {
+  id: string;
+  label: string;
+  provider: string;
+  tier: Tier;
+  color: string;
 };
 
 const ONBOARDING_KEY = 'ia-onboarding-done';
-
 const TOTAL_STEPS = 3;
 
-// ─── Step indicators ──────────────────────────────────────────────────────────
+const goals: GoalCard[] = [
+  {
+    id: 'analysis',
+    title: 'Analise e relatorios',
+    description: 'Entenda dados, sintetize contexto e gere respostas executivas com clareza.',
+    icon: BarChart3,
+    colorClass: 'text-[var(--brand-primary)]',
+    suggestedModel: 'gpt-4.1-mini',
+    prompts: [
+      'Crie um resumo executivo em 5 pontos sobre:',
+      'Analise estes dados e destaque riscos, oportunidades e proximos passos:',
+      'Compare os cenarios abaixo e recomende a melhor direcao:',
+    ],
+  },
+  {
+    id: 'writing',
+    title: 'Escrita e comunicacao',
+    description: 'Emails, documentos, comunicados e textos com mais consistencia e velocidade.',
+    icon: FileText,
+    colorClass: 'text-[var(--brand-secondary)]',
+    suggestedModel: 'claude-3-5-haiku',
+    prompts: [
+      'Escreva um email profissional e objetivo sobre:',
+      'Reescreva este texto para deixá-lo mais claro e persuasivo:',
+      'Crie um comunicado interno com tom executivo para:',
+    ],
+  },
+  {
+    id: 'planning',
+    title: 'Planejamento e projetos',
+    description: 'Quebre metas em planos, cronogramas, prioridades e entregas acionaveis.',
+    icon: Target,
+    colorClass: 'text-[var(--success)]',
+    suggestedModel: 'gpt-4o-mini',
+    prompts: [
+      'Monte um plano de acao com etapas, responsaveis e riscos para:',
+      'Crie um roadmap de 90 dias para atingir este objetivo:',
+      'Transforme o objetivo abaixo em milestones semanais:',
+    ],
+  },
+  {
+    id: 'general',
+    title: 'Assistente geral',
+    description: 'Pesquise, explore, aprenda e teste ideias sem travar em uma unica categoria.',
+    icon: Sparkles,
+    colorClass: 'text-[var(--warning)]',
+    suggestedModel: 'deepseek-chat',
+    prompts: [
+      'Explique este conceito com exemplos praticos:',
+      'Quais sao as melhores abordagens para resolver:',
+      'Crie um plano inicial para explorar esta oportunidade:',
+    ],
+  },
+];
 
-function StepDots({ current, total }: { current: number; total: number }) {
+const models: ModelCard[] = [
+  { id: 'gpt-4o-mini', label: 'GPT-4o mini', provider: 'OpenAI', tier: 'fast', color: '#4ed9a7' },
+  { id: 'gpt-4.1-mini', label: 'GPT-4.1 mini', provider: 'OpenAI', tier: 'balanced', color: '#6073ff' },
+  { id: 'claude-3-5-haiku', label: 'Claude Haiku', provider: 'Anthropic', tier: 'fast', color: '#f25d9c' },
+  { id: 'gemini-1.5-flash', label: 'Gemini Flash', provider: 'Google', tier: 'fast', color: '#77b8ff' },
+  { id: 'deepseek-chat', label: 'DeepSeek Chat', provider: 'DeepSeek', tier: 'balanced', color: '#8b6cff' },
+  { id: 'command-r-plus', label: 'Command R+', provider: 'Cohere', tier: 'powerful', color: '#ffbf66' },
+];
+
+const tierMeta: Record<Tier, { label: string; icon: React.ElementType; tone: string }> = {
+  fast: { label: 'Rapido', icon: Zap, tone: 'text-[var(--success)]' },
+  balanced: { label: 'Equilibrado', icon: Scale, tone: 'text-[var(--brand-primary)]' },
+  powerful: { label: 'Profundo', icon: Brain, tone: 'text-[var(--warning)]' },
+};
+
+function StepIndicator({ current }: { current: number }) {
   return (
     <div className="flex items-center gap-2">
-      {Array.from({ length: total }, (_, i) => (
-        <motion.div
-          key={i}
-          animate={{ width: i === current ? 24 : 8, background: i <= current ? 'var(--brand-primary)' : 'var(--surface-3)' }}
-          transition={{ duration: 0.25 }}
-          className="h-2 rounded-full"
+      {Array.from({ length: TOTAL_STEPS }, (_, index) => (
+        <motion.span
+          key={index}
+          animate={{ width: index === current ? 36 : 10, opacity: index <= current ? 1 : 0.55 }}
+          className={cn('h-2 rounded-full', index <= current ? 'bg-[var(--brand-primary)]' : 'bg-[var(--surface-4)]')}
         />
       ))}
     </div>
   );
 }
-
-// ─── Step 1: Goal selection ───────────────────────────────────────────────────
-
-function StepGoal({ selected, onSelect }: { selected: Goal | null; onSelect: (g: Goal) => void }) {
-  return (
-    <motion.div key="goal" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-      className="space-y-4">
-      <div>
-        <h2 className="text-[var(--text-2xl)] font-bold tracking-tight">Qual é seu principal objetivo?</h2>
-        <p className="mt-1 text-[var(--text-sm)] text-[var(--muted-foreground)]">Vamos personalizar sua experiência com base no seu uso.</p>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        {goals.map((goal) => {
-          const Icon = goal.icon;
-          const active = selected === goal.id;
-          return (
-            <motion.button key={goal.id} type="button" onClick={() => onSelect(goal.id)}
-              whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-              className={cn(
-                'relative flex flex-col items-start gap-3 rounded-[var(--radius-xl)] border p-4 text-left transition-all',
-                active
-                  ? `${goal.border} ${goal.shadow} bg-[var(--surface-2)]`
-                  : 'border-[var(--border)] bg-[var(--surface-1)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)]',
-              )}>
-              {active && (
-                <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                  className="absolute right-3 top-3 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--brand-primary)]">
-                  <Check className="h-3 w-3 text-white" />
-                </motion.span>
-              )}
-              <span className={cn('inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-lg)]', goal.bg)}>
-                <Icon className={cn('h-5 w-5', goal.color)} />
-              </span>
-              <div>
-                <p className="text-[var(--text-sm)] font-semibold leading-tight">{goal.label}</p>
-                <p className="mt-1 text-[var(--text-xs)] text-[var(--muted-foreground)] leading-snug">{goal.desc}</p>
-              </div>
-            </motion.button>
-          );
-        })}
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── Step 2: Model selection ──────────────────────────────────────────────────
-
-function StepModel({ selected, recommended, onSelect }: { selected: string | null; recommended: string; onSelect: (id: string) => void }) {
-  return (
-    <motion.div key="model" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-      className="space-y-4">
-      <div>
-        <h2 className="text-[var(--text-2xl)] font-bold tracking-tight">Escolha seu modelo favorito</h2>
-        <p className="mt-1 text-[var(--text-sm)] text-[var(--muted-foreground)]">Você pode trocar a qualquer momento no chat.</p>
-      </div>
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-        {models.map((model) => {
-          const active = (selected ?? recommended) === model.id;
-          const TierIcon = tierConfig[model.tier].icon;
-          return (
-            <motion.button key={model.id} type="button" onClick={() => onSelect(model.id)}
-              whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-              className={cn(
-                'flex flex-col items-start gap-2 rounded-[var(--radius-xl)] border p-4 text-left transition-all',
-                active
-                  ? 'border-[var(--brand-primary)] shadow-[0_0_0_2px_var(--brand-primary)] bg-[var(--surface-2)]'
-                  : 'border-[var(--border)] bg-[var(--surface-1)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)]',
-              )}>
-              <div className="flex w-full items-center justify-between">
-                <div className="h-2.5 w-2.5 rounded-full" style={{ background: model.color }} />
-                {active && (
-                  <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                    className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--brand-primary)]">
-                    <Check className="h-2.5 w-2.5 text-white" />
-                  </motion.span>
-                )}
-                {!active && model.id === recommended && (
-                  <span className="rounded-full bg-[var(--brand-primary)]/15 px-2 py-0.5 text-[9px] font-medium text-[var(--brand-primary)]">
-                    Recomendado
-                  </span>
-                )}
-              </div>
-              <div>
-                <p className="text-[var(--text-sm)] font-semibold leading-tight">{model.label}</p>
-                <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5">{model.provider}</p>
-              </div>
-              <span className={cn('inline-flex items-center gap-1 text-[10px]', tierConfig[model.tier].color)}>
-                <TierIcon className="h-3 w-3" /> {tierConfig[model.tier].label}
-              </span>
-            </motion.button>
-          );
-        })}
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── Step 3: First prompt ─────────────────────────────────────────────────────
-
-function StepPrompt({
-  goal, prompt, onChange,
-}: {
-  goal: Goal;
-  prompt: string;
-  onChange: (v: string) => void;
-}) {
-  const goalData = goals.find((g) => g.id === goal) ?? goals[0];
-  return (
-    <motion.div key="prompt" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-      className="space-y-4">
-      <div>
-        <h2 className="text-[var(--text-2xl)] font-bold tracking-tight">Tudo pronto! Qual é sua primeira pergunta?</h2>
-        <p className="mt-1 text-[var(--text-sm)] text-[var(--muted-foreground)]">Escolha um template ou escreva sua própria mensagem.</p>
-      </div>
-
-      {/* Suggested prompts */}
-      <div className="space-y-2">
-        {goalData.prompts.map((p) => (
-          <button key={p} type="button" onClick={() => onChange(p)}
-            className={cn(
-              'w-full flex items-start gap-3 rounded-[var(--radius-lg)] border px-4 py-3 text-left transition-all',
-              prompt === p
-                ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5'
-                : 'border-[var(--border)] bg-[var(--surface-1)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)]',
-            )}>
-            <MessageSquare className={cn('mt-0.5 h-4 w-4 shrink-0', prompt === p ? 'text-[var(--brand-primary)]' : 'text-[var(--muted-foreground)]')} />
-            <span className="text-[var(--text-sm)] leading-relaxed">{p}</span>
-            {prompt === p && <Check className="ml-auto mt-0.5 h-4 w-4 shrink-0 text-[var(--brand-primary)]" />}
-          </button>
-        ))}
-      </div>
-
-      {/* Custom prompt textarea */}
-      <div className="relative">
-        <textarea value={prompt.startsWith(goalData.prompts[0]) || goalData.prompts.includes(prompt) ? '' : prompt}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="Ou escreva sua própria pergunta..."
-          rows={3}
-          className="w-full resize-none rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-1)] px-4 py-3 text-[var(--text-sm)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-shadow" />
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function WelcomePage() {
   const { isAuthenticated, isLoading, fetchUser, user } = useAuthStore();
@@ -281,13 +144,14 @@ export default function WelcomePage() {
   const [modelId, setModelId] = useState<string | null>(null);
   const [firstPrompt, setFirstPrompt] = useState('');
 
-  // Auth guard
-  useEffect(() => { fetchUser(); }, [fetchUser]);
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login');
-  }, [isLoading, isAuthenticated, router]);
+  }, [isAuthenticated, isLoading, router]);
 
-  // If already onboarded, skip to dashboard
   useEffect(() => {
     if (typeof window !== 'undefined' && localStorage.getItem(ONBOARDING_KEY)) {
       router.replace('/');
@@ -298,52 +162,36 @@ export default function WelcomePage() {
     trackEvent('onboarding_start');
   }, []);
 
-  const selectedGoalData = goals.find((g) => g.id === goal);
-  const recommendedModel = selectedGoalData?.suggestedModel ?? 'gpt-4o-mini';
-  const effectiveModel = modelId ?? recommendedModel;
-
-  const canAdvance = [
-    goal !== null,        // step 0
-    true,                 // step 1 always allowed (has recommended)
-    true,                 // step 2 always allowed (can skip prompt)
-  ];
-
-  const handleNext = () => {
-    if (step < TOTAL_STEPS - 1) {
-      setStep((s) => s + 1);
-    } else {
-      handleFinish();
-    }
-  };
+  const selectedGoal = useMemo(() => goals.find((item) => item.id === goal) ?? goals[0], [goal]);
+  const effectiveModel = modelId ?? selectedGoal.suggestedModel;
+  const stepLabels = ['Objetivo', 'Modelo', 'Primeiro prompt'];
 
   const handleFinish = () => {
-    // Apply selections
     setSelectedModel(effectiveModel);
-
     trackEvent('onboarding_complete', {
       goal: goal ?? 'general',
       model: effectiveModel,
-      hasPrompt: firstPrompt.trim().length > 0,
+      hasPrompt: Boolean(firstPrompt.trim()),
     });
 
-    // Mark onboarding done
     if (typeof window !== 'undefined') {
       localStorage.setItem(ONBOARDING_KEY, '1');
     }
 
-    // Navigate to chat with optional first prompt
-    const prompt = firstPrompt.trim();
-    if (prompt) {
+    if (firstPrompt.trim()) {
       createConversation();
-      router.push(`/chat?prompt=${encodeURIComponent(prompt)}`);
-    } else {
-      router.push('/chat');
+      router.push(`/chat?prompt=${encodeURIComponent(firstPrompt.trim())}`);
+      return;
     }
+
+    router.push('/chat');
   };
 
   const handleSkip = () => {
     trackEvent('onboarding_skip', { step });
-    if (typeof window !== 'undefined') localStorage.setItem(ONBOARDING_KEY, '1');
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(ONBOARDING_KEY, '1');
+    }
     router.push('/chat');
   };
 
@@ -351,7 +199,9 @@ export default function WelcomePage() {
     return (
       <main className="flex min-h-screen items-center justify-center">
         <div className="flex gap-1">
-          <span className="pulse-dot" /><span className="pulse-dot" /><span className="pulse-dot" />
+          <span className="pulse-dot" />
+          <span className="pulse-dot" />
+          <span className="pulse-dot" />
         </div>
       </main>
     );
@@ -359,125 +209,182 @@ export default function WelcomePage() {
 
   if (!isAuthenticated) return null;
 
-  const stepLabels = ['Objetivo', 'Modelo', 'Primeiro prompt'];
-
   return (
-    <main className="relative min-h-screen bg-[var(--background)] flex items-center justify-center overflow-hidden px-4 py-12">
-      {/* Background glow */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        <div className="absolute -top-40 left-1/2 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-[var(--brand-primary)]/6 blur-[80px]" />
-        <div className="absolute bottom-0 right-0 h-[400px] w-[400px] translate-x-1/4 translate-y-1/4 rounded-full bg-[var(--brand-secondary)]/5 blur-[64px]" />
+    <main className="relative min-h-screen overflow-hidden px-4 py-10">
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
+        <div className="absolute left-[8%] top-[-10%] h-[24rem] w-[24rem] rounded-full bg-[rgba(96,115,255,0.18)] blur-[120px]" />
+        <div className="absolute bottom-[-12%] right-[6%] h-[24rem] w-[24rem] rounded-full bg-[rgba(242,93,156,0.14)] blur-[120px]" />
       </div>
 
-      <div className="relative w-full max-w-xl">
-        {/* Logo */}
-        <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius-lg)] text-white shadow-[var(--shadow-brand)]"
-              style={{ background: 'var(--brand-gradient)' }}>
+      <div className="relative lume-section max-w-3xl">
+        <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-12 w-12 items-center justify-center rounded-[18px] text-white shadow-[var(--shadow-brand)]" style={{ background: 'var(--brand-gradient)' }}>
               <Bot className="h-5 w-5" />
             </span>
-            <span className="text-[var(--text-base)] font-bold gradient-text">IA Aggregator</span>
+            <div>
+              <p className="text-[1rem] font-semibold tracking-[-0.05em] text-[var(--foreground)]">Lume</p>
+              <p className="text-[0.68rem] uppercase tracking-[0.2em] text-[var(--subtle-foreground)]">Onboarding premium</p>
+            </div>
           </div>
-          <button type="button" onClick={handleSkip}
-            className="text-[var(--text-xs)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
-            Pular configuração →
+          <button type="button" onClick={handleSkip} className="text-[0.82rem] font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+            Pular e ir para o chat
           </button>
         </motion.div>
 
-        {/* Progress */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
-          className="mb-6 flex items-center justify-between">
-          <StepDots current={step} total={TOTAL_STEPS} />
-          <span className="text-[var(--text-xs)] text-[var(--muted-foreground)]">
-            {stepLabels[step]} · {step + 1} de {TOTAL_STEPS}
-          </span>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-5 flex items-center justify-between gap-4">
+          <StepIndicator current={step} />
+          <span className="text-[0.78rem] font-medium text-[var(--muted-foreground)]">{stepLabels[step]} · {step + 1} de {TOTAL_STEPS}</span>
         </motion.div>
 
-        {/* Welcome banner on step 0 */}
         {step === 0 && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="mb-5 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-1)] px-5 py-4 flex items-center gap-3">
-            <div className="shrink-0 rounded-full bg-[var(--brand-primary)]/10 p-2.5">
-              <Sparkles className="h-5 w-5 text-[var(--brand-primary)]" />
-            </div>
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="lume-panel mb-5 flex items-center gap-3 rounded-[var(--radius-xl)] px-5 py-4">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[rgba(96,115,255,0.12)] text-[var(--brand-primary)]">
+              <Sparkles className="h-5 w-5" />
+            </span>
             <div>
-              <p className="text-[var(--text-sm)] font-semibold">
-                Bem-vindo, {user?.fullName?.split(' ')[0] || 'usuário'}! 👋
-              </p>
-              <p className="text-[var(--text-xs)] text-[var(--muted-foreground)] mt-0.5">
-                Leva menos de 1 minuto para configurar. Vamos lá.
-              </p>
+              <p className="text-[var(--text-sm)] font-semibold text-[var(--foreground)]">Bem-vindo, {user?.fullName?.split(' ')[0] || 'usuario'}.</p>
+              <p className="mt-1 text-[0.82rem] text-[var(--muted-foreground)]">Em menos de um minuto o Lume ajusta o fluxo inicial para o seu estilo de uso.</p>
             </div>
           </motion.div>
         )}
 
-        {/* Card */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface-1)] shadow-[var(--shadow-xl)] overflow-hidden">
-          <div className="p-6 md:p-7">
+        <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="lume-panel overflow-hidden rounded-[var(--radius-2xl)]">
+          <div className="p-6 md:p-8">
             <AnimatePresence mode="wait">
               {step === 0 && (
-                <StepGoal key="goal" selected={goal} onSelect={(g) => { setGoal(g); }} />
+                <motion.div key="goal" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} className="space-y-5">
+                  <div>
+                    <Badge variant="brand">Passo 1</Badge>
+                    <h1 className="mt-4 text-[var(--text-3xl)] font-semibold text-[var(--foreground)]">Qual e o seu foco principal?</h1>
+                    <p className="mt-2 text-[var(--text-sm)] text-[var(--muted-foreground)]">A resposta ajuda a sugerir o melhor modelo, os primeiros templates e a configuracao do workspace.</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {goals.map((item) => {
+                      const Icon = item.icon;
+                      const active = goal === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setGoal(item.id)}
+                          className={cn(
+                            'rounded-[var(--radius-xl)] border p-5 text-left transition-all',
+                            active
+                              ? 'border-[rgba(96,115,255,0.28)] bg-[rgba(96,115,255,0.1)] shadow-[0_0_0_1px_rgba(96,115,255,0.28)]'
+                              : 'border-[var(--border)] bg-[rgba(255,255,255,0.03)] hover:border-[var(--border-strong)] hover:bg-[rgba(255,255,255,0.05)]'
+                          )}
+                        >
+                          <span className="flex items-start justify-between gap-3">
+                            <span className="inline-flex h-11 w-11 items-center justify-center rounded-[18px] bg-[rgba(255,255,255,0.04)]">
+                              <Icon className={cn('h-5 w-5', item.colorClass)} />
+                            </span>
+                            {active && <Check className="h-5 w-5 text-[var(--brand-primary)]" />}
+                          </span>
+                          <h2 className="mt-4 text-[var(--text-lg)] font-semibold text-[var(--foreground)]">{item.title}</h2>
+                          <p className="mt-2 text-[0.84rem] leading-7 text-[var(--muted-foreground)]">{item.description}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
               )}
+
               {step === 1 && (
-                <StepModel key="model" selected={modelId} recommended={recommendedModel} onSelect={setModelId} />
+                <motion.div key="model" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} className="space-y-5">
+                  <div>
+                    <Badge variant="brand">Passo 2</Badge>
+                    <h1 className="mt-4 text-[var(--text-3xl)] font-semibold text-[var(--foreground)]">Escolha o modelo que vai guiar o inicio.</h1>
+                    <p className="mt-2 text-[var(--text-sm)] text-[var(--muted-foreground)]">Voce pode trocar a qualquer momento no chat. O Lume ja sugere um modelo com base no objetivo escolhido.</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {models.map((model) => {
+                      const tier = tierMeta[model.tier];
+                      const TierIcon = tier.icon;
+                      const active = effectiveModel === model.id;
+                      return (
+                        <button
+                          key={model.id}
+                          type="button"
+                          onClick={() => setModelId(model.id)}
+                          className={cn(
+                            'rounded-[var(--radius-xl)] border p-5 text-left transition-all',
+                            active
+                              ? 'border-[rgba(96,115,255,0.28)] bg-[rgba(96,115,255,0.1)] shadow-[0_0_0_1px_rgba(96,115,255,0.28)]'
+                              : 'border-[var(--border)] bg-[rgba(255,255,255,0.03)] hover:border-[var(--border-strong)] hover:bg-[rgba(255,255,255,0.05)]'
+                          )}
+                        >
+                          <span className="flex items-start justify-between gap-3">
+                            <span className="h-3 w-3 rounded-full" style={{ backgroundColor: model.color }} />
+                            {active && <Check className="h-5 w-5 text-[var(--brand-primary)]" />}
+                          </span>
+                          <p className="mt-4 text-[var(--text-base)] font-semibold text-[var(--foreground)]">{model.label}</p>
+                          <p className="mt-1 text-[0.78rem] text-[var(--muted-foreground)]">{model.provider}</p>
+                          <span className={cn('mt-3 inline-flex items-center gap-1 text-[0.72rem] font-medium', tier.tone)}>
+                            <TierIcon className="h-3.5 w-3.5" /> {tier.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
               )}
-              {step === 2 && goal && (
-                <StepPrompt key="prompt" goal={goal} prompt={firstPrompt} onChange={setFirstPrompt} />
+
+              {step === 2 && (
+                <motion.div key="prompt" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} className="space-y-5">
+                  <div>
+                    <Badge variant="brand">Passo 3</Badge>
+                    <h1 className="mt-4 text-[var(--text-3xl)] font-semibold text-[var(--foreground)]">Escolha o primeiro prompt ou escreva o seu.</h1>
+                    <p className="mt-2 text-[var(--text-sm)] text-[var(--muted-foreground)]">Voce ja entra no chat com contexto e direcao. O objetivo aqui e eliminar a tela vazia.</p>
+                  </div>
+                  <div className="space-y-3">
+                    {selectedGoal.prompts.map((prompt) => (
+                      <button
+                        key={prompt}
+                        type="button"
+                        onClick={() => setFirstPrompt(prompt)}
+                        className={cn(
+                          'flex w-full items-start gap-3 rounded-[var(--radius-xl)] border px-4 py-4 text-left transition-all',
+                          firstPrompt === prompt
+                            ? 'border-[rgba(96,115,255,0.28)] bg-[rgba(96,115,255,0.1)]'
+                            : 'border-[var(--border)] bg-[rgba(255,255,255,0.03)] hover:border-[var(--border-strong)] hover:bg-[rgba(255,255,255,0.05)]'
+                        )}
+                      >
+                        <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-[var(--brand-primary)]" />
+                        <span className="text-[var(--text-sm)] leading-7 text-[var(--foreground)]">{prompt}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={selectedGoal.prompts.includes(firstPrompt) ? '' : firstPrompt}
+                    onChange={(event) => setFirstPrompt(event.target.value)}
+                    rows={4}
+                    placeholder="Ou escreva sua propria pergunta inicial..."
+                    className="w-full resize-none rounded-[var(--radius-xl)] border border-[var(--input)] bg-[rgba(9,17,31,0.68)] px-4 py-4 text-[var(--text-sm)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:shadow-[0_0_0_4px_rgba(96,115,255,0.12)]"
+                  />
+                </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          {/* Footer / CTA */}
-          <div className="flex items-center justify-between border-t border-[var(--border)] bg-[var(--surface-2)] px-6 py-4">
+          <div className="flex items-center justify-between border-t border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-6 py-4">
             {step > 0 ? (
-              <button type="button" onClick={() => setStep((s) => s - 1)}
-                className="text-[var(--text-sm)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
-                ← Voltar
+              <button type="button" onClick={() => setStep((current) => current - 1)} className="inline-flex items-center gap-2 text-[0.84rem] font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+                <ChevronLeft className="h-4 w-4" /> Voltar
               </button>
-            ) : (
-              <span />
-            )}
-            <motion.button type="button" onClick={handleNext}
-              disabled={!canAdvance[step]}
-              whileTap={{ scale: 0.97 }}
-              style={{ background: 'var(--brand-gradient)' }}
-              className="flex items-center gap-2 rounded-[var(--radius-lg)] px-6 py-2.5 text-[var(--text-sm)] font-semibold text-white shadow-[var(--shadow-brand)] transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40">
-              {step < TOTAL_STEPS - 1 ? (
-                <>Continuar <ChevronRight className="h-4 w-4" /></>
-              ) : (
-                <>Começar agora <ArrowRight className="h-4 w-4" /></>
-              )}
-            </motion.button>
-          </div>
-        </motion.div>
+            ) : <span />}
 
-        {/* Step summary (model selected) */}
-        {step > 0 && goal && (
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-            className="mt-4 flex items-center gap-2 pl-1">
-            {(() => {
-              const g = goals.find((x) => x.id === goal);
-              if (!g) return null;
-              const Icon = g.icon;
-              return (
-                <span className={cn('inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface-1)] px-2.5 py-1 text-[10px]', g.color)}>
-                  <Icon className="h-3 w-3" /> {g.label}
-                </span>
-              );
-            })()}
-            {step > 1 && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface-1)] px-2.5 py-1 text-[10px] text-[var(--muted-foreground)]">
-                {models.find((m) => m.id === effectiveModel)?.label ?? effectiveModel}
-              </span>
+            {step < TOTAL_STEPS - 1 ? (
+              <Button variant="brand" size="lg" onClick={() => setStep((current) => current + 1)} disabled={step === 0 && !goal}>
+                Continuar <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button variant="brand" size="lg" onClick={handleFinish}>
+                Entrar no chat <ArrowRight className="h-4 w-4" />
+              </Button>
             )}
-          </motion.div>
-        )}
+          </div>
+        </motion.section>
       </div>
     </main>
   );

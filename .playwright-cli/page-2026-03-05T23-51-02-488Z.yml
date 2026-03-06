@@ -1,0 +1,93 @@
+- generic [active] [ref=e1]:
+  - link "Pular para o conteúdo" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - main [ref=e3]:
+    - generic [ref=e5]:
+      - link "IA Aggregator" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img [ref=e8]
+        - generic [ref=e11]: IA Aggregator
+      - navigation [ref=e12]:
+        - link "Biblioteca" [ref=e13] [cursor=pointer]:
+          - /url: /library
+        - link "Templates" [ref=e14] [cursor=pointer]:
+          - /url: /prompts
+        - link "Plano" [ref=e15] [cursor=pointer]:
+          - /url: /billing
+      - generic [ref=e16]:
+        - link "Entrar" [ref=e17] [cursor=pointer]:
+          - /url: /login
+        - link "Começar grátis" [ref=e18] [cursor=pointer]:
+          - /url: /register
+    - generic [ref=e19]:
+      - generic [ref=e20]:
+        - generic [ref=e21]:
+          - img [ref=e22]
+          - text: 13+ modelos IA em um painel — 2026
+        - heading "Qual tarefa você quer acelerar hoje?" [level=1] [ref=e24]:
+          - text: Qual tarefa você quer
+          - text: acelerar hoje?
+        - paragraph [ref=e25]: Planeje, escreva e execute com GPT-4o, Claude, Gemini, Mistral e mais — tudo em um único workspace inteligente.
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - textbox "Comece aqui... ou escolha um template abaixo" [ref=e28]
+          - button [disabled] [ref=e29]:
+            - img [ref=e30]
+        - generic [ref=e32]:
+          - button "Resumo executivo" [ref=e33]:
+            - img [ref=e34]
+            - text: Resumo executivo
+          - button "Plano de ação" [ref=e37]:
+            - img [ref=e38]
+            - text: Plano de ação
+          - button "E-mail profissional" [ref=e41]:
+            - img [ref=e42]
+            - text: E-mail profissional
+          - button "Comparar estratégias" [ref=e45]:
+            - img [ref=e46]
+            - text: Comparar estratégias
+    - generic [ref=e50]:
+      - generic [ref=e51]:
+        - img [ref=e52]
+        - paragraph [ref=e56]: 13+
+        - paragraph [ref=e57]: Modelos disponíveis
+      - generic [ref=e58]:
+        - img [ref=e59]
+        - paragraph [ref=e62]: 20+
+        - paragraph [ref=e63]: Templates prontos
+      - generic [ref=e64]:
+        - img [ref=e65]
+        - paragraph [ref=e67]: Ilimitado
+        - paragraph [ref=e68]: Tokens por mês
+      - generic [ref=e69]:
+        - img [ref=e70]
+        - paragraph [ref=e72]: 99.9%
+        - paragraph [ref=e73]: Uptime garantido
+    - generic [ref=e74]:
+      - generic [ref=e75]:
+        - heading "Tudo que você precisa" [level=2] [ref=e76]
+        - paragraph [ref=e77]: Ferramentas projetadas para produtividade real
+      - generic [ref=e78]:
+        - generic [ref=e79]:
+          - img [ref=e81]
+          - heading "Multi-modelo" [level=3] [ref=e85]
+          - paragraph [ref=e86]: GPT-4o, Claude, Gemini, Mistral, DeepSeek e muito mais em um único painel.
+        - generic [ref=e87]:
+          - img [ref=e89]
+          - heading "Canvas Mode" [level=3] [ref=e99]
+          - paragraph [ref=e100]: Reorganize mensagens livremente. Crie quadros de ideias com drag-and-drop.
+        - generic [ref=e101]:
+          - img [ref=e103]
+          - heading "Templates prontos" [level=3] [ref=e106]
+          - paragraph [ref=e107]: Biblioteca de prompts curados para análises, e-mails, planos de ação e mais.
+    - generic [ref=e109]:
+      - heading "Pronto para acelerar?" [level=2] [ref=e110]
+      - paragraph [ref=e111]: Crie sua conta gratuitamente e comece em segundos.
+      - generic [ref=e112]:
+        - link "Criar conta grátis" [ref=e113] [cursor=pointer]:
+          - /url: /register
+          - text: Criar conta grátis
+          - img [ref=e114]
+        - link "Já tenho conta" [ref=e116] [cursor=pointer]:
+          - /url: /login
+  - alert [ref=e117]

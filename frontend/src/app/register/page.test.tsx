@@ -37,9 +37,9 @@ describe('RegisterPage', () => {
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'user@test.com' } });
     fireEvent.change(screen.getByLabelText(/^senha$/i), { target: { value: 'Password123!' } });
     fireEvent.change(screen.getByLabelText(/confirmar senha/i), { target: { value: 'Password999!' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Criar Conta' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Criar acesso ao Lume' }));
 
-    expect(await screen.findByText('As senhas não coincidem')).toBeInTheDocument();
+    expect(await screen.findByText('As senhas nao coincidem')).toBeInTheDocument();
     expect(registerMock).not.toHaveBeenCalled();
   });
 
@@ -50,7 +50,7 @@ describe('RegisterPage', () => {
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'user@test.com' } });
     fireEvent.change(screen.getByLabelText(/^senha$/i), { target: { value: '123' } });
     fireEvent.change(screen.getByLabelText(/confirmar senha/i), { target: { value: '123' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Criar Conta' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Criar acesso ao Lume' }));
 
     expect(await screen.findByText('A senha deve ter pelo menos 8 caracteres')).toBeInTheDocument();
     expect(registerMock).not.toHaveBeenCalled();
@@ -64,7 +64,7 @@ describe('RegisterPage', () => {
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'user@test.com' } });
     fireEvent.change(screen.getByLabelText(/^senha$/i), { target: { value: 'Password123!' } });
     fireEvent.change(screen.getByLabelText(/confirmar senha/i), { target: { value: 'Password123!' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Criar Conta' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Criar acesso ao Lume' }));
 
     await waitFor(() => {
       expect(registerMock).toHaveBeenCalledWith('user@test.com', 'Password123!', 'User Test');
@@ -80,7 +80,7 @@ describe('RegisterPage', () => {
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'user@test.com' } });
     fireEvent.change(screen.getByLabelText(/^senha$/i), { target: { value: 'Password123!' } });
     fireEvent.change(screen.getByLabelText(/confirmar senha/i), { target: { value: 'Password123!' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Criar Conta' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Criar acesso ao Lume' }));
 
     expect(await screen.findByText('Email já cadastrado')).toBeInTheDocument();
     expect(pushMock).not.toHaveBeenCalled();

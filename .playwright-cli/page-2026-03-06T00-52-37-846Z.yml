@@ -1,0 +1,45 @@
+- generic [active] [ref=e1]:
+  - link "Pular para o conteudo" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - main [ref=e3]:
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - img [ref=e13]
+          - generic [ref=e16]:
+            - paragraph [ref=e17]: Lume
+            - paragraph [ref=e18]: Onboarding premium
+        - button "Pular e ir para o chat" [ref=e19]
+      - generic [ref=e25]: Objetivo · 1 de 3
+      - generic [ref=e26]:
+        - img [ref=e28]
+        - generic [ref=e30]:
+          - paragraph [ref=e31]: Bem-vindo, Lume.
+          - paragraph [ref=e32]: Em menos de um minuto o Lume ajusta o fluxo inicial para o seu estilo de uso.
+      - generic [ref=e33]:
+        - generic [ref=e35]:
+          - generic [ref=e36]:
+            - generic [ref=e37]: Passo 1
+            - heading "Qual e o seu foco principal?" [level=1] [ref=e38]
+            - paragraph [ref=e39]: A resposta ajuda a sugerir o melhor modelo, os primeiros templates e a configuracao do workspace.
+          - generic [ref=e40]:
+            - button "Analise e relatorios Entenda dados, sintetize contexto e gere respostas executivas com clareza." [ref=e41]:
+              - img [ref=e44]
+              - heading "Analise e relatorios" [level=2] [ref=e46]
+              - paragraph [ref=e47]: Entenda dados, sintetize contexto e gere respostas executivas com clareza.
+            - button "Escrita e comunicacao Emails, documentos, comunicados e textos com mais consistencia e velocidade." [ref=e48]:
+              - img [ref=e51]
+              - heading "Escrita e comunicacao" [level=2] [ref=e54]
+              - paragraph [ref=e55]: Emails, documentos, comunicados e textos com mais consistencia e velocidade.
+            - button "Planejamento e projetos Quebre metas em planos, cronogramas, prioridades e entregas acionaveis." [ref=e56]:
+              - img [ref=e59]
+              - heading "Planejamento e projetos" [level=2] [ref=e63]
+              - paragraph [ref=e64]: Quebre metas em planos, cronogramas, prioridades e entregas acionaveis.
+            - button "Assistente geral Pesquise, explore, aprenda e teste ideias sem travar em uma unica categoria." [ref=e65]:
+              - img [ref=e68]
+              - heading "Assistente geral" [level=2] [ref=e70]
+              - paragraph [ref=e71]: Pesquise, explore, aprenda e teste ideias sem travar em uma unica categoria.
+        - button "Continuar" [disabled] [ref=e73]:
+          - text: Continuar
+          - img [ref=e74]
+  - alert [ref=e8]

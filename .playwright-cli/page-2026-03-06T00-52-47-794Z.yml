@@ -1,0 +1,199 @@
+- generic [active] [ref=e1]:
+  - link "Pular para o conteudo" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e4]:
+    - complementary [ref=e5]:
+      - generic [ref=e6]:
+        - link "Lume AI Workspace" [ref=e7] [cursor=pointer]:
+          - /url: /chat
+          - img [ref=e9]
+          - generic [ref=e12]:
+            - generic [ref=e13]: Lume
+            - generic [ref=e14]: AI Workspace
+        - button "Abrir busca" [ref=e15]:
+          - img [ref=e16]
+          - text: Buscar
+          - generic [ref=e19]: CMD+K
+      - navigation "Navegacao principal" [ref=e20]:
+        - link "Chat" [ref=e21] [cursor=pointer]:
+          - /url: /chat
+          - img [ref=e22]
+          - generic [ref=e24]: Chat
+        - link "Biblioteca" [ref=e25] [cursor=pointer]:
+          - /url: /library
+          - img [ref=e26]
+          - generic [ref=e28]: Biblioteca
+        - link "Templates" [ref=e29] [cursor=pointer]:
+          - /url: /prompts
+          - img [ref=e30]
+          - generic [ref=e32]: Templates
+          - img [ref=e33]
+        - link "Plano" [ref=e35] [cursor=pointer]:
+          - /url: /billing
+          - img [ref=e36]
+          - generic [ref=e38]: Plano
+        - link "Configuracoes" [ref=e39] [cursor=pointer]:
+          - /url: /settings
+          - img [ref=e40]
+          - generic [ref=e43]: Configuracoes
+      - generic [ref=e44]:
+        - 'button "Tema: Escuro" [ref=e45]':
+          - img [ref=e46]
+          - generic [ref=e48]: Escuro
+        - generic [ref=e49]:
+          - generic [ref=e50]:
+            - generic "Lume Smoke" [ref=e51]: LS
+            - generic [ref=e52]:
+              - paragraph [ref=e53]: Lume Smoke
+              - paragraph [ref=e54]: lume-smoke-20260305215155@test.local
+          - button "Sair" [ref=e55]:
+            - img [ref=e56]
+            - text: Sair
+      - button "Recolher menu" [ref=e59]:
+        - img [ref=e60]
+    - generic [ref=e62]:
+      - banner [ref=e63]:
+        - generic [ref=e64]:
+          - generic [ref=e66]:
+            - paragraph [ref=e67]: Lume workspace
+            - heading "Templates" [level=1] [ref=e68]
+            - paragraph [ref=e69]: Prompts curados para acelerar qualquer tarefa
+          - generic [ref=e70]:
+            - generic [ref=e71]: Live workspace
+            - generic [ref=e72]:
+              - img
+              - textbox "Buscar templates..." [ref=e73]
+      - main [ref=e74]:
+        - generic [ref=e75]:
+          - generic [ref=e77]:
+            - generic [ref=e78]:
+              - generic [ref=e79]:
+                - img [ref=e80]
+                - text: Prompt operating system
+              - heading "Estruture seus fluxos como um catalogo de playbooks, nao como uma lista solta de prompts." [level=2] [ref=e84]
+              - paragraph [ref=e85]: "O referencial do InnerAI combina descoberta, contexto e CTA recorrente. Aqui o Lume faz o mesmo: destaque editorial, filtros simples e cards prontos para execucao."
+              - generic [ref=e86]:
+                - generic [ref=e87]:
+                  - paragraph [ref=e88]: Catalogo
+                  - paragraph [ref=e89]: "6"
+                  - paragraph [ref=e90]: templates ativos no workspace
+                - generic [ref=e91]:
+                  - paragraph [ref=e92]: Categorias
+                  - paragraph [ref=e93]: "3"
+                  - paragraph [ref=e94]: analise, planejamento e escrita
+                - generic [ref=e95]:
+                  - paragraph [ref=e96]: Mais usado
+                  - paragraph [ref=e97]: Resumo Executivo
+                  - paragraph [ref=e98]: 847 usos acumulados
+            - generic [ref=e99]:
+              - paragraph [ref=e100]: Template em foco
+              - generic [ref=e101]:
+                - img [ref=e103]
+                - generic [ref=e105]:
+                  - heading "Resumo Executivo" [level=3] [ref=e106]
+                  - paragraph [ref=e107]: Condensa informacoes em topicos estrategicos para lideranca.
+              - paragraph [ref=e109]: "Crie um resumo executivo estruturado em até 7 bullets com foco em insights e decisões estratégicas sobre o seguinte tema:"
+              - button "Usar template" [ref=e110]:
+                - img [ref=e111]
+                - text: Usar template
+                - img [ref=e114]
+          - generic [ref=e116]:
+            - button "Todos" [ref=e117]
+            - button "Analise2" [ref=e118]
+            - button "Planejamento2" [ref=e119]
+            - button "Escrita2" [ref=e120]
+            - generic [ref=e121]:
+              - img [ref=e122]
+              - text: 6 templates
+          - generic [ref=e124]:
+            - article [ref=e125]:
+              - generic [ref=e126]:
+                - img [ref=e128]
+                - generic [ref=e130]:
+                  - generic [ref=e131]:
+                    - img [ref=e132]
+                    - text: "847"
+                  - generic [ref=e134]: Analise
+              - heading "Resumo Executivo" [level=3] [ref=e135]
+              - paragraph [ref=e136]: Condensa informacoes em topicos estrategicos para lideranca.
+              - paragraph [ref=e138]: "Crie um resumo executivo estruturado em até 7 bullets com foco em insights e decisões estratégicas sobre o seguinte tema:"
+              - button "Usar template" [ref=e139]:
+                - img [ref=e140]
+                - text: Usar template
+                - img [ref=e143]
+            - article [ref=e145]:
+              - generic [ref=e146]:
+                - img [ref=e148]
+                - generic [ref=e152]:
+                  - generic [ref=e153]:
+                    - img [ref=e154]
+                    - text: "652"
+                  - generic [ref=e156]: Planejamento
+              - heading "Plano de Acao" [level=3] [ref=e157]
+              - paragraph [ref=e158]: Transforma objetivos em plano estruturado com etapas, donos e riscos.
+              - paragraph [ref=e160]: "Crie um plano de ação detalhado com: etapas claras, responsáveis, prazos estimados, dependências e principais riscos para:"
+              - button "Usar template" [ref=e161]:
+                - img [ref=e162]
+                - text: Usar template
+                - img [ref=e165]
+            - article [ref=e167]:
+              - generic [ref=e168]:
+                - img [ref=e170]
+                - generic [ref=e173]:
+                  - generic [ref=e174]:
+                    - img [ref=e175]
+                    - text: "1.203"
+                  - generic [ref=e177]: Escrita
+              - heading "E-mail Profissional" [level=3] [ref=e178]
+              - paragraph [ref=e179]: Rascunho claro, objetivo e com tom apropriado para comunicacoes formais.
+              - paragraph [ref=e181]: "Escreva um e-mail profissional com tom cordial, objetivo e estrutura clara (assunto, abertura, corpo, encerramento) sobre:"
+              - button "Usar template" [ref=e182]:
+                - img [ref=e183]
+                - text: Usar template
+                - img [ref=e186]
+            - article [ref=e188]:
+              - generic [ref=e189]:
+                - img [ref=e191]
+                - generic [ref=e193]:
+                  - generic [ref=e194]:
+                    - img [ref=e195]
+                    - text: "489"
+                  - generic [ref=e197]: Analise
+              - heading "Analise Comparativa" [level=3] [ref=e198]
+              - paragraph [ref=e199]: Compara duas ou mais alternativas com criterios objetivos e recomendacao final.
+              - paragraph [ref=e201]: "Compare as alternativas abaixo em uma tabela com critérios objetivos (custo, tempo, risco, benefícios) e conclua com uma recomendação justificada:"
+              - button "Usar template" [ref=e202]:
+                - img [ref=e203]
+                - text: Usar template
+                - img [ref=e206]
+            - article [ref=e208]:
+              - generic [ref=e209]:
+                - img [ref=e211]
+                - generic [ref=e214]:
+                  - generic [ref=e215]:
+                    - img [ref=e216]
+                    - text: "312"
+                  - generic [ref=e218]: Escrita
+              - heading "Documento Tecnico" [level=3] [ref=e219]
+              - paragraph [ref=e220]: Estrutura clara para documentacao tecnica, RFCs ou especificacoes.
+              - paragraph [ref=e222]: "Escreva um documento técnico com seções: Objetivo, Contexto, Solução proposta, Requisitos, Considerações e Plano de implementação para:"
+              - button "Usar template" [ref=e223]:
+                - img [ref=e224]
+                - text: Usar template
+                - img [ref=e227]
+            - article [ref=e229]:
+              - generic [ref=e230]:
+                - img [ref=e232]
+                - generic [ref=e235]:
+                  - generic [ref=e236]:
+                    - img [ref=e237]
+                    - text: "278"
+                  - generic [ref=e239]: Planejamento
+              - heading "OKRs e Metas" [level=3] [ref=e240]
+              - paragraph [ref=e241]: Define Objectives & Key Results claros e mensuraveis para equipes.
+              - paragraph [ref=e243]: "Defina 3 Objectives e 3 Key Results cada para o seguinte contexto de equipe ou área. Seja específico, mensurável e com prazo trimestral:"
+              - button "Usar template" [ref=e244]:
+                - img [ref=e245]
+                - text: Usar template
+                - img [ref=e248]
+  - alert [ref=e250]

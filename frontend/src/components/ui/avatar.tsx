@@ -1,14 +1,11 @@
-import { cn } from '@/lib/cn';
+﻿import { cn } from '@/lib/cn';
 
-const COLORS = [
-  '#7C3AED', '#06B6D4', '#10B981', '#F59E0B',
-  '#EF4444', '#EC4899', '#8B5CF6', '#3B82F6',
-];
+const COLORS = ['#6073ff', '#8b6cff', '#f25d9c', '#4ed9a7', '#77b8ff', '#ffbf66'];
 
 function getColorForName(name: string): string {
   let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  for (let index = 0; index < name.length; index += 1) {
+    hash = name.charCodeAt(index) + ((hash << 5) - hash);
   }
   return COLORS[Math.abs(hash) % COLORS.length];
 }
@@ -27,35 +24,31 @@ interface AvatarProps {
 }
 
 const sizeStyles = {
-  sm: 'h-7 w-7 text-[0.6rem]',
-  md: 'h-9 w-9 text-xs',
-  lg: 'h-11 w-11 text-sm',
-  xl: 'h-14 w-14 text-base',
+  sm: 'h-8 w-8 text-[0.62rem]',
+  md: 'h-10 w-10 text-[0.75rem]',
+  lg: 'h-12 w-12 text-[0.92rem]',
+  xl: 'h-16 w-16 text-[1.02rem]',
 };
 
-export function Avatar({ name = 'U', src, size = 'md', className }: AvatarProps) {
+export function Avatar({ name = 'LU', src, size = 'md', className }: AvatarProps) {
   const initials = getInitials(name);
   const color = getColorForName(name);
 
   if (src) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={src}
-        alt={name}
-        className={cn('rounded-full object-cover', sizeStyles[size], className)}
-      />
+      <img src={src} alt={name} className={cn('rounded-full object-cover ring-1 ring-[var(--border)]', sizeStyles[size], className)} />
     );
   }
 
   return (
     <span
       className={cn(
-        'inline-flex items-center justify-center rounded-full font-semibold text-white select-none shrink-0',
+        'inline-flex items-center justify-center rounded-full font-semibold text-white select-none shrink-0 ring-1 ring-white/10 shadow-[var(--shadow-sm)]',
         sizeStyles[size],
-        className
+        className,
       )}
-      style={{ backgroundColor: color }}
+      style={{ background: `linear-gradient(135deg, ${color} 0%, #08111f 160%)` }}
       aria-label={name}
     >
       {initials}

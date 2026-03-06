@@ -1,0 +1,162 @@
+- generic [active] [ref=e1]:
+  - link "Pular para o conteudo" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e4]:
+    - complementary [ref=e5]:
+      - generic [ref=e6]:
+        - link "Lume AI Workspace" [ref=e7] [cursor=pointer]:
+          - /url: /chat
+          - img [ref=e9]
+          - generic [ref=e12]:
+            - generic [ref=e13]: Lume
+            - generic [ref=e14]: AI Workspace
+        - button "Abrir busca" [ref=e15]:
+          - img [ref=e16]
+          - text: Buscar
+          - generic [ref=e19]: CMD+K
+      - navigation "Navegacao principal" [ref=e20]:
+        - link "Chat" [ref=e21] [cursor=pointer]:
+          - /url: /chat
+          - img [ref=e22]
+          - generic [ref=e24]: Chat
+        - link "Biblioteca" [ref=e25] [cursor=pointer]:
+          - /url: /library
+          - img [ref=e26]
+          - generic [ref=e28]: Biblioteca
+        - link "Templates" [ref=e29] [cursor=pointer]:
+          - /url: /prompts
+          - img [ref=e30]
+          - generic [ref=e32]: Templates
+        - link "Plano" [ref=e33] [cursor=pointer]:
+          - /url: /billing
+          - img [ref=e34]
+          - generic [ref=e36]: Plano
+        - link "Configuracoes" [ref=e37] [cursor=pointer]:
+          - /url: /settings
+          - img [ref=e38]
+          - generic [ref=e41]: Configuracoes
+          - img [ref=e42]
+      - generic [ref=e44]:
+        - 'button "Tema: Escuro" [ref=e45]':
+          - img [ref=e46]
+          - generic [ref=e48]: Escuro
+        - generic [ref=e49]:
+          - generic [ref=e50]:
+            - generic "Lume" [ref=e51]: LU
+            - generic [ref=e52]:
+              - paragraph [ref=e53]: Conta Lume
+              - paragraph
+          - button "Sair" [ref=e54]:
+            - img [ref=e55]
+            - text: Sair
+      - button "Recolher menu" [ref=e58]:
+        - img [ref=e59]
+    - generic [ref=e61]:
+      - banner [ref=e62]:
+        - generic [ref=e63]:
+          - generic [ref=e65]:
+            - paragraph [ref=e66]: Lume workspace
+            - heading "Configuracoes" [level=1] [ref=e67]
+            - paragraph [ref=e68]: Personalize sua conta e experiencia
+          - generic [ref=e70]: Live workspace
+      - main [ref=e71]:
+        - generic [ref=e72]:
+          - complementary [ref=e73]:
+            - generic [ref=e74]:
+              - generic [ref=e75]:
+                - img [ref=e76]
+                - text: Workspace profile
+              - generic [ref=e78]:
+                - img [ref=e80]
+                - paragraph [ref=e83]: Conta Lume
+                - paragraph
+                - generic [ref=e84]:
+                  - generic [ref=e85]:
+                    - paragraph [ref=e86]: Perfil
+                    - paragraph [ref=e87]: Preferencias salvas localmente para iteracao rapida do workspace.
+                  - generic [ref=e88]:
+                    - paragraph [ref=e89]: Tema
+                    - paragraph [ref=e90]: Dark-first com opcao de override local para homologacao.
+          - generic [ref=e91]:
+            - generic [ref=e92]:
+              - generic [ref=e93]:
+                - img [ref=e95]
+                - generic [ref=e98]:
+                  - heading "Perfil" [level=2] [ref=e99]
+                  - paragraph [ref=e100]: Dados principais da conta visivel no workspace.
+              - generic [ref=e102]:
+                - generic [ref=e103]:
+                  - text: Nome de exibicao
+                  - textbox "Nome de exibicao" [ref=e105]:
+                    - /placeholder: Seu nome
+                - generic [ref=e106]:
+                  - text: E-mail
+                  - textbox "E-mail" [disabled] [ref=e108]
+            - generic [ref=e109]:
+              - generic [ref=e110]:
+                - img [ref=e112]
+                - generic [ref=e114]:
+                  - heading "Aparencia" [level=2] [ref=e115]
+                  - paragraph [ref=e116]: Escala visual consistente em todas as paginas do Lume.
+              - generic [ref=e118]:
+                - generic [ref=e119]:
+                  - paragraph [ref=e120]: Tema
+                  - generic [ref=e121]:
+                    - button "Claro fallback secundario" [ref=e122]:
+                      - img [ref=e123]
+                      - paragraph [ref=e129]: Claro
+                      - paragraph [ref=e130]: fallback secundario
+                    - button "Escuro direcao principal" [ref=e131]:
+                      - img [ref=e132]
+                      - paragraph [ref=e134]: Escuro
+                      - paragraph [ref=e135]: direcao principal
+                    - button "Sistema segue o dispositivo" [ref=e136]:
+                      - img [ref=e137]
+                      - paragraph [ref=e139]: Sistema
+                      - paragraph [ref=e140]: segue o dispositivo
+                - generic [ref=e141]:
+                  - generic [ref=e142]:
+                    - img [ref=e143]
+                    - text: Idioma
+                  - combobox "Idioma" [ref=e148]:
+                    - option "Portugues (Brasil)" [selected]
+                    - option "English (US)"
+                    - option "Espanol"
+            - generic [ref=e149]:
+              - generic [ref=e150]:
+                - img [ref=e152]
+                - generic [ref=e155]:
+                  - heading "Notificacoes" [level=2] [ref=e156]
+                  - paragraph [ref=e157]: Ajuste o que merece interrupcao no seu fluxo.
+              - generic [ref=e159]:
+                - generic [ref=e160]:
+                  - generic [ref=e161]:
+                    - paragraph [ref=e162]: Respostas do chat
+                    - paragraph [ref=e163]: Alerta quando a IA terminar de responder
+                  - switch [checked] [ref=e164]
+                - generic [ref=e166]:
+                  - generic [ref=e167]:
+                    - paragraph [ref=e168]: Novidades da plataforma
+                    - paragraph [ref=e169]: Novos modelos e funcionalidades
+                  - switch [ref=e170]
+            - generic [ref=e172]:
+              - generic [ref=e173]:
+                - img [ref=e175]
+                - generic [ref=e177]:
+                  - heading "Privacidade e dados" [level=2] [ref=e178]
+                  - paragraph [ref=e179]: Dados locais para testes e iteracao rapida da experiencia.
+              - generic [ref=e181]:
+                - generic [ref=e182]:
+                  - paragraph [ref=e183]:
+                    - img [ref=e184]
+                    - text: Dados locais
+                  - paragraph [ref=e188]: Conversas, preferencias e analytics de frontend ficam armazenados localmente neste ambiente.
+                - button "Limpar todos os dados locais" [ref=e189]:
+                  - img [ref=e190]
+                  - text: Limpar todos os dados locais
+            - generic [ref=e193]:
+              - button "Salvar preferencias" [ref=e194]:
+                - img [ref=e195]
+                - text: Salvar preferencias
+              - paragraph [ref=e199]: Preview local do workspace. Nenhuma preferencia sai do navegador nesta tela.
+  - alert [ref=e200]

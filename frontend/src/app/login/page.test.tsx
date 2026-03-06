@@ -36,7 +36,7 @@ describe('LoginPage', () => {
 
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'user@test.com' } });
     fireEvent.change(screen.getByLabelText(/^senha$/i), { target: { value: 'Password123!' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Entrar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Entrar no Lume' }));
 
     await waitFor(() => {
       expect(loginMock).toHaveBeenCalledWith('user@test.com', 'Password123!');
@@ -50,7 +50,7 @@ describe('LoginPage', () => {
 
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'user@test.com' } });
     fireEvent.change(screen.getByLabelText(/^senha$/i), { target: { value: 'wrong-pass' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Entrar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Entrar no Lume' }));
 
     expect(await screen.findByText('Credenciais inválidas')).toBeInTheDocument();
     expect(pushMock).not.toHaveBeenCalled();
@@ -69,14 +69,14 @@ describe('LoginPage', () => {
 
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'user@test.com' } });
     fireEvent.change(screen.getByLabelText(/^senha$/i), { target: { value: 'Password123!' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Entrar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Entrar no Lume' }));
 
     expect(screen.getByRole('button', { name: 'Entrando...' })).toBeDisabled();
 
     resolveLogin();
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Entrar' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Entrar no Lume' })).toBeEnabled();
     });
   });
 });

@@ -1,4 +1,4 @@
-import { ButtonHTMLAttributes, forwardRef } from 'react';
+﻿import { ButtonHTMLAttributes, forwardRef } from 'react';
 import { cn } from '@/lib/cn';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive' | 'brand' | 'outline';
@@ -10,24 +10,18 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'px-2.5 py-1.5 text-[var(--text-xs)] font-medium',
-  md: 'px-4 py-2.5 text-[var(--text-sm)] font-medium',
-  lg: 'px-6 py-3 text-[var(--text-base)] font-semibold',
+  sm: 'min-h-9 px-3.5 text-[0.78rem] font-semibold',
+  md: 'min-h-11 px-5 text-[0.86rem] font-semibold',
+  lg: 'min-h-12 px-6 text-[0.94rem] font-semibold',
 };
 
 const variantClasses: Record<ButtonVariant, string> = {
-  brand:
-    'text-white shadow-[var(--shadow-brand)] hover:shadow-[var(--shadow-xl)] hover:opacity-90 active:scale-[0.97]',
-  primary:
-    'bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 active:scale-[0.97] focus-visible:ring-[var(--ring)]',
-  secondary:
-    'bg-[var(--secondary)] text-[var(--secondary-foreground)] border-[var(--border)] hover:bg-[var(--accent)] active:scale-[0.97] focus-visible:ring-[var(--ring)]',
-  ghost:
-    'bg-transparent text-[var(--foreground)] hover:bg-[var(--surface-2)] active:scale-[0.97] focus-visible:ring-[var(--ring)]',
-  outline:
-    'bg-transparent text-[var(--foreground)] border-[var(--border-strong)] hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-[0.97]',
-  destructive:
-    'bg-[var(--destructive)] text-[var(--destructive-foreground)] hover:opacity-90 active:scale-[0.97] focus-visible:ring-[var(--destructive)]',
+  brand: 'text-white shadow-[var(--shadow-brand)] hover:-translate-y-0.5 hover:shadow-[0_24px_56px_rgba(96,115,255,0.3)]',
+  primary: 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-[var(--shadow-brand)] hover:-translate-y-0.5 hover:opacity-95',
+  secondary: 'bg-[var(--surface-2)] text-[var(--foreground)] border-[var(--border)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-3)]',
+  ghost: 'bg-transparent text-[var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]',
+  outline: 'bg-transparent text-[var(--foreground)] border-[var(--border)] hover:border-[var(--brand-primary)]/40 hover:bg-[rgba(96,115,255,0.08)]',
+  destructive: 'bg-[var(--destructive)] text-[var(--destructive-foreground)] shadow-[0_16px_36px_rgba(255,107,135,0.2)] hover:-translate-y-0.5 hover:opacity-95',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -37,23 +31,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          'relative inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] border border-transparent',
+          'inline-flex items-center justify-center gap-2 rounded-[var(--radius-pill)] border border-transparent',
+          'transition-[transform,opacity,box-shadow,background-color,border-color,color] duration-[var(--dur-base)] ease-[var(--ease-standard)]',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]',
+          'disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none disabled:translate-y-0',
           sizeClasses[size],
-          'transition-[transform,opacity,box-shadow,background-color,border-color] duration-[var(--dur-base)] ease-[var(--ease-standard)]',
-          'disabled:opacity-50 disabled:cursor-not-allowed disabled:!scale-100',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]',
           variantClasses[variant],
-          className
+          className,
         )}
-        style={
-          isBrand
-            ? { background: 'var(--brand-gradient)', ...style }
-            : style
-        }
+        style={isBrand ? { background: 'var(--brand-gradient)', ...style } : style}
         {...props}
       />
     );
   }
 );
-Button.displayName = 'Button';
 
+Button.displayName = 'Button';

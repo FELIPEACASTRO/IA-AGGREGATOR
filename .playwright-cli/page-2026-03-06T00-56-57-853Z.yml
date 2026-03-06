@@ -1,0 +1,240 @@
+- generic [active] [ref=e1]:
+  - link "Pular para o conteudo" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - complementary [ref=e5]:
+        - link "Lume AI Workspace" [ref=e7] [cursor=pointer]:
+          - /url: /chat
+          - img [ref=e9]
+          - generic [ref=e12]:
+            - generic [ref=e13]: Lume
+            - generic [ref=e14]: AI Workspace
+        - button "Abrir busca" [ref=e16]:
+          - img [ref=e17]
+          - text: Buscar, paginas e acoes
+        - navigation "Navegacao principal" [ref=e20]:
+          - link "Chat" [ref=e21] [cursor=pointer]:
+            - /url: /chat
+            - img [ref=e22]
+            - generic [ref=e24]: Chat
+          - link "Biblioteca" [ref=e25] [cursor=pointer]:
+            - /url: /library
+            - img [ref=e26]
+            - generic [ref=e28]: Biblioteca
+          - link "Templates" [ref=e29] [cursor=pointer]:
+            - /url: /prompts
+            - img [ref=e30]
+            - generic [ref=e32]: Templates
+          - link "Plano" [ref=e33] [cursor=pointer]:
+            - /url: /billing
+            - img [ref=e34]
+            - generic [ref=e36]: Plano
+          - link "Configuracoes" [ref=e37] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e38]
+            - generic [ref=e41]: Configuracoes
+            - img [ref=e42]
+        - generic [ref=e44]:
+          - 'button "Tema: Escuro" [ref=e45]':
+            - img [ref=e46]
+            - generic [ref=e48]: Escuro
+          - generic [ref=e49]:
+            - generic [ref=e50]:
+              - generic "Lume" [ref=e51]: LU
+              - generic [ref=e52]:
+                - paragraph [ref=e53]: Conta Lume
+                - paragraph
+            - button "Sair" [ref=e54]:
+              - img [ref=e55]
+              - text: Sair
+      - generic [ref=e58]:
+        - banner [ref=e59]:
+          - generic [ref=e60]:
+            - generic [ref=e61]:
+              - button "Abrir menu" [ref=e62]:
+                - img [ref=e63]
+              - generic [ref=e65]:
+                - paragraph [ref=e66]: Lume workspace
+                - heading "Analytics" [level=1] [ref=e67]
+                - paragraph [ref=e68]: Diagnóstico local de eventos UX para Product/Data
+            - generic [ref=e70]:
+              - button "Atualizar" [ref=e71]
+              - button "Enviar relatório" [disabled] [ref=e72]
+              - button "Carregar histórico" [ref=e73]
+              - button "Exportar JSON" [disabled] [ref=e74]
+              - button "Resetar filtros" [disabled] [ref=e75]
+              - button "Limpar eventos" [disabled] [ref=e76]
+        - main [ref=e77]:
+          - generic [ref=e78]:
+            - generic [ref=e79]:
+              - generic [ref=e81]:
+                - generic [ref=e82]:
+                  - paragraph [ref=e83]: Eventos locais
+                  - paragraph [ref=e84]: "0"
+                  - paragraph [ref=e85]: capturados no browser atual
+                - img [ref=e87]
+              - generic [ref=e90]:
+                - generic [ref=e91]:
+                  - paragraph [ref=e92]: Ativacao
+                  - paragraph [ref=e93]: 0%
+                  - paragraph [ref=e94]: conclusao do onboarding local
+                - img [ref=e96]
+              - generic [ref=e104]:
+                - generic [ref=e105]:
+                  - paragraph [ref=e106]: Retencao D7
+                  - paragraph [ref=e107]: 0%
+                  - paragraph [ref=e108]: 0/0 coortes elegiveis
+                - img [ref=e110]
+              - generic [ref=e114]:
+                - generic [ref=e115]:
+                  - paragraph [ref=e116]: Filtros ativos
+                  - paragraph [ref=e117]: "0"
+                  - paragraph [ref=e118]: 0 relatorios em memoria
+                - img [ref=e120]
+            - generic [ref=e122]:
+              - complementary [ref=e123]:
+                - paragraph [ref=e124]: Resumo
+                - paragraph [ref=e125]: "Total de eventos: 0"
+                - paragraph [ref=e126]: "Ativação onboarding: 0%"
+                - paragraph [ref=e127]: "Janela de coorte: Últimas 4 semanas"
+                - generic [ref=e128]:
+                  - paragraph [ref=e129]: Funil local
+                  - generic [ref=e130]:
+                    - generic [ref=e131]:
+                      - paragraph [ref=e132]: 1. Page Views
+                      - generic [ref=e133]: "0"
+                    - paragraph [ref=e134]: "Conversão da etapa anterior: 100%"
+                  - generic [ref=e135]:
+                    - generic [ref=e136]:
+                      - paragraph [ref=e137]: 2. Onboarding Start
+                      - generic [ref=e138]: "0"
+                    - paragraph [ref=e139]: "Conversão da etapa anterior: 0%"
+                  - generic [ref=e140]:
+                    - generic [ref=e141]:
+                      - paragraph [ref=e142]: 3. Onboarding Complete
+                      - generic [ref=e143]: "0"
+                    - paragraph [ref=e144]: "Conversão da etapa anterior: 0%"
+                  - generic [ref=e145]:
+                    - generic [ref=e146]:
+                      - paragraph [ref=e147]: 4. Primeiro Prompt
+                      - generic [ref=e148]: "0"
+                    - paragraph [ref=e149]: "Conversão da etapa anterior: 0%"
+                  - generic [ref=e150]:
+                    - generic [ref=e151]:
+                      - paragraph [ref=e152]: 5. Primeira Resposta Útil
+                      - generic [ref=e153]: "0"
+                    - paragraph [ref=e154]: "Conversão da etapa anterior: 0%"
+                - generic [ref=e155]:
+                  - paragraph [ref=e156]: Retenção local (proxy)
+                  - generic [ref=e157]:
+                    - generic [ref=e158]:
+                      - paragraph [ref=e159]: D1
+                      - paragraph [ref=e160]: 0%
+                      - paragraph [ref=e161]: 0/0 coortes elegíveis
+                    - generic [ref=e162]:
+                      - paragraph [ref=e163]: D7
+                      - paragraph [ref=e164]: 0%
+                      - paragraph [ref=e165]: 0/0 coortes elegíveis
+                  - paragraph [ref=e166]: "Base de coortes: 0 dia(s) com onboarding/page view."
+                - paragraph [ref=e168]: Sem eventos capturados.
+                - generic [ref=e169]:
+                  - paragraph [ref=e170]: Relatórios persistidos
+                  - generic [ref=e171]:
+                    - generic [ref=e172]:
+                      - textbox "Data inicial do histórico" [ref=e173]
+                      - textbox "Data final do histórico" [ref=e174]
+                    - generic [ref=e175]:
+                      - combobox "Ordenar histórico por" [ref=e176]:
+                        - option "Recebimento" [selected]
+                        - option "Geração"
+                        - option "Total de eventos"
+                        - option "Fonte"
+                      - combobox "Direção da ordenação do histórico" [ref=e177]:
+                        - option "Descendente" [selected]
+                        - option "Ascendente"
+                    - generic [ref=e178]:
+                      - combobox "Filtrar relatórios por fonte" [ref=e179]:
+                        - option "Todas as fontes" [selected]
+                      - combobox "Janela de coorte" [ref=e180]:
+                        - option "Todas janelas"
+                        - option "Últimas 2 semanas"
+                        - option "Últimas 4 semanas" [selected]
+                        - option "Últimas 8 semanas"
+                        - option "Últimas 12 semanas"
+                    - button "Exportar histórico CSV" [disabled] [ref=e181]
+                  - paragraph [ref=e183]: Nenhum histórico carregado.
+              - generic [ref=e184]:
+                - paragraph [ref=e185]: Eventos
+                - paragraph [ref=e187]: Nenhum evento encontrado. Interaja com o sistema e clique em Atualizar.
+                - generic [ref=e188]:
+                  - paragraph [ref=e189]: Detalhes do relatório persistido
+                  - generic [ref=e190]:
+                    - paragraph [ref=e191]: Comparação por fonte (funil agregado)
+                    - generic [ref=e192]:
+                      - combobox "Fonte A" [ref=e193]
+                      - combobox "Fonte B" [ref=e194]
+                    - paragraph [ref=e195]: Carregue pelo menos duas fontes no histórico para comparar.
+                  - generic [ref=e196]:
+                    - paragraph [ref=e197]: Comparação temporal (período atual vs anterior)
+                    - generic [ref=e198]:
+                      - combobox "Janela da comparação temporal" [ref=e199]:
+                        - option "Últimos 7 dias" [selected]
+                        - option "Últimos 14 dias"
+                        - option "Últimos 30 dias"
+                      - combobox "Fonte para comparação temporal" [ref=e200]:
+                        - option "Todas as fontes" [selected]
+                    - paragraph [ref=e201]: "Relatórios no período atual: 0 · período anterior: 0"
+                    - generic [ref=e202]:
+                      - generic [ref=e203]:
+                        - generic [ref=e204]:
+                          - paragraph [ref=e205]: 1. Page Views
+                          - generic [ref=e206]: Δ +0
+                        - paragraph [ref=e207]: "Atual: 0 (100%) · Anterior: 0 (100%)"
+                        - paragraph [ref=e208]: "Δ conversão: +0 p.p."
+                      - generic [ref=e209]:
+                        - generic [ref=e210]:
+                          - paragraph [ref=e211]: 2. Onboarding Start
+                          - generic [ref=e212]: Δ +0
+                        - paragraph [ref=e213]: "Atual: 0 (0%) · Anterior: 0 (0%)"
+                        - paragraph [ref=e214]: "Δ conversão: +0 p.p."
+                      - generic [ref=e215]:
+                        - generic [ref=e216]:
+                          - paragraph [ref=e217]: 3. Onboarding Complete
+                          - generic [ref=e218]: Δ +0
+                        - paragraph [ref=e219]: "Atual: 0 (0%) · Anterior: 0 (0%)"
+                        - paragraph [ref=e220]: "Δ conversão: +0 p.p."
+                      - generic [ref=e221]:
+                        - generic [ref=e222]:
+                          - paragraph [ref=e223]: 4. Primeiro Prompt
+                          - generic [ref=e224]: Δ +0
+                        - paragraph [ref=e225]: "Atual: 0 (0%) · Anterior: 0 (0%)"
+                        - paragraph [ref=e226]: "Δ conversão: +0 p.p."
+                      - generic [ref=e227]:
+                        - generic [ref=e228]:
+                          - paragraph [ref=e229]: 5. Primeira Resposta Útil
+                          - generic [ref=e230]: Δ +0
+                        - paragraph [ref=e231]: "Atual: 0 (0%) · Anterior: 0 (0%)"
+                        - paragraph [ref=e232]: "Δ conversão: +0 p.p."
+                  - paragraph [ref=e234]: Selecione um relatório para visualizar os eventos persistidos.
+    - navigation "Atalhos rapidos" [ref=e235]:
+      - link "Chat" [ref=e236] [cursor=pointer]:
+        - /url: /chat
+        - img [ref=e237]
+        - generic [ref=e239]: Chat
+      - link "Biblioteca" [ref=e240] [cursor=pointer]:
+        - /url: /library
+        - img [ref=e241]
+        - generic [ref=e243]: Biblioteca
+      - link "Templates" [ref=e244] [cursor=pointer]:
+        - /url: /prompts
+        - img [ref=e245]
+        - generic [ref=e247]: Templates
+      - link "Plano" [ref=e248] [cursor=pointer]:
+        - /url: /billing
+        - img [ref=e249]
+        - generic [ref=e251]: Plano
+      - link "Configuracoes" [ref=e252] [cursor=pointer]:
+        - /url: /settings
+        - img [ref=e253]
+        - generic [ref=e256]: Configuracoes

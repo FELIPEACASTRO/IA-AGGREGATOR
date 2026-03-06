@@ -1,0 +1,226 @@
+- generic [active] [ref=e1]:
+  - link "Pular para o conteudo" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e4]:
+    - complementary [ref=e5]:
+      - generic [ref=e6]:
+        - link "Lume AI Workspace" [ref=e7] [cursor=pointer]:
+          - /url: /chat
+          - img [ref=e9]
+          - generic [ref=e12]:
+            - generic [ref=e13]: Lume
+            - generic [ref=e14]: AI Workspace
+        - button "Abrir busca" [ref=e15]:
+          - img [ref=e16]
+          - text: Buscar
+          - generic [ref=e19]: CMD+K
+      - navigation "Navegacao principal" [ref=e20]:
+        - link "Chat" [ref=e21] [cursor=pointer]:
+          - /url: /chat
+          - img [ref=e22]
+          - generic [ref=e24]: Chat
+        - link "Biblioteca" [ref=e25] [cursor=pointer]:
+          - /url: /library
+          - img [ref=e26]
+          - generic [ref=e28]: Biblioteca
+        - link "Templates" [ref=e29] [cursor=pointer]:
+          - /url: /prompts
+          - img [ref=e30]
+          - generic [ref=e32]: Templates
+        - link "Plano" [ref=e33] [cursor=pointer]:
+          - /url: /billing
+          - img [ref=e34]
+          - generic [ref=e36]: Plano
+          - img [ref=e37]
+        - link "Configuracoes" [ref=e39] [cursor=pointer]:
+          - /url: /settings
+          - img [ref=e40]
+          - generic [ref=e43]: Configuracoes
+      - generic [ref=e44]:
+        - 'button "Tema: Escuro" [ref=e45]':
+          - img [ref=e46]
+          - generic [ref=e48]: Escuro
+        - generic [ref=e49]:
+          - generic [ref=e50]:
+            - generic "Lume" [ref=e51]: LU
+            - generic [ref=e52]:
+              - paragraph [ref=e53]: Conta Lume
+              - paragraph
+          - button "Sair" [ref=e54]:
+            - img [ref=e55]
+            - text: Sair
+      - button "Recolher menu" [ref=e58]:
+        - img [ref=e59]
+    - generic [ref=e61]:
+      - banner [ref=e62]:
+        - generic [ref=e63]:
+          - generic [ref=e65]:
+            - paragraph [ref=e66]: Lume workspace
+            - heading "Plano e uso" [level=1] [ref=e67]
+            - paragraph [ref=e68]: Monitore seu consumo e faca upgrade quando precisar
+          - generic [ref=e70]: Live workspace
+      - main [ref=e71]:
+        - generic [ref=e72]:
+          - generic [ref=e74]:
+            - generic [ref=e75]:
+              - generic [ref=e76]:
+                - img [ref=e77]
+                - text: Revenue workspace
+              - heading "Controle de plano, consumo e capacidade em uma camada executiva unica." [level=2] [ref=e79]
+              - paragraph [ref=e80]: "A referencia premium aqui e simples: hierarquia clara, status atual evidente e CTA de upgrade bem colocado. O usuario precisa entender em segundos quanto pode consumir e qual e o proximo nivel."
+              - generic [ref=e81]:
+                - generic [ref=e83]:
+                  - generic [ref=e84]:
+                    - paragraph [ref=e85]: Plano atual
+                    - paragraph [ref=e86]: Starter
+                    - paragraph [ref=e87]: Ideal para explorar e validar
+                  - img [ref=e89]
+                - generic [ref=e92]:
+                  - generic [ref=e93]:
+                    - paragraph [ref=e94]: Tokens usados
+                    - paragraph [ref=e95]: 12.4k
+                    - paragraph [ref=e96]: de 50k disponiveis
+                  - img [ref=e98]
+                - generic [ref=e101]:
+                  - generic [ref=e102]:
+                    - paragraph [ref=e103]: Reset em
+                    - paragraph [ref=e104]: 18 dias
+                    - paragraph [ref=e105]: ciclo mensal em andamento
+                  - img [ref=e107]
+            - generic [ref=e109]:
+              - paragraph [ref=e110]: Saude do consumo
+              - generic [ref=e111]:
+                - generic [ref=e112]:
+                  - heading "Uso de tokens este mes" [level=3] [ref=e113]
+                  - generic [ref=e114]:
+                    - img [ref=e115]
+                    - text: Saudavel
+                - progressbar "Progresso" [ref=e118]
+                - generic [ref=e120]:
+                  - generic [ref=e121]: 12.400 tokens usados
+                  - generic [ref=e122]: 37.600 restantes
+              - generic [ref=e123]:
+                - paragraph [ref=e124]: Leitura rapida
+                - list [ref=e125]:
+                  - listitem [ref=e126]:
+                    - img [ref=e127]
+                    - text: consumo abaixo da zona de risco
+                  - listitem [ref=e130]:
+                    - img [ref=e131]
+                    - text: upgrade recomendado so para fluxos multi-equipe
+                  - listitem [ref=e133]:
+                    - img [ref=e134]
+                    - text: uso semanal concentrado em dias uteis
+          - generic [ref=e136]:
+            - generic [ref=e137]:
+              - generic [ref=e138]:
+                - generic [ref=e139]:
+                  - paragraph [ref=e140]: Tendencia semanal
+                  - heading "Distribuicao de consumo" [level=3] [ref=e141]
+                - generic [ref=e142]:
+                  - img [ref=e143]
+                  - text: ultimos 7 dias
+              - generic [ref=e146]:
+                - generic [ref=e147]:
+                  - 'generic "Seg: 3.200 tokens" [ref=e149]'
+                  - generic [ref=e150]: Seg
+                - generic [ref=e151]:
+                  - 'generic "Ter: 5.400 tokens" [ref=e153]'
+                  - generic [ref=e154]: Ter
+                - generic [ref=e155]:
+                  - 'generic "Qua: 2.100 tokens" [ref=e157]'
+                  - generic [ref=e158]: Qua
+                - generic [ref=e159]:
+                  - 'generic "Qui: 7.800 tokens" [ref=e161]'
+                  - generic [ref=e162]: Qui
+                - generic [ref=e163]:
+                  - 'generic "Sex: 6.300 tokens" [ref=e165]'
+                  - generic [ref=e166]: Sex
+                - generic [ref=e167]:
+                  - 'generic "Sab: 1.200 tokens" [ref=e169]'
+                  - generic [ref=e170]: Sab
+                - generic [ref=e171]:
+                  - 'generic "Dom: 900 tokens" [ref=e173]'
+                  - generic [ref=e174]: Dom
+            - generic [ref=e175]:
+              - paragraph [ref=e176]: Uso recomendado
+              - heading "Seus limites hoje cobrem bem o fluxo principal." [level=3] [ref=e177]
+              - generic [ref=e178]:
+                - generic [ref=e179]:
+                  - paragraph [ref=e180]: Quando subir para Pro
+                  - paragraph [ref=e181]: Equipes compartilhando prompts, historico ilimitado e uso recorrente de canvas mode.
+                - generic [ref=e182]:
+                  - paragraph [ref=e183]: Quando falar com vendas
+                  - paragraph [ref=e184]: Governanca corporativa, SSO e integracoes dedicadas para operacao em escala.
+          - generic [ref=e185]:
+            - generic [ref=e186]:
+              - img [ref=e187]
+              - heading "Planos disponiveis" [level=2] [ref=e189]
+            - generic [ref=e190]:
+              - generic [ref=e191]:
+                - generic [ref=e192]: Plano atual
+                - generic [ref=e193]:
+                  - heading "Starter" [level=3] [ref=e194]
+                  - paragraph [ref=e195]: Gratis
+                  - paragraph [ref=e196]: Ideal para explorar e validar
+                  - list [ref=e197]:
+                    - listitem [ref=e198]:
+                      - img [ref=e199]
+                      - generic [ref=e201]: 5 modelos disponiveis
+                    - listitem [ref=e202]:
+                      - img [ref=e203]
+                      - generic [ref=e205]: 50k tokens/mes
+                    - listitem [ref=e206]:
+                      - img [ref=e207]
+                      - generic [ref=e209]: Historico 30 dias
+                    - listitem [ref=e210]:
+                      - img [ref=e211]
+                      - generic [ref=e213]: Suporte por e-mail
+                  - generic [ref=e214]:
+                    - img [ref=e215]
+                    - text: Plano ativo
+              - generic [ref=e218]:
+                - heading "Pro" [level=3] [ref=e219]
+                - paragraph [ref=e220]: R$ 49/mes
+                - paragraph [ref=e221]: Para profissionais e equipes
+                - list [ref=e222]:
+                  - listitem [ref=e223]:
+                    - img [ref=e224]
+                    - generic [ref=e226]: 13+ modelos disponiveis
+                  - listitem [ref=e227]:
+                    - img [ref=e228]
+                    - generic [ref=e230]: 500k tokens/mes
+                  - listitem [ref=e231]:
+                    - img [ref=e232]
+                    - generic [ref=e234]: Historico ilimitado
+                  - listitem [ref=e235]:
+                    - img [ref=e236]
+                    - generic [ref=e238]: Canvas Mode
+                  - listitem [ref=e239]:
+                    - img [ref=e240]
+                    - generic [ref=e242]: Suporte prioritario
+                  - listitem [ref=e243]:
+                    - img [ref=e244]
+                    - generic [ref=e246]: API access
+                - button "Fazer upgrade" [ref=e247]
+              - generic [ref=e249]:
+                - heading "Enterprise" [level=3] [ref=e250]
+                - paragraph [ref=e251]: Personalizado
+                - paragraph [ref=e252]: Escala e seguranca corporativa
+                - list [ref=e253]:
+                  - listitem [ref=e254]:
+                    - img [ref=e255]
+                    - generic [ref=e257]: Tokens ilimitados
+                  - listitem [ref=e258]:
+                    - img [ref=e259]
+                    - generic [ref=e261]: SSO / SAML
+                  - listitem [ref=e262]:
+                    - img [ref=e263]
+                    - generic [ref=e265]: SLA dedicado
+                  - listitem [ref=e266]:
+                    - img [ref=e267]
+                    - generic [ref=e269]: Integracoes custom
+                  - listitem [ref=e270]:
+                    - img [ref=e271]
+                    - generic [ref=e273]: Treinamento da equipe
+                - button "Falar com vendas" [ref=e274]

@@ -86,7 +86,6 @@ export const trackEvent = (
   writeEvents(current);
 
   if (process.env.NODE_ENV !== 'production') {
-    // eslint-disable-next-line no-console
     console.info('[analytics]', item);
   }
 

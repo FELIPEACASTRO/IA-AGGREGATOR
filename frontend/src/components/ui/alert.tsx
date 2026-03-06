@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+﻿import { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
 type AlertProps = {
@@ -8,14 +8,18 @@ type AlertProps = {
 };
 
 const variants: Record<NonNullable<AlertProps['variant']>, string> = {
-  error: 'text-[var(--destructive)] bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/50',
-  info: 'text-[var(--foreground)] bg-[var(--secondary)] border-[var(--border)]',
-  success: 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50',
+  error: 'border-[rgba(255,107,135,0.28)] bg-[rgba(255,107,135,0.08)] text-[var(--destructive)]',
+  info: 'border-[var(--border)] bg-[rgba(119,184,255,0.08)] text-[var(--foreground)]',
+  success: 'border-[rgba(78,217,167,0.28)] bg-[rgba(78,217,167,0.08)] text-[var(--success)]',
 };
 
 export function Alert({ children, variant = 'info', className }: AlertProps) {
   return (
-    <div className={cn('rounded-lg border p-3 text-sm', variants[variant], className)} role="status" aria-live="polite">
+    <div
+      className={cn('rounded-[var(--radius-md)] border px-4 py-3 text-[var(--text-sm)] shadow-[var(--shadow-sm)]', variants[variant], className)}
+      role="status"
+      aria-live="polite"
+    >
       {children}
     </div>
   );

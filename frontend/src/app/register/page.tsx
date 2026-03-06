@@ -1,14 +1,15 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
-import { useAuthStore } from '@/stores/auth-store';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
 import { AuthShell } from '@/components/app/auth-shell';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { trackEvent } from '@/lib/analytics';
+import { useAuthStore } from '@/stores/auth-store';
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
@@ -17,15 +18,15 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const register = useAuthStore((s) => s.register);
+  const register = useAuthStore((state) => state.register);
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setError('');
 
     if (password !== confirmPassword) {
-      setError('As senhas não coincidem');
+      setError('As senhas nao coincidem');
       return;
     }
 
@@ -41,9 +42,7 @@ export default function RegisterPage() {
       router.push('/welcome');
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } };
-      const message =
-        axiosErr?.response?.data?.message ||
-        (err instanceof Error ? err.message : 'Erro ao criar conta');
+      const message = axiosErr?.response?.data?.message || (err instanceof Error ? err.message : 'Erro ao criar conta');
       trackEvent('auth_register_error', { message });
       setError(message);
     } finally {
@@ -52,79 +51,46 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthShell title="Criar Conta" subtitle="Configure seu acesso à plataforma IA Aggregator">
+    <AuthShell title="Criar conta" subtitle="Abra seu workspace no Lume e deixe o onboarding preparar o fluxo ideal para o seu uso.">
       <form onSubmit={handleSubmit} className="space-y-4">
         {error ? <Alert variant="error">{error}</Alert> : null}
 
         <div className="space-y-2">
-          <label htmlFor="fullName" className="text-sm font-medium">
-            Nome Completo
+          <label htmlFor="fullName" className="text-[0.8rem] font-semibold text-[var(--muted-foreground)]">
+            Nome completo
           </label>
-          <Input
-            id="fullName"
-            type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            required
-            placeholder="Seu nome completo"
-            autoComplete="name"
-          />
+          <Input id="fullName" type="text" value={fullName} onChange={(event) => setFullName(event.target.value)} required placeholder="Seu nome" autoComplete="name" />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium">
+          <label htmlFor="email" className="text-[0.8rem] font-semibold text-[var(--muted-foreground)]">
             Email
           </label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            placeholder="seu@email.com"
-            autoComplete="email"
-          />
+          <Input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required placeholder="voce@empresa.com" autoComplete="email" />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium">
+          <label htmlFor="password" className="text-[0.8rem] font-semibold text-[var(--muted-foreground)]">
             Senha
           </label>
-          <Input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={8}
-            placeholder="Mínimo 8 caracteres"
-            autoComplete="new-password"
-          />
+          <Input id="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} placeholder="Minimo de 8 caracteres" autoComplete="new-password" />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="confirmPassword" className="text-sm font-medium">
-            Confirmar Senha
+          <label htmlFor="confirmPassword" className="text-[0.8rem] font-semibold text-[var(--muted-foreground)]">
+            Confirmar senha
           </label>
-          <Input
-            id="confirmPassword"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            placeholder="Repita sua senha"
-            autoComplete="new-password"
-          />
+          <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required placeholder="Repita a senha" autoComplete="new-password" />
         </div>
 
-        <Button type="submit" disabled={loading} className="w-full">
-          {loading ? 'Criando conta...' : 'Criar Conta'}
+        <Button type="submit" variant="brand" size="lg" disabled={loading} className="w-full">
+          {loading ? 'Criando conta...' : 'Criar acesso ao Lume'}
         </Button>
       </form>
 
-      <p className="text-center text-sm text-[var(--muted-foreground)]">
-        Já tem uma conta?{' '}
-        <Link href="/login" className="text-[var(--primary)] hover:underline">
+      <p className="mt-5 text-center text-[0.82rem] text-[var(--muted-foreground)]">
+        Ja possui conta?{' '}
+        <Link href="/login" className="font-semibold text-[var(--foreground)] hover:text-[var(--brand-primary)]">
           Entrar
         </Link>
       </p>

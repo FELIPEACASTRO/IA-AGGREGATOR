@@ -1,9 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, MessageSquare, BookOpen, Zap, CreditCard, Settings, Plus, Trash2, Pin, ArrowRight } from 'lucide-react';
+import { Search, MessageSquare, BookOpen, Zap, CreditCard, Settings, Plus, Pin, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/cn';
 import { useChatStore } from '@/stores/chat-store';
@@ -28,27 +28,24 @@ function useCommandItems(onClose: () => void): CommandItem[] {
   const { conversations, createConversation, setActiveConversation } = useChatStore();
 
   const navigate = (path: string) => { router.push(path); onClose(); };
-  const openConv = (id: string) => { setActiveConversation(id); router.push('/chat'); onClose(); };
-  const newConv = () => { createConversation(); router.push('/chat'); onClose(); };
+  const openConversation = (id: string) => { setActiveConversation(id); router.push('/chat'); onClose(); };
+  const newConversation = () => { createConversation(); router.push('/chat'); onClose(); };
 
   return [
-    // Navigation
-    { id: 'nav-chat', label: 'Ir para Chat', icon: <MessageSquare className="h-4 w-4" />, group: 'Navegar', action: () => navigate('/chat'), keywords: ['chat', 'conversar'] },
-    { id: 'nav-library', label: 'Ir para Biblioteca', icon: <BookOpen className="h-4 w-4" />, group: 'Navegar', action: () => navigate('/library'), keywords: ['biblioteca', 'histórico'] },
-    { id: 'nav-prompts', label: 'Ir para Prompts', icon: <Zap className="h-4 w-4" />, group: 'Navegar', action: () => navigate('/prompts'), keywords: ['prompts', 'templates'] },
-    { id: 'nav-billing', label: 'Ir para Plano', icon: <CreditCard className="h-4 w-4" />, group: 'Navegar', action: () => navigate('/billing'), keywords: ['plano', 'billing', 'crédito'] },
-    { id: 'nav-settings', label: 'Ir para Configurações', icon: <Settings className="h-4 w-4" />, group: 'Navegar', action: () => navigate('/settings'), keywords: ['configurações', 'settings'] },
-    // Actions
-    { id: 'action-new-conv', label: 'Nova Conversa', description: 'Iniciar uma nova conversa', icon: <Plus className="h-4 w-4" />, group: 'Ações', action: newConv, keywords: ['nova', 'new', 'criar'] },
-    // Recent conversations
-    ...conversations.slice(0, 8).map((conv) => ({
-      id: `conv-${conv.id}`,
-      label: conv.title,
-      description: `${conv.model} · ${conv.messages.length} mensagens`,
-      icon: conv.pinned ? <Pin className="h-4 w-4" /> : <MessageSquare className="h-4 w-4" />,
+    { id: 'nav-chat', label: 'Ir para Chat', icon: <MessageSquare className="h-4 w-4" />, group: 'Navegar', action: () => navigate('/chat'), keywords: ['chat', 'conversa'] },
+    { id: 'nav-library', label: 'Ir para Biblioteca', icon: <BookOpen className="h-4 w-4" />, group: 'Navegar', action: () => navigate('/library'), keywords: ['biblioteca', 'acervo'] },
+    { id: 'nav-prompts', label: 'Ir para Templates', icon: <Zap className="h-4 w-4" />, group: 'Navegar', action: () => navigate('/prompts'), keywords: ['template', 'prompt'] },
+    { id: 'nav-billing', label: 'Ir para Plano', icon: <CreditCard className="h-4 w-4" />, group: 'Navegar', action: () => navigate('/billing'), keywords: ['plano', 'billing'] },
+    { id: 'nav-settings', label: 'Ir para Configuracoes', icon: <Settings className="h-4 w-4" />, group: 'Navegar', action: () => navigate('/settings'), keywords: ['configuracoes', 'perfil'] },
+    { id: 'action-new-conv', label: 'Nova conversa', description: 'Abrir um chat em branco', icon: <Plus className="h-4 w-4" />, group: 'Acoes', action: newConversation, keywords: ['nova', 'criar'] },
+    ...conversations.slice(0, 8).map((conversation) => ({
+      id: `conv-${conversation.id}`,
+      label: conversation.title,
+      description: `${conversation.model} · ${conversation.messages.length} mensagens`,
+      icon: conversation.pinned ? <Pin className="h-4 w-4" /> : <MessageSquare className="h-4 w-4" />,
       group: 'Conversas recentes',
-      action: () => openConv(conv.id),
-      keywords: [conv.title.toLowerCase(), conv.model],
+      action: () => openConversation(conversation.id),
+      keywords: [conversation.title.toLowerCase(), conversation.model],
     })),
   ];
 }
@@ -61,134 +58,110 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
 
   const filtered = query.trim()
     ? items.filter((item) => {
-        const q = query.toLowerCase();
-        return (
-          item.label.toLowerCase().includes(q) ||
-          item.description?.toLowerCase().includes(q) ||
-          item.keywords?.some((k) => k.includes(q))
-        );
+        const normalizedQuery = query.toLowerCase();
+        return item.label.toLowerCase().includes(normalizedQuery)
+          || item.description?.toLowerCase().includes(normalizedQuery)
+          || item.keywords?.some((keyword) => keyword.includes(normalizedQuery));
       })
     : items;
 
-  // Group by category
-  const groups = filtered.reduce<Record<string, CommandItem[]>>((acc, item) => {
-    if (!acc[item.group]) acc[item.group] = [];
-    acc[item.group].push(item);
-    return acc;
+  const groups = filtered.reduce<Record<string, CommandItem[]>>((accumulator, item) => {
+    if (!accumulator[item.group]) accumulator[item.group] = [];
+    accumulator[item.group].push(item);
+    return accumulator;
   }, {});
 
-  // Flat index for keyboard nav
-  const flatItems = filtered;
-
   useEffect(() => {
-    if (open) {
-      setQuery('');
-      setHighlighted(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+    if (!open) return;
+    setQuery('');
+    setHighlighted(0);
+    setTimeout(() => inputRef.current?.focus(), 50);
   }, [open]);
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        setHighlighted((h) => Math.min(h + 1, flatItems.length - 1));
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setHighlighted((h) => Math.max(h - 1, 0));
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        flatItems[highlighted]?.action();
-      } else if (e.key === 'Escape') {
-        onClose();
-      }
-    },
-    [flatItems, highlighted, onClose]
-  );
+  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setHighlighted((current) => Math.min(current + 1, filtered.length - 1));
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setHighlighted((current) => Math.max(current - 1, 0));
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      filtered[highlighted]?.action();
+    } else if (event.key === 'Escape') {
+      onClose();
+    }
+  }, [filtered, highlighted, onClose]);
 
   if (typeof document === 'undefined') return null;
 
   return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[var(--z-modal)] flex items-start justify-center pt-[15vh] px-4">
-          {/* Backdrop */}
+        <div className="fixed inset-0 z-[var(--z-modal)] flex items-start justify-center px-4 pt-[12vh]">
           <motion.div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-[rgba(3,8,18,0.72)] backdrop-blur-md"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             onClick={onClose}
           />
-
-          {/* Panel */}
           <motion.div
-            className="glass relative z-10 w-full max-w-xl overflow-hidden rounded-[var(--radius-xl)] shadow-[var(--shadow-xl)]"
-            initial={{ opacity: 0, scale: 0.95, y: -12 }}
+            className="glass relative z-10 w-full max-w-2xl overflow-hidden rounded-[var(--radius-xl)] shadow-[var(--shadow-xl)]"
+            initial={{ opacity: 0, scale: 0.96, y: -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -12 }}
+            exit={{ opacity: 0, scale: 0.96, y: -10 }}
             transition={{ duration: 0.18, ease: [0.34, 1.56, 0.64, 1] }}
             onKeyDown={handleKeyDown}
           >
-            {/* Search input */}
-            <div className="flex items-center gap-3 border-b border-[var(--glass-border)] px-4 py-3.5">
+            <div className="flex items-center gap-3 border-b border-[var(--glass-border)] px-5 py-4">
               <Search className="h-4 w-4 shrink-0 text-[var(--muted-foreground)]" />
               <input
                 ref={inputRef}
                 value={query}
-                onChange={(e) => { setQuery(e.target.value); setHighlighted(0); }}
-                placeholder="Buscar páginas, conversas, ações..."
+                onChange={(event) => { setQuery(event.target.value); setHighlighted(0); }}
+                placeholder="Buscar paginas, conversas e acoes..."
                 className="flex-1 bg-transparent text-[var(--text-sm)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none"
                 aria-label="Buscar comandos"
                 autoComplete="off"
               />
-              <kbd className="rounded border border-[var(--border)] bg-[var(--surface-2)] px-1.5 py-0.5 text-[0.6rem] text-[var(--muted-foreground)]">
-                ESC
-              </kbd>
+              <kbd className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.04)] px-2 py-1 text-[0.62rem] text-[var(--muted-foreground)]">ESC</kbd>
             </div>
-
-            {/* Results */}
-            <div className="max-h-96 overflow-y-auto py-2">
-              {flatItems.length === 0 ? (
-                <div className="px-4 py-8 text-center text-[var(--text-sm)] text-[var(--muted-foreground)]">
+            <div className="max-h-[28rem] overflow-y-auto py-3">
+              {filtered.length === 0 ? (
+                <div className="px-5 py-10 text-center text-[var(--text-sm)] text-[var(--muted-foreground)]">
                   Nenhum resultado para &ldquo;{query}&rdquo;
                 </div>
               ) : (
                 Object.entries(groups).map(([group, groupItems]) => {
-                  const flatOffset = flatItems.findIndex((item) => item.id === groupItems[0].id);
+                  const offset = filtered.findIndex((item) => item.id === groupItems[0].id);
                   return (
                     <div key={group}>
-                      <div className="px-4 py-1.5 text-[0.6rem] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">
+                      <div className="px-5 py-1.5 text-[0.64rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">
                         {group}
                       </div>
-                      {groupItems.map((item, i) => {
-                        const idx = flatOffset + i;
+                      {groupItems.map((item, index) => {
+                        const flatIndex = offset + index;
                         return (
                           <button
                             key={item.id}
                             type="button"
-                            onMouseEnter={() => setHighlighted(idx)}
+                            onMouseEnter={() => setHighlighted(flatIndex)}
                             onClick={item.action}
                             className={cn(
-                              'flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors',
-                              idx === highlighted
-                                ? 'bg-[var(--surface-3)] text-[var(--brand-primary)]'
-                                : 'text-[var(--foreground)]'
+                              'flex w-full items-center gap-3 px-5 py-3 text-left transition-colors',
+                              flatIndex === highlighted ? 'bg-[rgba(96,115,255,0.12)] text-[#dfe6ff]' : 'text-[var(--foreground)]'
                             )}
                           >
-                            <span className={cn('shrink-0', idx === highlighted ? 'text-[var(--brand-primary)]' : 'text-[var(--muted-foreground)]')}>
+                            <span className={cn('shrink-0', flatIndex === highlighted ? 'text-[var(--brand-primary)]' : 'text-[var(--muted-foreground)]')}>
                               {item.icon}
                             </span>
-                            <span className="flex-1 min-w-0">
-                              <span className="block text-[var(--text-sm)] font-medium truncate">{item.label}</span>
-                              {item.description && (
-                                <span className="block text-[0.65rem] text-[var(--muted-foreground)] truncate">{item.description}</span>
-                              )}
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[var(--text-sm)] font-medium">{item.label}</span>
+                              {item.description && <span className="block truncate text-[0.7rem] text-[var(--muted-foreground)]">{item.description}</span>}
                             </span>
-                            {idx === highlighted && (
-                              <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[var(--brand-primary)]" />
-                            )}
+                            {flatIndex === highlighted && <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[var(--brand-primary)]" />}
                           </button>
                         );
                       })}
@@ -196,20 +169,6 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                   );
                 })
               )}
-            </div>
-
-            {/* Footer hint bar */}
-            <div className="flex items-center gap-4 border-t border-[var(--glass-border)] px-4 py-2.5">
-              {[
-                { key: '↑↓', label: 'navegar' },
-                { key: 'Enter', label: 'selecionar' },
-                { key: 'Esc', label: 'fechar' },
-              ].map(({ key, label }) => (
-                <span key={key} className="flex items-center gap-1 text-[0.6rem] text-[var(--muted-foreground)]">
-                  <kbd className="rounded border border-[var(--border)] bg-[var(--surface-2)] px-1.5 py-0.5 font-mono">{key}</kbd>
-                  {label}
-                </span>
-              ))}
             </div>
           </motion.div>
         </div>
@@ -219,15 +178,14 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   );
 }
 
-// Hook for global Cmd+K listener
 export function useCommandPalette() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setOpen((v) => !v);
+    const handler = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setOpen((current) => !current);
       }
     };
     window.addEventListener('keydown', handler);

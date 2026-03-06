@@ -1,0 +1,156 @@
+- generic [active] [ref=e1]:
+  - link "Pular para o conteudo" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - alert [ref=e8]
+  - generic [ref=e9]:
+    - generic [ref=e10]:
+      - complementary [ref=e11]:
+        - link "Lume AI Workspace" [ref=e13] [cursor=pointer]:
+          - /url: /chat
+          - img [ref=e15]
+          - generic [ref=e18]:
+            - generic [ref=e19]: Lume
+            - generic [ref=e20]: AI Workspace
+        - button "Abrir busca" [ref=e22]:
+          - img [ref=e23]
+          - text: Buscar, paginas e acoes
+        - navigation "Navegacao principal" [ref=e26]:
+          - link "Chat" [ref=e27] [cursor=pointer]:
+            - /url: /chat
+            - img [ref=e28]
+            - generic [ref=e30]: Chat
+            - img [ref=e31]
+          - link "Biblioteca" [ref=e33] [cursor=pointer]:
+            - /url: /library
+            - img [ref=e34]
+            - generic [ref=e36]: Biblioteca
+          - link "Templates" [ref=e37] [cursor=pointer]:
+            - /url: /prompts
+            - img [ref=e38]
+            - generic [ref=e40]: Templates
+          - link "Plano" [ref=e41] [cursor=pointer]:
+            - /url: /billing
+            - img [ref=e42]
+            - generic [ref=e44]: Plano
+          - link "Configuracoes" [ref=e45] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e46]
+            - generic [ref=e49]: Configuracoes
+        - generic [ref=e50]:
+          - 'button "Tema: Escuro" [ref=e51]':
+            - img [ref=e52]
+            - generic [ref=e54]: Escuro
+          - generic [ref=e55]:
+            - generic [ref=e56]:
+              - generic "Lume Smoke" [ref=e57]: LS
+              - generic [ref=e58]:
+                - paragraph [ref=e59]: Lume Smoke
+                - paragraph [ref=e60]: lume-smoke-20260305215155@test.local
+            - button "Sair" [ref=e61]:
+              - img [ref=e62]
+              - text: Sair
+      - generic [ref=e65]:
+        - banner [ref=e66]:
+          - generic [ref=e67]:
+            - generic [ref=e68]:
+              - button "Abrir menu" [ref=e69]:
+                - img [ref=e70]
+              - generic [ref=e72]:
+                - paragraph [ref=e73]: Lume workspace
+                - heading "Chat" [level=1] [ref=e74]
+                - paragraph [ref=e75]: Lume · 0 conversas
+            - generic [ref=e77]:
+              - generic [ref=e78]:
+                - button "Chat" [ref=e79]:
+                  - img [ref=e80]
+                  - text: Chat
+                - button "Canvas" [ref=e82]:
+                  - img [ref=e83]
+                  - text: Canvas
+              - button "GPT-4o Mini" [ref=e89]:
+                - generic [ref=e91]: GPT-4o Mini
+                - img [ref=e92]
+        - main [ref=e94]:
+          - generic [ref=e96]:
+            - generic [ref=e98]:
+              - heading "Como posso ajudar hoje?" [level=2] [ref=e99]
+              - paragraph [ref=e100]: Selecione um modelo abaixo ou envie sua mensagem.
+              - generic [ref=e101]:
+                - button "GPT-4o Mini OpenAI Rapido" [ref=e102]:
+                  - generic [ref=e103]: GPT-4o Mini
+                  - generic [ref=e104]: OpenAI
+                  - generic [ref=e105]:
+                    - img [ref=e106]
+                    - text: Rapido
+                - button "GPT-4.1 Mini OpenAI Rapido" [ref=e108]:
+                  - generic [ref=e109]: GPT-4.1 Mini
+                  - generic [ref=e110]: OpenAI
+                  - generic [ref=e111]:
+                    - img [ref=e112]
+                    - text: Rapido
+                - button "Claude 3.5 Haiku Anthropic Rapido" [ref=e114]:
+                  - generic [ref=e115]: Claude 3.5 Haiku
+                  - generic [ref=e116]: Anthropic
+                  - generic [ref=e117]:
+                    - img [ref=e118]
+                    - text: Rapido
+                - button "Gemini 1.5 Flash Google Rapido" [ref=e120]:
+                  - generic [ref=e121]: Gemini 1.5 Flash
+                  - generic [ref=e122]: Google
+                  - generic [ref=e123]:
+                    - img [ref=e124]
+                    - text: Rapido
+                - button "DeepSeek Chat DeepSeek Equilibrado" [ref=e126]:
+                  - generic [ref=e127]: DeepSeek Chat
+                  - generic [ref=e128]: DeepSeek
+                  - generic [ref=e129]:
+                    - img [ref=e130]
+                    - text: Equilibrado
+                - button "DeepSeek Reasoner DeepSeek Poderoso" [ref=e134]:
+                  - generic [ref=e135]: DeepSeek Reasoner
+                  - generic [ref=e136]: DeepSeek
+                  - generic [ref=e137]:
+                    - img [ref=e138]
+                    - text: Poderoso
+            - generic [ref=e149]:
+              - generic [ref=e150]:
+                - button "Anexar arquivo" [ref=e151]:
+                  - img [ref=e152]
+                - textbox "Envie uma mensagem..."
+                - button "Enviar mensagem" [disabled] [ref=e153]:
+                  - img [ref=e154]
+              - generic [ref=e156]:
+                - button "Resuma os pontos principais em 5 bullets executivos." [ref=e157]:
+                  - img [ref=e158]
+                  - generic [ref=e161]: Resuma os pontos principais em 5 bullets executivos.
+                - button "Monte um plano de acao com etapas, responsaveis e riscos." [ref=e162]:
+                  - img [ref=e163]
+                  - generic [ref=e166]: Monte um plano de acao com etapas, responsaveis e riscos.
+                - button "Reescreva em tom profissional e objetivo." [ref=e167]:
+                  - img [ref=e168]
+                  - generic [ref=e171]: Reescreva em tom profissional e objetivo.
+                - button "Compare duas alternativas e recomende com justificativa." [ref=e172]:
+                  - img [ref=e173]
+                  - generic [ref=e176]: Compare duas alternativas e recomende com justificativa.
+              - paragraph [ref=e177]: Seta cima/baixo = historico · Enter envia · Shift+Enter = nova linha · Ctrl+N = nova conversa
+    - navigation "Atalhos rapidos" [ref=e178]:
+      - link "Chat" [ref=e179] [cursor=pointer]:
+        - /url: /chat
+        - img [ref=e180]
+        - generic [ref=e182]: Chat
+      - link "Biblioteca" [ref=e183] [cursor=pointer]:
+        - /url: /library
+        - img [ref=e184]
+        - generic [ref=e186]: Biblioteca
+      - link "Templates" [ref=e187] [cursor=pointer]:
+        - /url: /prompts
+        - img [ref=e188]
+        - generic [ref=e190]: Templates
+      - link "Plano" [ref=e191] [cursor=pointer]:
+        - /url: /billing
+        - img [ref=e192]
+        - generic [ref=e194]: Plano
+      - link "Configuracoes" [ref=e195] [cursor=pointer]:
+        - /url: /settings
+        - img [ref=e196]
+        - generic [ref=e199]: Configuracoes

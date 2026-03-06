@@ -21,8 +21,8 @@ const applyTheme = (resolved: 'light' | 'dark') => {
 
 export const useThemeStore = create<ThemeState>()(
   persist(
-    (set, get) => ({
-      theme: 'system',
+    (set) => ({
+      theme: 'dark',
       resolvedTheme: 'dark',
 
       setTheme: (theme: Theme) => {
@@ -32,7 +32,7 @@ export const useThemeStore = create<ThemeState>()(
       },
     }),
     {
-      name: 'ia-theme',
+      name: 'lume-theme',
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         const resolved =

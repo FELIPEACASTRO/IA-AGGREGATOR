@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import { AppShell } from '@/components/app/app-shell';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import { clearTrackedEvents, flushTrackedEvents, getTrackedEvents, type AnalyticsEvent } from '@/lib/analytics';
 import { toast } from '@/stores/toast-store';
+import { Activity, Filter, LineChart, Radar } from 'lucide-react';
 
 const formatDate = (value: string) => {
   try {
@@ -120,6 +121,34 @@ type PersistedAnalyticsFilters = {
   compareSourceB?: string;
   selectedCategory?: string;
 };
+
+function SummaryTile({
+  label,
+  value,
+  helper,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  helper: string;
+  icon: React.ElementType;
+}) {
+  return (
+
+    <div className="lume-panel-soft rounded-[var(--radius-xl)] p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">{label}</p>
+          <p className="mt-2 text-[var(--text-2xl)] font-semibold text-[var(--foreground)]">{value}</p>
+          <p className="mt-1 text-[var(--text-xs)] text-[var(--muted-foreground)]">{helper}</p>
+        </div>
+        <span className="inline-flex h-11 w-11 items-center justify-center rounded-[18px] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] text-[var(--brand-primary)]">
+          <Icon className="h-5 w-5" />
+        </span>
+      </div>
+    </div>
+  );
+}
 
 const resolveAnalyticsEndpoint = (suffix: string) => {
   const base = process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT
@@ -291,7 +320,7 @@ const buildRetentionMetrics = (
 };
 
 export default function AnalyticsDiagnosticsPage() {
-  const [events, setEvents] = useState<AnalyticsEvent[]>(() => getTrackedEvents());
+  const [events, setEvents] = useState<AnalyticsEvent[]>([]);
   const [isSendingReport, setIsSendingReport] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isLoadingReportDetails, setIsLoadingReportDetails] = useState(false);
@@ -314,6 +343,10 @@ export default function AnalyticsDiagnosticsPage() {
   const [selectedReportOffset, setSelectedReportOffset] = useState(0);
   const [hasMoreReportEvents, setHasMoreReportEvents] = useState(false);
   const [settingsHydrated, setSettingsHydrated] = useState(false);
+
+  useEffect(() => {
+    setEvents(getTrackedEvents());
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -714,7 +747,35 @@ export default function AnalyticsDiagnosticsPage() {
     toast.info('Filtros resetados', 'Os filtros de analytics voltaram ao padrão.');
   };
 
+  const summaryCards = [
+    {
+      label: 'Eventos locais',
+      value: events.length.toLocaleString('pt-BR'),
+      helper: 'capturados no browser atual',
+      icon: Activity,
+    },
+    {
+      label: 'Ativacao',
+      value: `${localActivationRate}%`,
+      helper: 'conclusao do onboarding local',
+      icon: Radar,
+    },
+    {
+      label: 'Retencao D7',
+      value: `${localRetention.d7Rate}%`,
+      helper: `${localRetention.d7Retained}/${localRetention.eligibleD7} coortes elegiveis`,
+      icon: LineChart,
+    },
+    {
+      label: 'Filtros ativos',
+      value: String(activeFilterCount),
+      helper: `${persistedReports.length} relatorios em memoria`,
+      icon: Filter,
+    },
+  ];
+
   return (
+
     <AppShell
       title="Analytics"
       subtitle="Diagnóstico local de eventos UX para Product/Data"
@@ -755,8 +816,21 @@ export default function AnalyticsDiagnosticsPage() {
         </div>
       }
     >
-      <div className="grid gap-4 py-6 lg:grid-cols-[320px_1fr]">
-        <aside className="rounded-[16px] border border-[var(--border)] bg-[var(--background)] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+      <div className="space-y-4 py-6">
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {summaryCards.map((card) => (
+            <SummaryTile
+              key={card.label}
+              label={card.label}
+              value={card.value}
+              helper={card.helper}
+              icon={card.icon}
+            />
+          ))}
+        </section>
+
+        <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+        <aside className="lume-panel rounded-[var(--radius-2xl)] p-4">
           <p className="text-sm font-semibold">Resumo</p>
           <p className="mt-1 text-xs text-[var(--muted-foreground)]">
             Total de eventos: {events.length}
@@ -801,6 +875,7 @@ export default function AnalyticsDiagnosticsPage() {
                     const max = Math.max(...localRetention.timeline.map((item) => item.events), 1);
                     const height = Math.max(4, Math.round((point.events / max) * 40));
                     return (
+
                       <div key={point.day} className="group flex-1">
                         <div className="w-full rounded-t-sm bg-[var(--brand-primary)]/60" style={{ height: `${height}px` }} title={`${point.day}: ${point.events}`} />
                       </div>
@@ -935,7 +1010,7 @@ export default function AnalyticsDiagnosticsPage() {
           </div>
         </aside>
 
-        <section className="rounded-[16px] border border-[var(--border)] bg-[var(--background)] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+        <section className="lume-panel rounded-[var(--radius-2xl)] p-4">
           <p className="text-sm font-semibold">Eventos</p>
           <div className="mt-3 max-h-[520px] space-y-2 overflow-y-auto pr-1">
             {events.length === 0 ? (
@@ -993,6 +1068,7 @@ export default function AnalyticsDiagnosticsPage() {
                     const deltaCount = (a?.count ?? 0) - (b?.count ?? 0);
                     const deltaRate = (a?.rate ?? 0) - (b?.rate ?? 0);
                     return (
+
                       <div key={`cmp-${step.key}`} className="rounded-[10px] border border-[var(--border)] bg-[var(--background)] px-2.5 py-2">
                         <div className="flex items-center justify-between gap-2">
                           <p className="truncate text-xs font-medium">{index + 1}. {step.label}</p>
@@ -1046,6 +1122,7 @@ export default function AnalyticsDiagnosticsPage() {
                   const deltaCount = (current?.count ?? 0) - (previous?.count ?? 0);
                   const deltaRate = (current?.rate ?? 0) - (previous?.rate ?? 0);
                   return (
+
                     <div key={`period-${step.key}`} className="rounded-[10px] border border-[var(--border)] bg-[var(--background)] px-2.5 py-2">
                       <div className="flex items-center justify-between gap-2">
                         <p className="truncate text-xs font-medium">{index + 1}. {step.label}</p>
@@ -1151,7 +1228,11 @@ export default function AnalyticsDiagnosticsPage() {
             </div>
           </div>
         </section>
+        </div>
       </div>
     </AppShell>
   );
 }
+
+
+

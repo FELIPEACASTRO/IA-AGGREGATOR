@@ -8,156 +8,223 @@ import { toast } from '@/stores/toast-store';
 import { trackEvent } from '@/lib/analytics';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/cn';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
-  Globe2, Moon, Sun, Monitor, UserRound, Bell, Shield,
-  Database, ChevronRight, Save, Trash2,
+  Bell,
+  Database,
+  Globe2,
+  Monitor,
+  Moon,
+  Save,
+  Shield,
+  Sparkles,
+  Sun,
+  Trash2,
+  UserRound,
 } from 'lucide-react';
 
 type ThemeOption = 'light' | 'dark' | 'system';
 
-const themeOptions: { value: ThemeOption; label: string; icon: React.ElementType }[] = [
-  { value: 'light', label: 'Claro', icon: Sun },
-  { value: 'dark', label: 'Escuro', icon: Moon },
-  { value: 'system', label: 'Sistema', icon: Monitor },
+const themeOptions: { value: ThemeOption; label: string; icon: React.ElementType; helper: string }[] = [
+  { value: 'light', label: 'Claro', icon: Sun, helper: 'fallback secundario' },
+  { value: 'dark', label: 'Escuro', icon: Moon, helper: 'direcao principal' },
+  { value: 'system', label: 'Sistema', icon: Monitor, helper: 'segue o dispositivo' },
 ];
 
 const localeOptions = [
-  { value: 'pt-BR', label: 'Português (Brasil)' },
+  { value: 'pt-BR', label: 'Portugues (Brasil)' },
   { value: 'en-US', label: 'English (US)' },
-  { value: 'es-ES', label: 'Español' },
+  { value: 'es-ES', label: 'Espanol' },
 ];
 
-function SectionCard({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {
+function SectionCard({ title, helper, icon: Icon, children }: { title: string; helper: string; icon: React.ElementType; children: React.ReactNode }) {
   return (
-    <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-1)] overflow-hidden">
-      <div className="flex items-center gap-2.5 border-b border-[var(--border)] px-5 py-3.5">
-        <Icon className="h-4 w-4 text-[var(--muted-foreground)]" />
-        <h2 className="text-[var(--text-sm)] font-semibold">{title}</h2>
+    <section className="lume-panel-soft rounded-[var(--radius-2xl)] p-5">
+      <div className="flex items-start gap-3">
+        <span className="inline-flex h-11 w-11 items-center justify-center rounded-[18px] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] text-[var(--brand-primary)]">
+          <Icon className="h-5 w-5" />
+        </span>
+        <div>
+          <h2 className="text-[var(--text-lg)] font-semibold text-[var(--foreground)]">{title}</h2>
+          <p className="mt-1 text-[var(--text-xs)] text-[var(--muted-foreground)]">{helper}</p>
+        </div>
       </div>
-      <div className="p-5">{children}</div>
-    </div>
+      <div className="mt-5">{children}</div>
+    </section>
   );
 }
 
 export default function SettingsPage() {
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthStore((state) => state.user);
   const { theme, setTheme } = useThemeStore();
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [locale, setLocale] = useState('pt-BR');
   const [notifChat, setNotifChat] = useState(true);
   const [notifUpdates, setNotifUpdates] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = (event: React.FormEvent) => {
+    event.preventDefault();
     trackEvent('settings_save_preferences', { locale, hasName: Boolean(fullName) });
-    toast.success('Preferências salvas', 'Alterações aplicadas com sucesso.');
+    toast.success('Preferencias salvas', 'Alteracoes aplicadas com sucesso.');
   };
 
   return (
-    <AppShell title="Configurações" subtitle="Personalize sua conta e experiência">
-      <motion.form onSubmit={handleSave} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }} className="py-6 max-w-2xl space-y-5">
-
-        {/* Profile */}
-        <SectionCard title="Perfil" icon={UserRound}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="fullName" className="block text-[var(--text-xs)] font-medium text-[var(--muted-foreground)] mb-1.5">
-                Nome de exibição
-              </label>
-              <input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)}
-                placeholder="Seu nome"
-                className="w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 text-[var(--text-sm)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-shadow" />
-            </div>
-            <div>
-              <label className="block text-[var(--text-xs)] font-medium text-[var(--muted-foreground)] mb-1.5">
-                E-mail
-              </label>
-              <input value={user?.email || ''} disabled
-                className="w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 text-[var(--text-sm)] text-[var(--muted-foreground)] cursor-not-allowed opacity-60" />
-            </div>
-          </div>
-        </SectionCard>
-
-        {/* Appearance */}
-        <SectionCard title="Aparência" icon={Monitor}>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-[var(--text-xs)] font-medium text-[var(--muted-foreground)] mb-2">Tema</label>
-              <div className="grid grid-cols-3 gap-2">
-                {themeOptions.map((opt) => (
-                  <button key={opt.value} type="button" onClick={() => setTheme(opt.value)}
-                    className={cn('flex items-center justify-center gap-2 rounded-[var(--radius-md)] border py-2.5 text-[var(--text-xs)] font-medium transition-all',
-                      theme === opt.value
-                        ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]'
-                        : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted-foreground)] hover:border-[var(--border-strong)]')}>
-                    <opt.icon className="h-3.5 w-3.5" /> {opt.label}
-                  </button>
-                ))}
+    <AppShell title="Configuracoes" subtitle="Personalize sua conta e experiencia">
+      <motion.form
+        onSubmit={handleSave}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25 }}
+        className="grid gap-4 py-6 xl:grid-cols-[320px_minmax(0,1fr)]"
+      >
+        <aside className="space-y-4">
+          <section className="lume-panel rounded-[var(--radius-2xl)] p-5">
+            <span className="lume-kicker">
+              <Sparkles className="h-3.5 w-3.5" /> Workspace profile
+            </span>
+            <div className="mt-5 rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-5">
+              <div className="inline-flex h-14 w-14 items-center justify-center rounded-[20px] bg-[var(--brand-gradient)] text-white shadow-[var(--shadow-brand)]">
+                <UserRound className="h-6 w-6" />
               </div>
-            </div>
-            <div>
-              <label htmlFor="locale" className="block text-[var(--text-xs)] font-medium text-[var(--muted-foreground)] mb-1.5 flex items-center gap-1">
-                <Globe2 className="h-3.5 w-3.5" /> Idioma
-              </label>
-              <select id="locale" value={locale} onChange={(e) => setLocale(e.target.value)}
-                className="w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 text-[var(--text-sm)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-shadow">
-                {localeOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </SectionCard>
-
-        {/* Notifications */}
-        <SectionCard title="Notificações" icon={Bell}>
-          <div className="space-y-3">
-            {[
-              { id: 'chat', label: 'Respostas do chat', desc: 'Alerta quando a IA terminar de responder', value: notifChat, set: setNotifChat },
-              { id: 'updates', label: 'Novidades da plataforma', desc: 'Novos modelos e funcionalidades', value: notifUpdates, set: setNotifUpdates },
-            ].map((item) => (
-              <div key={item.id} className="flex items-center justify-between rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3">
-                <div>
-                  <p className="text-[var(--text-sm)] font-medium">{item.label}</p>
-                  <p className="text-[var(--text-xs)] text-[var(--muted-foreground)]">{item.desc}</p>
+              <p className="mt-4 text-[var(--text-xl)] font-semibold text-[var(--foreground)]">{user?.fullName || 'Conta Lume'}</p>
+              <p className="mt-1 text-[var(--text-sm)] text-[var(--muted-foreground)]">{user?.email}</p>
+              <div className="mt-5 grid gap-3">
+                <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.52)] p-4">
+                  <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Perfil</p>
+                  <p className="mt-2 text-[var(--text-sm)] text-[var(--muted-foreground)]">Preferencias salvas localmente para iteracao rapida do workspace.</p>
                 </div>
-                <button type="button" role="switch" aria-checked={item.value} onClick={() => item.set((v) => !v)}
-                  className={cn('relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2',
-                    item.value ? 'bg-[var(--brand-primary)]' : 'bg-[var(--surface-3)]')}>
-                  <span className={cn('pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition-transform',
-                    item.value ? 'translate-x-4' : 'translate-x-0')} />
-                </button>
+                <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.52)] p-4">
+                  <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Tema</p>
+                  <p className="mt-2 text-[var(--text-sm)] text-[var(--muted-foreground)]">Dark-first com opcao de override local para homologacao.</p>
+                </div>
               </div>
-            ))}
-          </div>
-        </SectionCard>
-
-        {/* Privacy */}
-        <SectionCard title="Privacidade e dados" icon={Shield}>
-          <div className="space-y-3">
-            <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 flex items-center justify-between">
-              <div>
-                <p className="text-[var(--text-sm)] font-medium flex items-center gap-1.5"><Database className="h-3.5 w-3.5 text-[var(--muted-foreground)]" /> Dados locais</p>
-                <p className="text-[var(--text-xs)] text-[var(--muted-foreground)]">Conversas e preferências armazenadas localmente</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-[var(--muted-foreground)]" />
             </div>
-            <button type="button"
-              onClick={() => { if (window.confirm('Limpar todos os dados locais? Esta ação é irreversível.')) { localStorage.clear(); toast.success('Dados limpos'); }}}
-              className="flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--destructive)]/30 bg-[var(--destructive)]/5 px-4 py-3 text-[var(--text-sm)] text-[var(--destructive)] hover:bg-[var(--destructive)]/10 transition-colors w-full">
-              <Trash2 className="h-3.5 w-3.5" /> Limpar todos os dados locais
-            </button>
-          </div>
-        </SectionCard>
+          </section>
+        </aside>
 
-        <div className="flex items-center gap-3 pt-2">
-          <button type="submit"
-            className="inline-flex items-center gap-2 rounded-[var(--radius-md)] px-5 py-2.5 text-[var(--text-sm)] font-medium text-white shadow-[var(--shadow-brand)] hover:opacity-90 transition-opacity"
-            style={{ background: 'var(--brand-gradient)' }}>
-            <Save className="h-3.5 w-3.5" /> Salvar preferências
-          </button>
-          <p className="text-[var(--text-xs)] text-[var(--muted-foreground)]">Preview — dados salvos localmente</p>
+        <div className="space-y-4">
+          <SectionCard title="Perfil" helper="Dados principais da conta visivel no workspace." icon={UserRound}>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <label htmlFor="fullName" className="text-[var(--text-xs)] font-semibold text-[var(--muted-foreground)]">
+                  Nome de exibicao
+                </label>
+                <Input id="fullName" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Seu nome" />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-[var(--text-xs)] font-semibold text-[var(--muted-foreground)]">
+                  E-mail
+                </label>
+                <Input id="email" value={user?.email || ''} disabled />
+              </div>
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Aparencia" helper="Escala visual consistente em todas as paginas do Lume." icon={Monitor}>
+            <div className="space-y-4">
+              <div>
+                <p className="mb-2 text-[var(--text-xs)] font-semibold text-[var(--muted-foreground)]">Tema</p>
+                <div className="grid gap-3 md:grid-cols-3">
+                  {themeOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setTheme(option.value)}
+                      className={cn(
+                        'rounded-[var(--radius-xl)] border p-4 text-left transition-colors',
+                        theme === option.value
+                          ? 'border-[var(--brand-primary)] bg-[rgba(96,115,255,0.1)] text-[var(--brand-primary)]'
+                          : 'border-[var(--border)] bg-[rgba(255,255,255,0.03)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]',
+                      )}
+                    >
+                      <option.icon className="h-5 w-5" />
+                      <p className="mt-3 text-[var(--text-sm)] font-semibold">{option.label}</p>
+                      <p className="mt-1 text-[0.72rem]">{option.helper}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="locale" className="inline-flex items-center gap-2 text-[var(--text-xs)] font-semibold text-[var(--muted-foreground)]">
+                  <Globe2 className="h-4 w-4" /> Idioma
+                </label>
+                <select
+                  id="locale"
+                  value={locale}
+                  onChange={(event) => setLocale(event.target.value)}
+                  className="lume-field"
+                >
+                  {localeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Notificacoes" helper="Ajuste o que merece interrupcao no seu fluxo." icon={Bell}>
+            <div className="space-y-3">
+              {[
+                { id: 'chat', label: 'Respostas do chat', desc: 'Alerta quando a IA terminar de responder', value: notifChat, setValue: setNotifChat },
+                { id: 'updates', label: 'Novidades da plataforma', desc: 'Novos modelos e funcionalidades', value: notifUpdates, setValue: setNotifUpdates },
+              ].map((item) => (
+                <div key={item.id} className="flex items-center justify-between gap-4 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-4">
+                  <div>
+                    <p className="text-[var(--text-sm)] font-semibold text-[var(--foreground)]">{item.label}</p>
+                    <p className="mt-1 text-[var(--text-xs)] text-[var(--muted-foreground)]">{item.desc}</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={item.value}
+                    onClick={() => item.setValue((current) => !current)}
+                    className={cn(
+                      'relative inline-flex h-7 w-12 shrink-0 rounded-full border border-transparent transition-colors',
+                      item.value ? 'bg-[var(--brand-primary)]' : 'bg-[var(--surface-3)]',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'absolute left-1 top-1 inline-flex h-5 w-5 rounded-full bg-white shadow-[var(--shadow-sm)] transition-transform',
+                        item.value ? 'translate-x-5' : 'translate-x-0',
+                      )}
+                    />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Privacidade e dados" helper="Dados locais para testes e iteracao rapida da experiencia." icon={Shield}>
+            <div className="space-y-3">
+              <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-4">
+                <p className="inline-flex items-center gap-2 text-[var(--text-sm)] font-semibold text-[var(--foreground)]">
+                  <Database className="h-4 w-4 text-[var(--brand-primary)]" /> Dados locais
+                </p>
+                <p className="mt-2 text-[var(--text-xs)] text-[var(--muted-foreground)]">Conversas, preferencias e analytics de frontend ficam armazenados localmente neste ambiente.</p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-center border-[rgba(255,107,135,0.25)] text-[var(--destructive)] hover:bg-[rgba(255,107,135,0.08)]"
+                onClick={() => {
+                  if (!window.confirm('Limpar todos os dados locais? Esta acao e irreversivel.')) return;
+                  localStorage.clear();
+                  toast.success('Dados limpos');
+                }}
+              >
+                <Trash2 className="h-4 w-4" /> Limpar todos os dados locais
+              </Button>
+            </div>
+          </SectionCard>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="submit" variant="brand" size="lg">
+              <Save className="h-4 w-4" /> Salvar preferencias
+            </Button>
+            <p className="text-[var(--text-xs)] text-[var(--muted-foreground)]">Preview local do workspace. Nenhuma preferencia sai do navegador nesta tela.</p>
+          </div>
         </div>
       </motion.form>
     </AppShell>

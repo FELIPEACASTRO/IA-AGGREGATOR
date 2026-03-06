@@ -1,4 +1,4 @@
-import { cn } from '@/lib/cn';
+﻿import { cn } from '@/lib/cn';
 
 type BadgeVariant = 'default' | 'brand' | 'success' | 'warning' | 'error' | 'info' | 'outline';
 
@@ -10,12 +10,12 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  default: 'bg-[var(--surface-2)] text-[var(--foreground)] border-[var(--border)]',
-  brand: 'bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] border-[var(--brand-primary)]/20',
-  success: 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/20',
-  warning: 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/20',
-  error: 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)]/20',
-  info: 'bg-[var(--info)]/10 text-[var(--info)] border-[var(--info)]/20',
+  default: 'bg-[rgba(160,176,215,0.08)] text-[var(--foreground)] border-[var(--border)]',
+  brand: 'bg-[rgba(96,115,255,0.12)] text-[#dfe6ff] border-[rgba(96,115,255,0.24)]',
+  success: 'bg-[rgba(78,217,167,0.12)] text-[var(--success)] border-[rgba(78,217,167,0.24)]',
+  warning: 'bg-[rgba(255,191,102,0.12)] text-[var(--warning)] border-[rgba(255,191,102,0.24)]',
+  error: 'bg-[rgba(255,107,135,0.12)] text-[var(--destructive)] border-[rgba(255,107,135,0.24)]',
+  info: 'bg-[rgba(119,184,255,0.12)] text-[var(--info)] border-[rgba(119,184,255,0.24)]',
   outline: 'bg-transparent text-[var(--muted-foreground)] border-[var(--border)]',
 };
 
@@ -33,15 +33,13 @@ export function Badge({ variant = 'default', children, className, dot }: BadgePr
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] border px-2 py-0.5',
-        'text-[0.65rem] font-medium leading-none tracking-wide uppercase',
+        'inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] border px-2.5 py-1',
+        'text-[0.64rem] font-semibold leading-none uppercase tracking-[0.12em]',
         variantStyles[variant],
         className
       )}
     >
-      {dot && (
-        <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', dotStyles[variant])} />
-      )}
+      {dot && <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', dotStyles[variant])} />}
       {children}
     </span>
   );

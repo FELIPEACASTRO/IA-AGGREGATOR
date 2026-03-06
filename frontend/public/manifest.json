@@ -1,14 +1,14 @@
-{
-  "name": "IA Aggregator",
-  "short_name": "IA Aggregator",
-  "description": "Plataforma de agregação de IA: GPT-4o, Claude, Gemini, Mistral e muito mais em um único workspace.",
+﻿{
+  "name": "Lume",
+  "short_name": "Lume",
+  "description": "Workspace premium com chat, biblioteca, prompts e analytics em um unico ambiente de IA.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0A0A0F",
-  "theme_color": "#7C3AED",
+  "background_color": "#08111f",
+  "theme_color": "#08111f",
   "orientation": "portrait-primary",
   "lang": "pt-BR",
-  "categories": ["productivity", "utilities"],
+  "categories": ["productivity", "business"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -25,23 +25,23 @@
   ],
   "shortcuts": [
     {
-      "name": "Novo Chat",
+      "name": "Novo chat",
       "short_name": "Chat",
-      "description": "Iniciar uma nova conversa com IA",
+      "description": "Abrir uma nova conversa",
       "url": "/chat",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Biblioteca",
       "short_name": "Biblioteca",
-      "description": "Ver conversas salvas",
+      "description": "Abrir conversas e acervos",
       "url": "/library",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Templates",
       "short_name": "Templates",
-      "description": "Acessar prompts curados",
+      "description": "Abrir prompts curados",
       "url": "/prompts",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }

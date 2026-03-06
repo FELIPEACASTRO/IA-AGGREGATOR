@@ -1,0 +1,851 @@
+- main [ref=e660]:
+  - generic [ref=e663]:
+    - generic [ref=e664]:
+      - link "InnerAI":
+        - /url: /pt
+    - generic [ref=e665]:
+      - link "Conheça nossos planos Conheça nossos planos" [ref=e669] [cursor=pointer]:
+        - /url: /pt/nossos-planos
+        - text: Conheça nossos planos
+        - generic [ref=e670]: Conheça nossos planos
+      - button "Close Menu" [active] [ref=e2151] [cursor=pointer]:
+        - img "Close Menu" [ref=e2152]
+      - navigation [ref=e2153]:
+        - list [ref=e673]:
+          - listitem [ref=e674]:
+            - link "Sobre nós" [ref=e675] [cursor=pointer]:
+              - /url: /pt/about
+          - listitem [ref=e676]:
+            - link "Empresas" [ref=e677] [cursor=pointer]:
+              - /url: /pt/empresas
+          - listitem [ref=e678]:
+            - link "Carreiras" [ref=e679] [cursor=pointer]:
+              - /url: /pt/careers
+          - listitem [ref=e680]:
+            - link "Preços" [ref=e681] [cursor=pointer]:
+              - /url: /pt/pricing
+          - listitem [ref=e682]:
+            - link "Tutoriais" [ref=e683] [cursor=pointer]:
+              - /url: https://intercom.help/innerai/pt-BR
+          - listitem [ref=e684]:
+            - link "Blog" [ref=e685] [cursor=pointer]:
+              - /url: /pt/blog
+          - listitem [ref=e686]:
+            - link "Login" [ref=e687] [cursor=pointer]:
+              - /url: https://platform.innerai.com/login.html
+        - generic [ref=e688]:
+          - link "English" [ref=e689] [cursor=pointer]:
+            - /url: /en
+            - generic [ref=e691]: English
+          - link "Español" [ref=e692] [cursor=pointer]:
+            - /url: /es
+            - generic [ref=e694]: Español
+          - link "Português" [ref=e695] [cursor=pointer]:
+            - /url: /pt
+            - generic [ref=e697]: Português
+  - main [ref=e699]:
+    - generic [ref=e703]:
+      - generic [ref=e704]:
+        - heading "Os melhores modelos de IA em um só lugar" [level=1] [ref=e706]
+        - heading "por um décimo do preço" [level=1] [ref=e707]
+        - generic [ref=e708]:
+          - paragraph [ref=e710]: GPT-5, Claude, Gemini, Nano Banana e muito mais
+          - paragraph [ref=e712]: 7 cursos de IA com certificado
+          - paragraph [ref=e714]: +250 prompts para todas as áreas
+        - generic [ref=e716]:
+          - button "Conheça nossos planos" [ref=e717] [cursor=pointer]:
+            - generic [ref=e718]: Conheça nossos planos
+          - generic [ref=e719]:
+            - generic [ref=e720]: disponível em
+            - generic [ref=e721]:
+              - link "Windows" [ref=e722] [cursor=pointer]:
+                - /url: https://platform.innerai.com/login.html
+                - img "Windows" [ref=e723]
+              - link "Android" [ref=e724] [cursor=pointer]:
+                - /url: https://play.google.com/store/apps/details?id=com.innerai.mobile
+                - img "Android" [ref=e725]
+              - link "Apple" [ref=e726] [cursor=pointer]:
+                - /url: https://apps.apple.com/br/app/inner-ai/id6720709318
+                - img "Apple" [ref=e727]
+        - generic [ref=e728]:
+          - generic [ref=e730]:
+            - link [ref=e732] [cursor=pointer]:
+              - /url: https://exame.com/inteligencia-artificial/brasileira-inner-ai-levanta-r12-mi-com-inteligencia-artificial-que-cria-conteudo-para-empresas/
+            - link [ref=e735] [cursor=pointer]:
+              - /url: https://oglobo.globo.com/blogs/capital/post/2024/04/novata-inner-ai-capta-r-12-milhoes-para-levar-inteligencia-artificial-com-dna-brasileiro-para-empresas.ghtml
+            - link [ref=e738] [cursor=pointer]:
+              - /url: https://epocanegocios.globo.com/inteligencia-artificial/noticia/2025/05/inner-ai-o-que-e-como-usar-e-quanto-custa-a-plataforma-brasileira-de-inteligencia-artificial.ghtml
+            - link [ref=e741] [cursor=pointer]:
+              - /url: https://www.cnnbrasil.com.br/economia/macroeconomia/empresa-testa-qual-a-melhor-ia-disponivel-no-brasil-veja-resultados/
+            - link [ref=e744] [cursor=pointer]:
+              - /url: https://olhardigital.com.br/2024/07/18/pro/conheca-a-ia-brasileira-que-quer-bater-de-frente-com-o-copilot/
+          - generic [ref=e2085]:
+            - button "Go to slide 1" [ref=e2086] [cursor=pointer]
+            - button "Go to slide 2" [ref=e2087] [cursor=pointer]
+            - button "Go to slide 3" [ref=e2088] [cursor=pointer]
+            - button "Go to slide 4" [ref=e2089] [cursor=pointer]
+            - button "Go to slide 5" [ref=e2090] [cursor=pointer]
+      - text:             
+      - generic [ref=e2096]:
+        - region "Video Player" [ref=e2099]:
+          - application [ref=e2100]
+          - text:             
+        - img "Play Video" [ref=e2102] [cursor=pointer]
+    - generic [ref=e766]:
+      - heading "As melhores IAs do mundo" [level=1] [ref=e767]
+      - paragraph [ref=e768]: Todas as IAs pagas que você realmente precisa — em um só lugar
+      - generic [ref=e772]:
+        - generic [ref=e773]:
+          - img "Playground" [ref=e775]
+          - paragraph [ref=e776]: Playground
+        - generic [ref=e777]:
+          - img "Luma" [ref=e779]
+          - paragraph [ref=e780]: Luma
+        - generic [ref=e781]:
+          - img "GPT" [ref=e783]
+          - paragraph [ref=e784]: GPT
+        - generic [ref=e785]:
+          - img "Claude" [ref=e787]
+          - paragraph [ref=e788]: Claude
+        - generic [ref=e789]:
+          - img "Gemini" [ref=e791]
+          - paragraph [ref=e792]: Gemini
+        - generic [ref=e793]:
+          - img "Grok" [ref=e795]
+          - paragraph [ref=e796]: Grok
+        - generic [ref=e797]:
+          - img "Perplexity Sonar" [ref=e799]
+          - paragraph [ref=e800]: Perplexity Sonar
+        - generic [ref=e801]:
+          - img "Leonardo" [ref=e803]
+          - paragraph [ref=e804]: Leonardo
+        - generic [ref=e805]:
+          - img "Kling" [ref=e807]
+          - paragraph [ref=e808]: Kling
+        - generic [ref=e809]:
+          - img "Veo3" [ref=e811]
+          - paragraph [ref=e812]: Veo3
+        - generic [ref=e813]:
+          - img "Ideogram" [ref=e815]
+          - paragraph [ref=e816]: Ideogram
+        - generic [ref=e817]:
+          - img "Nano Banana" [ref=e819]
+          - paragraph [ref=e820]: Nano Banana
+        - generic [ref=e821]:
+          - img "Haiper" [ref=e823]
+          - paragraph [ref=e824]: Haiper
+        - generic [ref=e825]:
+          - img "Gemini" [ref=e827]
+          - paragraph [ref=e828]: Gemini
+        - generic [ref=e829]:
+          - img "DeepSeek" [ref=e831]
+          - paragraph [ref=e832]: DeepSeek
+        - generic [ref=e833]:
+          - img "Hailuo" [ref=e835]
+          - paragraph [ref=e836]: Hailuo
+        - generic [ref=e837]:
+          - img "Claude" [ref=e839]
+          - paragraph [ref=e840]: Claude
+        - generic [ref=e841]:
+          - img "GPT" [ref=e843]
+          - paragraph [ref=e844]: GPT
+        - generic [ref=e845]:
+          - img "Llama" [ref=e847]
+          - paragraph [ref=e848]: Llama
+        - generic [ref=e849]:
+          - img "Qwen QwQ" [ref=e851]
+          - paragraph [ref=e852]: Qwen QwQ
+        - generic [ref=e853]:
+          - img "Mistral" [ref=e855]
+          - paragraph [ref=e856]: Mistral
+        - generic [ref=e857]:
+          - img "Sabiá" [ref=e859]
+          - paragraph [ref=e860]: Sabiá
+        - generic [ref=e861]:
+          - img "Playground" [ref=e863]
+          - paragraph [ref=e864]: Playground
+        - generic [ref=e865]:
+          - img "Luma" [ref=e867]
+          - paragraph [ref=e868]: Luma
+        - generic [ref=e869]:
+          - img "GPT" [ref=e871]
+          - paragraph [ref=e872]: GPT
+        - generic [ref=e873]:
+          - img "Claude" [ref=e875]
+          - paragraph [ref=e876]: Claude
+        - generic [ref=e877]:
+          - img "Gemini" [ref=e879]
+          - paragraph [ref=e880]: Gemini
+        - generic [ref=e881]:
+          - img "Grok" [ref=e883]
+          - paragraph [ref=e884]: Grok
+        - generic [ref=e885]:
+          - img "Perplexity Sonar" [ref=e887]
+          - paragraph [ref=e888]: Perplexity Sonar
+        - generic [ref=e889]:
+          - img "Leonardo" [ref=e891]
+          - paragraph [ref=e892]: Leonardo
+        - generic [ref=e893]:
+          - img "Kling" [ref=e895]
+          - paragraph [ref=e896]: Kling
+        - generic [ref=e897]:
+          - img "Veo3" [ref=e899]
+          - paragraph [ref=e900]: Veo3
+        - generic [ref=e901]:
+          - img "Ideogram" [ref=e903]
+          - paragraph [ref=e904]: Ideogram
+        - generic [ref=e905]:
+          - img "Nano Banana" [ref=e907]
+          - paragraph [ref=e908]: Nano Banana
+        - generic [ref=e909]:
+          - img "Haiper" [ref=e911]
+          - paragraph [ref=e912]: Haiper
+        - generic [ref=e913]:
+          - img "Gemini" [ref=e915]
+          - paragraph [ref=e916]: Gemini
+        - generic [ref=e917]:
+          - img "DeepSeek" [ref=e919]
+          - paragraph [ref=e920]: DeepSeek
+        - generic [ref=e921]:
+          - img "Hailuo" [ref=e923]
+          - paragraph [ref=e924]: Hailuo
+        - generic [ref=e925]:
+          - img "Claude" [ref=e927]
+          - paragraph [ref=e928]: Claude
+        - generic [ref=e929]:
+          - img "GPT" [ref=e931]
+          - paragraph [ref=e932]: GPT
+        - generic [ref=e933]:
+          - img "Llama" [ref=e935]
+          - paragraph [ref=e936]: Llama
+        - generic [ref=e937]:
+          - img "Qwen QwQ" [ref=e939]
+          - paragraph [ref=e940]: Qwen QwQ
+        - generic [ref=e941]:
+          - img "Mistral" [ref=e943]
+          - paragraph [ref=e944]: Mistral
+        - generic [ref=e945]:
+          - img "Sabiá" [ref=e947]
+          - paragraph [ref=e948]: Sabiá
+        - generic [ref=e949]:
+          - img "Playground" [ref=e951]
+          - paragraph [ref=e952]: Playground
+        - generic [ref=e953]:
+          - img "Luma" [ref=e955]
+          - paragraph [ref=e956]: Luma
+        - generic [ref=e957]:
+          - img "GPT" [ref=e959]
+          - paragraph [ref=e960]: GPT
+        - generic [ref=e961]:
+          - img "Claude" [ref=e963]
+          - paragraph [ref=e964]: Claude
+        - generic [ref=e965]:
+          - img "Gemini" [ref=e967]
+          - paragraph [ref=e968]: Gemini
+        - generic [ref=e969]:
+          - img "Grok" [ref=e971]
+          - paragraph [ref=e972]: Grok
+        - generic [ref=e973]:
+          - img "Perplexity Sonar" [ref=e975]
+          - paragraph [ref=e976]: Perplexity Sonar
+        - generic [ref=e977]:
+          - img "Leonardo" [ref=e979]
+          - paragraph [ref=e980]: Leonardo
+        - generic [ref=e981]:
+          - img "Kling" [ref=e983]
+          - paragraph [ref=e984]: Kling
+        - generic [ref=e985]:
+          - img "Veo3" [ref=e987]
+          - paragraph [ref=e988]: Veo3
+        - generic [ref=e989]:
+          - img "Ideogram" [ref=e991]
+          - paragraph [ref=e992]: Ideogram
+        - generic [ref=e993]:
+          - img "Nano Banana" [ref=e995]
+          - paragraph [ref=e996]: Nano Banana
+        - generic [ref=e997]:
+          - img "Haiper" [ref=e999]
+          - paragraph [ref=e1000]: Haiper
+        - generic [ref=e1001]:
+          - img "Gemini" [ref=e1003]
+          - paragraph [ref=e1004]: Gemini
+        - generic [ref=e1005]:
+          - img "DeepSeek" [ref=e1007]
+          - paragraph [ref=e1008]: DeepSeek
+        - generic [ref=e1009]:
+          - img "Hailuo" [ref=e1011]
+          - paragraph [ref=e1012]: Hailuo
+        - generic [ref=e1013]:
+          - img "Claude" [ref=e1015]
+          - paragraph [ref=e1016]: Claude
+        - generic [ref=e1017]:
+          - img "GPT" [ref=e1019]
+          - paragraph [ref=e1020]: GPT
+        - generic [ref=e1021]:
+          - img "Llama" [ref=e1023]
+          - paragraph [ref=e1024]: Llama
+        - generic [ref=e1025]:
+          - img "Qwen QwQ" [ref=e1027]
+          - paragraph [ref=e1028]: Qwen QwQ
+        - generic [ref=e1029]:
+          - img "Mistral" [ref=e1031]
+          - paragraph [ref=e1032]: Mistral
+        - generic [ref=e1033]:
+          - img "Sabiá" [ref=e1035]
+          - paragraph [ref=e1036]: Sabiá
+        - generic [ref=e1037]:
+          - img "Playground" [ref=e1039]
+          - paragraph [ref=e1040]: Playground
+        - generic [ref=e1041]:
+          - img "Luma" [ref=e1043]
+          - paragraph [ref=e1044]: Luma
+        - generic [ref=e1045]:
+          - img "GPT" [ref=e1047]
+          - paragraph [ref=e1048]: GPT
+        - generic [ref=e1049]:
+          - img "Claude" [ref=e1051]
+          - paragraph [ref=e1052]: Claude
+        - generic [ref=e1053]:
+          - img "Gemini" [ref=e1055]
+          - paragraph [ref=e1056]: Gemini
+        - generic [ref=e1057]:
+          - img "Grok" [ref=e1059]
+          - paragraph [ref=e1060]: Grok
+        - generic [ref=e1061]:
+          - img "Perplexity Sonar" [ref=e1063]
+          - paragraph [ref=e1064]: Perplexity Sonar
+        - generic [ref=e1065]:
+          - img "Leonardo" [ref=e1067]
+          - paragraph [ref=e1068]: Leonardo
+        - generic [ref=e1069]:
+          - img "Kling" [ref=e1071]
+          - paragraph [ref=e1072]: Kling
+        - generic [ref=e1073]:
+          - img "Veo3" [ref=e1075]
+          - paragraph [ref=e1076]: Veo3
+        - generic [ref=e1077]:
+          - img "Ideogram" [ref=e1079]
+          - paragraph [ref=e1080]: Ideogram
+        - generic [ref=e1081]:
+          - img "Nano Banana" [ref=e1083]
+          - paragraph [ref=e1084]: Nano Banana
+        - generic [ref=e1085]:
+          - img "Haiper" [ref=e1087]
+          - paragraph [ref=e1088]: Haiper
+        - generic [ref=e1089]:
+          - img "Gemini" [ref=e1091]
+          - paragraph [ref=e1092]: Gemini
+        - generic [ref=e1093]:
+          - img "DeepSeek" [ref=e1095]
+          - paragraph [ref=e1096]: DeepSeek
+        - generic [ref=e1097]:
+          - img "Hailuo" [ref=e1099]
+          - paragraph [ref=e1100]: Hailuo
+        - generic [ref=e1101]:
+          - img "Claude" [ref=e1103]
+          - paragraph [ref=e1104]: Claude
+        - generic [ref=e1105]:
+          - img "GPT" [ref=e1107]
+          - paragraph [ref=e1108]: GPT
+        - generic [ref=e1109]:
+          - img "Llama" [ref=e1111]
+          - paragraph [ref=e1112]: Llama
+        - generic [ref=e1113]:
+          - img "Qwen QwQ" [ref=e1115]
+          - paragraph [ref=e1116]: Qwen QwQ
+        - generic [ref=e1117]:
+          - img "Mistral" [ref=e1119]
+          - paragraph [ref=e1120]: Mistral
+        - generic [ref=e1121]:
+          - img "Sabiá" [ref=e1123]
+          - paragraph [ref=e1124]: Sabiá
+    - generic [ref=e1126]:
+      - heading "Economize 90% com a nossa plataforma" [level=1] [ref=e1127]
+      - generic [ref=e1128]:
+        - generic [ref=e1130]:
+          - generic [ref=e1133]:
+            - generic [ref=e1134]: Outros
+            - generic [ref=e1135]: R$ 600
+          - generic [ref=e1137]:
+            - generic [ref=e1138]:
+              - img "AI Logo" [ref=e1140]
+              - generic [ref=e1141]: Chat GPT R$120
+            - img [ref=e1142]
+            - generic [ref=e1143]:
+              - img "AI Logo" [ref=e1145]
+              - generic [ref=e1146]: Grok R$180
+            - img [ref=e1147]
+            - generic [ref=e1148]:
+              - img "AI Logo" [ref=e1150]
+              - generic [ref=e1151]: Claude R$120
+            - img [ref=e1152]
+            - generic [ref=e1153]:
+              - img "AI Logo" [ref=e1155]
+              - generic [ref=e1156]: Gemini R$100
+            - img [ref=e1157]
+            - generic [ref=e1158]:
+              - img "AI Logo" [ref=e1160]
+              - generic [ref=e1161]: Mistral AI R$90
+        - generic [ref=e1166]:
+          - generic [ref=e1168]:
+            - img "Table logo" [ref=e1171]
+            - generic [ref=e1172]:
+              - generic [ref=e1173]: A partir de
+              - generic [ref=e1174]: R$ 99,90
+          - img [ref=e1175]
+          - generic [ref=e1176]:
+            - generic [ref=e1177]:
+              - img [ref=e1179]
+              - generic [ref=e1182]: +50 modelos de IA incluindo ChatGPT, Gemini, Deepseek, Claude e Grok
+            - img [ref=e1183]
+            - generic [ref=e1184]:
+              - img [ref=e1186]
+              - generic [ref=e1189]: Cursos com certificado e atualizações semanais por e-mail
+            - img [ref=e1190]
+            - generic [ref=e1191]:
+              - img [ref=e1193]
+              - generic [ref=e1196]: Plataforma brasileira com suporte 7 dias da semana ao vivo via chat
+            - img [ref=e1197]
+            - generic [ref=e1198]:
+              - img [ref=e1200]
+              - generic [ref=e1203]: +250 prompts para marketing, jurídico, acadêmico e +10 times
+    - generic [ref=e1204]:
+      - heading "Tudo o que você precisa de IA" [level=1] [ref=e1206]
+      - generic [ref=e1207]:
+        - generic [ref=e1208]:
+          - generic [ref=e1209]:
+            - img "Chat" [ref=e1210]
+            - generic [ref=e1211]:
+              - heading "Chat" [level=3] [ref=e1212]
+              - paragraph [ref=e1213]: Acesse os melhores modelos do mundo, como GPT-5, o3, Claude 4.6 Sonnet, Gemini 2.5 Pro, Grok 3 e Perplexity. Use o poder da IA para analisar documentos, pesquisar na web, escrever emails e criar projetos para você.
+          - generic [ref=e1214]:
+            - img "Documentos" [ref=e1215]
+            - generic [ref=e1216]:
+              - heading "Documentos" [level=3] [ref=e1217]
+              - paragraph [ref=e1218]: A criação de documentos profissionais ficou mais fácil do que nunca. Você tem dezenas de templates para te ajudar a criar textos com a ajuda da Inteligência Artificial. Escolha o tema, preencha as informações e aguarde a mágica acontecer.
+        - generic [ref=e1219]:
+          - generic [ref=e1220]:
+            - img "Prompts" [ref=e1221]
+            - generic [ref=e1222]:
+              - heading "Prompts" [level=4] [ref=e1223]
+              - paragraph [ref=e1224]: "São mais de 250 prompts desenvolvidos por especialistas todos organizados por áreas: Marketing, RH, Vendas, Finanças, Jurídico e muito mais."
+          - generic [ref=e1225]:
+            - img "Assistentes" [ref=e1226]
+            - generic [ref=e1227]:
+              - heading "Assistentes" [level=4] [ref=e1228]
+              - paragraph [ref=e1229]: Crie quantos assistentes de IA precisar para escrever textos, organizar tarefas, analisar dados, produzir conteúdos, revisar contratos e muito mais.
+          - generic [ref=e1230]:
+            - img "Projetos" [ref=e1231]
+            - generic [ref=e1232]:
+              - heading "Projetos" [level=4] [ref=e1233]
+              - paragraph [ref=e1234]: Organize todas suas criações em projetos. Mantenha o foco no que realmente importa. Crie projetos específicos e organize seus chats por pastas.
+    - generic [ref=e1240]:
+      - heading "Desbloqueie todo seu potencial criativo" [level=1] [ref=e1242]
+      - paragraph [ref=e1243]: São mais de 25 modelos de IA para geração de imagens, vídeos, áudios e apresentações de slides
+      - link "Veja nossos planos" [ref=e1247] [cursor=pointer]:
+        - /url: /pt/nossos-planos
+    - generic [ref=e1251]:
+      - generic [ref=e1252]:
+        - heading "Fluxos de trabalho otimizados" [level=1] [ref=e1253]
+        - paragraph [ref=e1255]: A Inner empodera equipes, reduzindo tarefas repetitivas e otimizando processos de criação de conteúdo, pesquisa e mais.
+      - generic [ref=e1257]:
+        - generic [ref=e1261]:
+          - generic [ref=e1262] [cursor=pointer]: Marketing
+          - generic [ref=e1263] [cursor=pointer]: RH
+          - generic [ref=e1264] [cursor=pointer]: Vendas
+          - generic [ref=e1265] [cursor=pointer]: Mídia Social
+          - generic [ref=e1266] [cursor=pointer]: Jurídico
+        - generic [ref=e1268]:
+          - generic [ref=e1274]: Your browser does not support the video tag.
+          - generic [ref=e1275]:
+            - heading "Acelere o marketing com IA personalizada" [level=3] [ref=e1277]
+            - separator [ref=e1278]
+            - list [ref=e1279]:
+              - listitem [ref=e1280]:
+                - img [ref=e1281]
+                - generic [ref=e1283]: Crie conteúdo personalizado para todos seus canais de marketing
+              - separator [ref=e1284]
+              - listitem [ref=e1285]:
+                - img [ref=e1286]
+                - generic [ref=e1288]: Produza anúncios persuasivos para Google, Meta, LinkedIn e outras plataformas
+              - separator [ref=e1289]
+              - listitem [ref=e1290]:
+                - img [ref=e1291]
+                - generic [ref=e1293]: Gere copy otimizado para landing pages, blogs e SEO
+            - paragraph
+    - generic [ref=e1295]:
+      - generic [ref=e1296]:
+        - heading "Acesse a Inner onde estiver" [level=1] [ref=e1297]
+        - paragraph [ref=e1298]: Disponível pelo computador, tablet ou aplicativo de celular
+      - generic [ref=e1299]:
+        - generic [ref=e1302]:
+          - heading "Disponível de qualquer lugar" [level=3] [ref=e1303]
+          - paragraph [ref=e1304]: Trabalhe com a Inner em todos os dispositivos com históricos de chats sincronizados, acesso a biblioteca de prompts, assistentes personalizados e pesquisa na internet.
+          - generic [ref=e1305]:
+            - link "Web Web" [ref=e1306] [cursor=pointer]:
+              - /url: https://app.innerai.com/
+              - img "Web" [ref=e1307]
+              - text: Web
+            - link "iOS iOS" [ref=e1308] [cursor=pointer]:
+              - /url: https://apps.apple.com/br/app/inner-ai/id6720709318
+              - img "iOS" [ref=e1309]
+              - text: iOS
+            - link "Android Android" [ref=e1310] [cursor=pointer]:
+              - /url: https://play.google.com/store/apps/details?id=com.innerai.mobile&pli=1
+              - img "Android" [ref=e1311]
+              - text: Android
+        - img "Device Access" [ref=e1313]
+    - generic [ref=e1315]:
+      - heading "Segurança está em nosso DNA" [level=1] [ref=e1316]
+      - generic [ref=e1317]:
+        - heading "Seus chats nunca são utilizados para treinar as IAs" [level=3] [ref=e1320]
+        - heading "Segurança empresarial com compliance SOC II e LGPD" [level=3] [ref=e1323]
+        - heading "Todos os dados são privados e criptografados" [level=3] [ref=e1326]
+    - generic [ref=e1327]:
+      - heading "Aprenda com Inner Academy" [level=1] [ref=e1328]
+      - paragraph [ref=e1329]: Cursos com os maiores especialistas em IA e com certificado
+      - generic [ref=e1330]:
+        - generic [ref=e1334]:
+          - img "Course image" [ref=e1337]
+          - img "Course image" [ref=e1340]
+          - img "Course image" [ref=e1343]
+          - img "Course image" [ref=e1346]
+          - img "Course image" [ref=e1349]
+          - img "Course image" [ref=e1352]
+          - img "Course image" [ref=e1355]
+          - img "Course image" [ref=e1358]
+          - img "Course image" [ref=e1361]
+          - img "Course image" [ref=e1364]
+          - img "Course image" [ref=e1367]
+          - img "Course image" [ref=e1370]
+          - img "Course image" [ref=e1373]
+          - img "Course image" [ref=e1376]
+          - img "Course image" [ref=e1379]
+          - img "Course image" [ref=e1382]
+          - img "Course image" [ref=e1385]
+          - img "Course image" [ref=e1388]
+          - img "Course image" [ref=e1391]
+          - img "Course image" [ref=e1394]
+          - img "Course image" [ref=e1397]
+          - img "Course image" [ref=e1400]
+          - img "Course image" [ref=e1403]
+          - img "Course image" [ref=e1406]
+          - img "Course image" [ref=e1409]
+          - img "Course image" [ref=e1412]
+          - img "Course image" [ref=e1415]
+          - img "Course image" [ref=e1418]
+          - img "Course image" [ref=e1421]
+          - img "Course image" [ref=e1424]
+          - img "Course image" [ref=e1427]
+          - img "Course image" [ref=e1430]
+          - img "Course image" [ref=e1433]
+          - img "Course image" [ref=e1436]
+          - img "Course image" [ref=e1439]
+          - img "Course image" [ref=e1442]
+          - img "Course image" [ref=e1445]
+          - img "Course image" [ref=e1448]
+          - img "Course image" [ref=e1451]
+          - img "Course image" [ref=e1454]
+          - img "Course image" [ref=e1457]
+          - img "Course image" [ref=e1460]
+          - img "Course image" [ref=e1463]
+          - img "Course image" [ref=e1466]
+          - img "Course image" [ref=e1469]
+          - img "Course image" [ref=e1472]
+          - img "Course image" [ref=e1475]
+          - img "Course image" [ref=e1478]
+          - img "Course image" [ref=e1481]
+          - img "Course image" [ref=e1484]
+          - img "Course image" [ref=e1487]
+          - img "Course image" [ref=e1490]
+          - img "Course image" [ref=e1493]
+          - img "Course image" [ref=e1496]
+          - img "Course image" [ref=e1499]
+          - img "Course image" [ref=e1502]
+          - img "Course image" [ref=e1505]
+          - img "Course image" [ref=e1508]
+          - img "Course image" [ref=e1511]
+          - img "Course image" [ref=e1514]
+          - img "Course image" [ref=e1517]
+          - img "Course image" [ref=e1520]
+          - img "Course image" [ref=e1523]
+          - img "Course image" [ref=e1526]
+          - img "Course image" [ref=e1529]
+          - img "Course image" [ref=e1532]
+          - img "Course image" [ref=e1535]
+          - img "Course image" [ref=e1538]
+          - img "Course image" [ref=e1541]
+          - img "Course image" [ref=e1544]
+          - img "Course image" [ref=e1547]
+          - img "Course image" [ref=e1550]
+          - img "Course image" [ref=e1553]
+          - img "Course image" [ref=e1556]
+          - img "Course image" [ref=e1559]
+          - img "Course image" [ref=e1562]
+          - img "Course image" [ref=e1565]
+          - img "Course image" [ref=e1568]
+          - img "Course image" [ref=e1571]
+          - img "Course image" [ref=e1574]
+          - img "Course image" [ref=e1577]
+          - img "Course image" [ref=e1580]
+          - img "Course image" [ref=e1583]
+          - img "Course image" [ref=e1586]
+          - img "Course image" [ref=e1589]
+          - img "Course image" [ref=e1592]
+          - img "Course image" [ref=e1595]
+          - img "Course image" [ref=e1598]
+          - img "Course image" [ref=e1601]
+          - img "Course image" [ref=e1604]
+          - img "Course image" [ref=e1607]
+          - img "Course image" [ref=e1610]
+          - img "Course image" [ref=e1613]
+          - img "Course image" [ref=e1616]
+          - img "Course image" [ref=e1619]
+          - img "Course image" [ref=e1622]
+          - img "Course image" [ref=e1625]
+          - img "Course image" [ref=e1628]
+          - img "Course image" [ref=e1631]
+          - img "Course image" [ref=e1634]
+          - img "Course image" [ref=e1637]
+          - img "Course image" [ref=e1640]
+          - img "Course image" [ref=e1643]
+          - img "Course image" [ref=e1646]
+          - img "Course image" [ref=e1649]
+          - img "Course image" [ref=e1652]
+          - img "Course image" [ref=e1655]
+          - img "Course image" [ref=e1658]
+          - img "Course image" [ref=e1661]
+          - img "Course image" [ref=e1664]
+          - img "Course image" [ref=e1667]
+          - img "Course image" [ref=e1670]
+          - img "Course image" [ref=e1673]
+          - img "Course image" [ref=e1676]
+          - img "Course image" [ref=e1679]
+          - img "Course image" [ref=e1682]
+          - img "Course image" [ref=e1685]
+          - img "Course image" [ref=e1688]
+          - img "Course image" [ref=e1691]
+          - img "Course image" [ref=e1694]
+          - img "Course image" [ref=e1697]
+          - img "Course image" [ref=e1700]
+          - img "Course image" [ref=e1703]
+          - img "Course image" [ref=e1706]
+          - img "Course image" [ref=e1709]
+          - img "Course image" [ref=e1712]
+          - img "Course image" [ref=e1715]
+          - img "Course image" [ref=e1718]
+          - img "Course image" [ref=e1721]
+          - img "Course image" [ref=e1724]
+          - img "Course image" [ref=e1727]
+          - img "Course image" [ref=e1730]
+          - img "Course image" [ref=e1733]
+          - img "Course image" [ref=e1736]
+          - img "Course image" [ref=e1739]
+          - img "Course image" [ref=e1742]
+          - img "Course image" [ref=e1745]
+          - img "Course image" [ref=e1748]
+          - img "Course image" [ref=e1751]
+          - img "Course image" [ref=e1754]
+        - button "Previous courses" [ref=e1755] [cursor=pointer]:
+          - img [ref=e1756]
+        - button "Next courses" [ref=e1758] [cursor=pointer]:
+          - img [ref=e1759]
+    - generic [ref=e1761]:
+      - heading "Junte-se a mais de 500 mil usuários" [level=1] [ref=e1763]
+      - link "Conheça nossos planos" [ref=e1767] [cursor=pointer]:
+        - /url: /pt/nossos-planos
+    - generic [ref=e1769]:
+      - generic [ref=e1770]:
+        - generic [ref=e1771]:
+          - heading "O que nossos clientes dizem sobre nós" [level=2] [ref=e1772]
+          - paragraph [ref=e1773]: Descubra como empresas de diferentes segmentos estão implementando Inteligência Artificial com a Inner AI
+        - generic [ref=e2103]:
+          - generic [ref=e2104]:
+            - generic [ref=e2108] [cursor=pointer]:
+              - img "Pilar" [ref=e2109]
+              - img [ref=e2113]
+              - generic [ref=e2115]:
+                - heading "Pilar" [level=3] [ref=e2117]
+                - paragraph [ref=e2118]: "\"Descubra como a Pilar implementou IA para mais de 100 corretores e dobrou o número de atendimentos\""
+            - generic [ref=e2122] [cursor=pointer]:
+              - img "Movida" [ref=e2123]
+              - img [ref=e2127]
+              - generic [ref=e2129]:
+                - heading "Movida" [level=3] [ref=e2131]
+                - paragraph [ref=e2132]: "\"Como a Movida reduziu em 80% o tempo de criação de treinamentos corporativos\""
+            - generic [ref=e2136] [cursor=pointer]:
+              - img "Zissou" [ref=e2137]
+              - img [ref=e2141]
+              - generic [ref=e2143]:
+                - heading "Zissou" [level=3] [ref=e2145]
+                - paragraph [ref=e2146]: "\"Descubra como time de marketing aumentou o faturamento com novas linhas de produtos usando a Inner AI\""
+          - generic [ref=e2147]:
+            - button "Go to slide 1" [ref=e2148] [cursor=pointer]
+            - button "Go to slide 2" [ref=e2149] [cursor=pointer]
+            - button "Go to slide 3" [ref=e2150] [cursor=pointer]
+      - list [ref=e1819]:
+        - listitem [ref=e1820]
+        - listitem [ref=e1822]
+        - listitem [ref=e1824]
+        - listitem [ref=e1826]
+        - listitem [ref=e1828]
+        - listitem [ref=e1830]
+        - listitem [ref=e1832]
+        - listitem [ref=e1834]
+        - listitem [ref=e1836]
+        - listitem [ref=e1838]
+        - listitem [ref=e1840]
+        - listitem [ref=e1842]
+        - listitem [ref=e1844]
+        - listitem [ref=e1846]
+        - listitem [ref=e1848]
+        - listitem [ref=e1850]
+        - listitem [ref=e1852]
+        - listitem [ref=e1854]
+        - listitem [ref=e1856]
+        - listitem [ref=e1858]
+        - listitem [ref=e1860]
+        - listitem [ref=e1862]
+        - listitem [ref=e1864]
+        - listitem [ref=e1866]
+        - listitem [ref=e1868]
+        - listitem [ref=e1870]
+        - listitem [ref=e1872]
+        - listitem [ref=e1874]
+        - listitem [ref=e1876]
+        - listitem [ref=e1878]
+        - listitem [ref=e1880]
+        - listitem [ref=e1882]
+        - listitem [ref=e1884]
+        - listitem [ref=e1886]
+        - listitem [ref=e1888]
+        - listitem [ref=e1890]
+        - listitem [ref=e1892]
+        - listitem [ref=e1894]
+        - listitem [ref=e1896]
+        - listitem [ref=e1898]
+        - listitem [ref=e1900]
+        - listitem [ref=e1902]
+        - listitem [ref=e1904]
+        - listitem [ref=e1906]
+        - listitem [ref=e1908]
+        - listitem [ref=e1910]
+        - listitem [ref=e1912]
+        - listitem [ref=e1914]
+        - listitem [ref=e1916]
+        - listitem [ref=e1918]
+        - listitem [ref=e1920]
+        - listitem [ref=e1922]
+        - listitem [ref=e1924]
+        - listitem [ref=e1926]
+        - listitem [ref=e1928]
+        - listitem [ref=e1930]
+        - listitem [ref=e1932]
+        - listitem [ref=e1934]
+        - listitem [ref=e1936]
+        - listitem [ref=e1938]
+        - listitem [ref=e1940]
+        - listitem [ref=e1942]
+        - listitem [ref=e1944]
+        - listitem [ref=e1946]
+        - listitem [ref=e1948]
+        - listitem [ref=e1950]
+        - listitem [ref=e1952]
+        - listitem [ref=e1954]
+        - listitem [ref=e1956]
+        - listitem [ref=e1958]
+        - listitem [ref=e1960]
+        - listitem [ref=e1962]
+        - listitem [ref=e1964]
+        - listitem [ref=e1966]
+        - listitem [ref=e1968]
+        - listitem [ref=e1970]
+        - listitem [ref=e1972]
+        - listitem [ref=e1974]
+        - listitem [ref=e1976]
+        - listitem [ref=e1978]
+        - listitem [ref=e1980]
+        - listitem [ref=e1982]
+        - listitem [ref=e1984]
+        - listitem [ref=e1986]
+        - listitem [ref=e1988]
+    - generic [ref=e1995]:
+      - heading "Desbloqueie seu potencial, assine a Inner agora!" [level=1] [ref=e1997]
+      - link "Conheça nossos planos" [ref=e2000] [cursor=pointer]:
+        - /url: /pt/nossos-planos
+  - generic [ref=e2001]:
+    - generic [ref=e2003]:
+      - link "InnerAI":
+        - /url: /
+    - generic [ref=e2005]:
+      - list [ref=e2006]:
+        - listitem [ref=e2007]:
+          - generic [ref=e2008]: São Francisco
+          - generic [ref=e2009]:
+            - paragraph [ref=e2010]: Mission St, 1680, São Francisco
+            - paragraph [ref=e2011]: CA, 94103, Estados Unidos
+        - listitem [ref=e2012]:
+          - generic [ref=e2013]: São Paulo
+          - generic [ref=e2014]:
+            - paragraph [ref=e2015]: Alameda Franca, 1423, São Paulo,
+            - paragraph [ref=e2016]: SP, 01422-005, Brazil
+        - listitem [ref=e2017]:
+          - paragraph [ref=e2018]: Baixe o nosso App
+          - generic [ref=e2019]:
+            - link "Baixar na Google Play" [ref=e2020] [cursor=pointer]:
+              - /url: https://play.google.com/store/apps/details?id=com.innerai.mobile
+              - img "Baixar na Google Play" [ref=e2021]
+            - link "Baixar na App Store" [ref=e2022] [cursor=pointer]:
+              - /url: https://apps.apple.com/br/app/inner-ai/id6720709318
+              - img "Baixar na App Store" [ref=e2023]
+      - generic [ref=e2024]:
+        - generic [ref=e2025]:
+          - heading "Inner AI" [level=2] [ref=e2026]
+          - generic [ref=e2027]:
+            - link "Sobre nós" [ref=e2028] [cursor=pointer]:
+              - /url: /pt/about
+            - link "Empresas" [ref=e2029] [cursor=pointer]:
+              - /url: /pt/empresas
+            - link "Carreiras" [ref=e2030] [cursor=pointer]:
+              - /url: /pt/careers
+            - link "Preços" [ref=e2031] [cursor=pointer]:
+              - /url: /pt/pricing
+            - link "Fale com Vendas" [ref=e2032] [cursor=pointer]:
+              - /url: "#sales-modal"
+            - link "Nos Envie um Email" [ref=e2033] [cursor=pointer]:
+              - /url: mailto:hello@innerai.com
+            - link "Indique e ganhe" [ref=e2034] [cursor=pointer]:
+              - /url: "https://innerai.com/pt/solucoes/indicacoes "
+        - generic [ref=e2035]:
+          - heading "Recursos" [level=2] [ref=e2036]
+          - generic [ref=e2037]:
+            - link "Segurança" [ref=e2038] [cursor=pointer]:
+              - /url: /pt/security
+            - link "Status do Sistema" [ref=e2039] [cursor=pointer]:
+              - /url: https://status.innerai.com/
+            - link "Tutoriais" [ref=e2040] [cursor=pointer]:
+              - /url: https://link.innerai.com/v2-tutoriais
+            - link "Blog" [ref=e2041] [cursor=pointer]:
+              - /url: /pt/blog
+    - generic [ref=e2043]:
+      - generic [ref=e2044]:
+        - link "Termos de Serviço" [ref=e2046] [cursor=pointer]:
+          - /url: /pt/legal/terms
+        - generic [ref=e2047]:
+          - generic [ref=e2048]: ·
+          - link "Privacidade" [ref=e2049] [cursor=pointer]:
+            - /url: /pt/legal/privacy
+        - generic [ref=e2050]: ·
+        - generic [ref=e2051]: "CNPJ: 42.888.509/0001-62"
+      - generic [ref=e2052]:
+        - generic [ref=e2053]:
+          - link "/uploads/linkedin.svg" [ref=e2054] [cursor=pointer]:
+            - /url: https://www.linkedin.com/company/innerai/
+          - link "/uploads/instagram.svg" [ref=e2055] [cursor=pointer]:
+            - /url: https://www.instagram.com/innerai.br/
+          - link "/uploads/tiktok.svg" [ref=e2056] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@inner.ai/
+        - generic [ref=e2057]: © 2025 Inner AI
+  - link [ref=e2058] [cursor=pointer]:
+    - /url: https://wa.me/551152962293?text=Ol%C3%A1,%20quero%20saber%20mais%20da%20Inner%20AI
+    - img [ref=e2059]

@@ -1,25 +1,26 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
-import { useAuthStore } from '@/stores/auth-store';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
 import { AuthShell } from '@/components/app/auth-shell';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { trackEvent } from '@/lib/analytics';
+import { useAuthStore } from '@/stores/auth-store';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const login = useAuthStore((s) => s.login);
+  const login = useAuthStore((state) => state.login);
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setError('');
     setLoading(true);
 
@@ -29,9 +30,7 @@ export default function LoginPage() {
       router.push('/chat');
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } };
-      const message =
-        axiosErr?.response?.data?.message ||
-        (err instanceof Error ? err.message : 'Erro ao fazer login');
+      const message = axiosErr?.response?.data?.message || (err instanceof Error ? err.message : 'Erro ao fazer login');
       trackEvent('auth_login_error', { message });
       setError(message);
     } finally {
@@ -40,49 +39,33 @@ export default function LoginPage() {
   };
 
   return (
-    <AuthShell title="Entrar" subtitle="Acesse sua conta para continuar no IA Aggregator">
+    <AuthShell title="Entrar" subtitle="Acesse o Lume para abrir seus chats, templates e biblioteca em uma experiencia premium.">
       <form onSubmit={handleSubmit} className="space-y-4">
         {error ? <Alert variant="error">{error}</Alert> : null}
 
         <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium">
+          <label htmlFor="email" className="text-[0.8rem] font-semibold text-[var(--muted-foreground)]">
             Email
           </label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            placeholder="seu@email.com"
-            autoComplete="email"
-          />
+          <Input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required placeholder="voce@empresa.com" autoComplete="email" />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium">
+          <label htmlFor="password" className="text-[0.8rem] font-semibold text-[var(--muted-foreground)]">
             Senha
           </label>
-          <Input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            placeholder="Sua senha"
-            autoComplete="current-password"
-          />
+          <Input id="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required placeholder="Sua senha" autoComplete="current-password" />
         </div>
 
-        <Button type="submit" disabled={loading} className="w-full">
-          {loading ? 'Entrando...' : 'Entrar'}
+        <Button type="submit" variant="brand" size="lg" disabled={loading} className="w-full">
+          {loading ? 'Entrando...' : 'Entrar no Lume'}
         </Button>
       </form>
 
-      <p className="text-center text-sm text-[var(--muted-foreground)]">
-        Não tem uma conta?{' '}
-        <Link href="/register" className="text-[var(--primary)] hover:underline">
-          Criar conta
+      <p className="mt-5 text-center text-[0.82rem] text-[var(--muted-foreground)]">
+        Ainda nao tem conta?{' '}
+        <Link href="/register" className="font-semibold text-[var(--foreground)] hover:text-[var(--brand-primary)]">
+          Criar acesso
         </Link>
       </p>
     </AuthShell>

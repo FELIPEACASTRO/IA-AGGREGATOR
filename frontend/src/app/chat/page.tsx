@@ -23,7 +23,7 @@ import {
   ArrowUp, Plus, WandSparkles, Copy, Check, RefreshCw,
   ThumbsUp, ThumbsDown, LayoutGrid, MessageSquare,
   Pin, Trash2, Pencil, MoreHorizontal,
-  Zap, Brain, Scale, GripVertical,
+  Zap, Brain, Scale, GripVertical, Search,
 } from 'lucide-react';
 
 type Tier = 'fast' | 'balanced' | 'powerful';
@@ -241,7 +241,7 @@ function ChatPageContent() {
 
   const {
     conversations, activeConversationId, selectedModel,
-    isSending, isStreaming, availableModels,
+    isSending, availableModels,
     setSelectedModel, createConversation, setActiveConversation,
     renameConversation, toggleConversationPinned, clearConversationMessages,
     sendMessage, stopGenerating, deleteConversation,
@@ -302,7 +302,7 @@ function ChatPageContent() {
   }, [searchParams]);
   useEffect(() => {
     if (activeConversation) setCanvasOrder(activeConversation.messages.map((m) => m.id));
-  }, [activeConversation?.id, activeConversation?.messages.length]);
+  }, [activeConversation]);
   useEffect(() => {
     if (!canvasMode) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeConversation?.messages, canvasMode]);
@@ -444,7 +444,7 @@ function ChatPageContent() {
         </div>
       }
     >
-      <div className="flex" style={{ height: 'calc(100vh - 128px)' }}>
+      <div className="flex h-full min-h-0">
         <aside className="hidden w-72 shrink-0 border-r border-[var(--border)] flex-col overflow-hidden lg:flex bg-[var(--surface-1)]">
           <div className="p-3 border-b border-[var(--border)]">
             <button onClick={() => { createConversation(); setCanvasMode(false); }}
@@ -456,7 +456,7 @@ function ChatPageContent() {
             <div className="relative">
               <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar conversas..."
                 className="w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-1.5 pl-8 text-[var(--text-sm)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--ring)]" />
-              <Pin className="pointer-events-none absolute left-2.5 top-2 h-3.5 w-3.5 text-[var(--muted-foreground)]" />
+              <Search className="pointer-events-none absolute left-2.5 top-2 h-3.5 w-3.5 text-[var(--muted-foreground)]" />
             </div>
           </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-0.5">

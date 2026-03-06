@@ -1,0 +1,26 @@
+- generic [active] [ref=e1]:
+  - link "Pular para o conteúdo" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - main [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - heading "Entrar" [level=1] [ref=e6]
+        - paragraph [ref=e7]: Acesse sua conta para continuar no IA Aggregator
+      - generic [ref=e8]:
+        - generic [ref=e9]:
+          - text: Email
+          - textbox "Email" [ref=e11]:
+            - /placeholder: seu@email.com
+        - generic [ref=e12]:
+          - text: Senha
+          - generic [ref=e13]:
+            - textbox "Senha" [ref=e14]:
+              - /placeholder: Sua senha
+            - button "Mostrar senha" [ref=e15]:
+              - img [ref=e16]
+        - button "Entrar" [ref=e19]
+      - paragraph [ref=e20]:
+        - text: Não tem uma conta?
+        - link "Criar conta" [ref=e21] [cursor=pointer]:
+          - /url: /register
+  - alert [ref=e22]

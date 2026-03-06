@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { AppShell } from '@/components/app/app-shell';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useChatStore } from '@/stores/chat-store';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/stores/toast-store';
@@ -9,12 +9,40 @@ import { trackEvent } from '@/lib/analytics';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/cn';
 import {
-  BookOpen, Clock3, MessageSquare, Pin, Search,
-  Trash2, ChevronRight, LayoutGrid, List, ArrowUpDown,
+  ArrowUpDown,
+  BookOpen,
+  BrainCircuit,
+  ChevronRight,
+  Clock3,
+  FolderKanban,
+  LayoutGrid,
+  List,
+  MessageSquare,
+  Pin,
+  Search,
+  Sparkles,
+  Trash2,
 } from 'lucide-react';
 
 type SortKey = 'recent' | 'name' | 'size';
 type ViewMode = 'grid' | 'list';
+
+function StatCard({ label, value, helper, icon: Icon }: { label: string; value: string; helper: string; icon: React.ElementType }) {
+  return (
+    <div className="lume-panel-soft rounded-[var(--radius-xl)] p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">{label}</p>
+          <p className="mt-2 text-[var(--text-2xl)] font-semibold text-[var(--foreground)]">{value}</p>
+          <p className="mt-1 text-[var(--text-xs)] text-[var(--muted-foreground)]">{helper}</p>
+        </div>
+        <span className="inline-flex h-11 w-11 items-center justify-center rounded-[18px] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] text-[var(--brand-primary)]">
+          <Icon className="h-5 w-5" />
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export default function LibraryPage() {
   const [query, setQuery] = useState('');
@@ -24,150 +52,322 @@ export default function LibraryPage() {
   const router = useRouter();
   const { conversations, setActiveConversation, toggleConversationPinned, deleteConversation } = useChatStore();
 
-  const filtered = useMemo(() => {
-    let list = conversations.filter((c) =>
-      c.title.toLowerCase().includes(query.toLowerCase())
-    );
-    if (filterPinned) list = list.filter((c) => c.pinned);
-    if (sort === 'name') list = [...list].sort((a, b) => a.title.localeCompare(b.title));
-    else if (sort === 'size') list = [...list].sort((a, b) => b.messages.length - a.messages.length);
-    else list = [...list].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-    return list;
-  }, [conversations, query, sort, filterPinned]);
+  const totalMessages = useMemo(
+    () => conversations.reduce((sum, conversation) => sum + conversation.messages.length, 0),
+    [conversations],
+  );
 
-  const pinnedCount = conversations.filter((c) => c.pinned).length;
+  const pinnedCount = useMemo(
+    () => conversations.filter((conversation) => conversation.pinned).length,
+    [conversations],
+  );
+
+  const modelsInUse = useMemo(
+    () => new Set(conversations.map((conversation) => conversation.model)).size,
+    [conversations],
+  );
+
+  const recentConversation = useMemo(
+    () => [...conversations].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0],
+    [conversations],
+  );
+
+  const filtered = useMemo(() => {
+    let list = conversations.filter((conversation) =>
+      conversation.title.toLowerCase().includes(query.toLowerCase()),
+    );
+
+    if (filterPinned) list = list.filter((conversation) => conversation.pinned);
+
+    if (sort === 'name') {
+      list = [...list].sort((a, b) => a.title.localeCompare(b.title));
+    } else if (sort === 'size') {
+      list = [...list].sort((a, b) => b.messages.length - a.messages.length);
+    } else {
+      list = [...list].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    }
+
+    return list;
+  }, [conversations, filterPinned, query, sort]);
+
+  const openConversation = (conversationId: string) => {
+    setActiveConversation(conversationId);
+    trackEvent('library_open_conversation', { conversationId });
+    router.push('/chat');
+    toast.success('Conversa aberta');
+  };
+
+  const removeConversation = (conversationId: string) => {
+    if (!window.confirm('Excluir esta conversa?')) return;
+    deleteConversation(conversationId);
+    toast.success('Conversa excluida');
+  };
 
   return (
     <AppShell
       title="Biblioteca"
-      subtitle={`${conversations.length} conversa${conversations.length !== 1 ? 's' : ''} salvas`}
+      subtitle={`${conversations.length} conversa${conversations.length !== 1 ? 's' : ''} salvas e prontas para reuso`}
       headerActions={
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--muted-foreground)]" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar..."
-              className="h-8 w-52 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-2)] pl-8 pr-3 text-[var(--text-xs)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--ring)]" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Buscar..."
+              className="lume-field h-11 w-[min(18rem,50vw)] pl-9"
+            />
           </div>
-          <div className="flex rounded-[var(--radius-md)] border border-[var(--border)] overflow-hidden">
-            <button onClick={() => setView('list')} className={cn('p-1.5 transition-colors', view === 'list' ? 'bg-[var(--brand-primary)] text-white' : 'bg-[var(--surface-1)] text-[var(--muted-foreground)] hover:bg-[var(--surface-2)]')}>
+          <div className="flex rounded-[var(--radius-pill)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-1">
+            <button
+              onClick={() => setView('list')}
+              className={cn(
+                'inline-flex h-9 items-center gap-2 rounded-[var(--radius-pill)] px-3 text-[var(--text-xs)] font-semibold transition-colors',
+                view === 'list' ? 'bg-[var(--brand-primary)] text-white shadow-[var(--shadow-brand)]' : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]',
+              )}
+              aria-label="Visualizacao em lista"
+            >
               <List className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Lista</span>
             </button>
-            <button onClick={() => setView('grid')} className={cn('p-1.5 transition-colors', view === 'grid' ? 'bg-[var(--brand-primary)] text-white' : 'bg-[var(--surface-1)] text-[var(--muted-foreground)] hover:bg-[var(--surface-2)]')}>
+            <button
+              onClick={() => setView('grid')}
+              className={cn(
+                'inline-flex h-9 items-center gap-2 rounded-[var(--radius-pill)] px-3 text-[var(--text-xs)] font-semibold transition-colors',
+                view === 'grid' ? 'bg-[var(--brand-primary)] text-white shadow-[var(--shadow-brand)]' : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]',
+              )}
+              aria-label="Visualizacao em grade"
+            >
               <LayoutGrid className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Grid</span>
             </button>
           </div>
         </div>
       }
     >
-      <div className="py-6 space-y-5">
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-2">
-          <button onClick={() => setFilterPinned((v) => !v)}
-            className={cn('inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] border px-3 py-1.5 text-[var(--text-xs)] font-medium transition-colors',
-              filterPinned ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]' : 'border-[var(--border)] bg-[var(--surface-1)] text-[var(--muted-foreground)] hover:border-[var(--border-strong)]')}>
-            <Pin className="h-3 w-3" /> Fixadas {pinnedCount > 0 && `(${pinnedCount})`}
-          </button>
-          <div className="flex items-center gap-1.5 ml-auto">
-            <ArrowUpDown className="h-3.5 w-3.5 text-[var(--muted-foreground)]" />
-            {(['recent', 'name', 'size'] as SortKey[]).map((key) => (
-              <button key={key} onClick={() => setSort(key)}
-                className={cn('rounded-[var(--radius-pill)] border px-2.5 py-1 text-[var(--text-xs)] transition-colors',
-                  sort === key ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]' : 'border-[var(--border)] bg-[var(--surface-1)] text-[var(--muted-foreground)] hover:border-[var(--border-strong)]')}>
-                {key === 'recent' ? 'Recente' : key === 'name' ? 'Nome' : 'Tamanho'}
-              </button>
-            ))}
-          </div>
-        </div>
+      <div className="space-y-6 py-6">
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <StatCard label="Conversas" value={String(conversations.length)} helper="Biblioteca pronta para reabrir contexto" icon={FolderKanban} />
+          <StatCard label="Mensagens" value={totalMessages.toLocaleString('pt-BR')} helper="Volume total salvo no workspace" icon={MessageSquare} />
+          <StatCard label="Fixadas" value={String(pinnedCount)} helper="Acessos rapidos para fluxos recorrentes" icon={Pin} />
+          <StatCard label="Modelos" value={String(modelsInUse)} helper="Mix de engines usadas no historico" icon={BrainCircuit} />
+        </section>
 
-        {filtered.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-1)] p-12 text-center">
-            <BookOpen className="mx-auto h-10 w-10 text-[var(--muted-foreground)] opacity-40 mb-3" />
-            <p className="font-medium text-[var(--text-sm)]">
-              {query ? 'Nenhum resultado encontrado' : 'Nenhuma conversa ainda'}
-            </p>
-            <p className="mt-1 text-[var(--text-xs)] text-[var(--muted-foreground)]">
-              {query ? 'Tente outro termo de busca.' : 'Inicie uma conversa no chat para ela aparecer aqui.'}
-            </p>
-          </motion.div>
-        ) : view === 'grid' ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <AnimatePresence>
-              {filtered.map((conv, i) => (
-                <motion.article key={conv.id} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.2, delay: i * 0.03 }}
-                  className="group rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-1)] p-4 hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-md)] transition-all">
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-md)] bg-[var(--brand-primary)]/10 text-[var(--text-xs)] font-bold text-[var(--brand-primary)]">
-                      {conv.title.slice(0, 2).toUpperCase()}
-                    </div>
-                    {conv.pinned && <Pin className="h-3.5 w-3.5 text-[var(--warning)] shrink-0" />}
-                  </div>
-                  <h3 className="truncate text-[var(--text-sm)] font-semibold mb-1">{conv.title}</h3>
-                  <p className="text-[10px] text-[var(--muted-foreground)] mb-1">{conv.model}</p>
-                  <p className="text-[10px] text-[var(--subtle-foreground)] flex items-center gap-1">
-                    <MessageSquare className="h-3 w-3" /> {conv.messages.length} msg{conv.messages.length !== 1 ? 's' : ''}
+        <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+          <aside className="space-y-4">
+            <section className="lume-panel rounded-[var(--radius-2xl)] p-5">
+              <span className="lume-kicker">
+                <Sparkles className="h-3.5 w-3.5" /> Workspace memory
+              </span>
+              <h2 className="mt-4 text-[var(--text-xl)] font-semibold text-[var(--foreground)]">Biblioteca curada para retomar trabalho sem friccao.</h2>
+              <p className="mt-3 text-[var(--text-sm)] text-[var(--muted-foreground)]">
+                O InnerAI usa a ideia de workspace orientado por contexto. Aqui o Lume replica isso com conversa recente, filtros claros e retomada imediata.
+              </p>
+              {recentConversation ? (
+                <div className="mt-5 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-4">
+                  <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Mais recente</p>
+                  <p className="mt-2 text-[var(--text-lg)] font-semibold text-[var(--foreground)]">Retomar a conversa mais recente</p>
+                  <p className="mt-1 text-[var(--text-xs)] text-[var(--muted-foreground)]">
+                    Assunto: {recentConversation.title}
                   </p>
-                  <div className="mt-3 flex gap-1.5">
-                    <button onClick={() => { setActiveConversation(conv.id); trackEvent('library_open_conversation', { conversationId: conv.id }); router.push('/chat'); toast.success('Conversa aberta'); }}
-                      className="flex-1 rounded-[var(--radius-md)] bg-[var(--brand-primary)] py-1.5 text-[var(--text-xs)] font-medium text-white hover:opacity-90 transition-opacity">
-                      Abrir
-                    </button>
-                    <button onClick={() => { toggleConversationPinned(conv.id); trackEvent('library_toggle_pin', { conversationId: conv.id }); }}
-                      className="rounded-[var(--radius-md)] border border-[var(--border)] p-1.5 text-[var(--muted-foreground)] hover:bg-[var(--surface-2)] transition-colors">
-                      <Pin className="h-3.5 w-3.5" />
-                    </button>
-                    <button onClick={() => { if (window.confirm('Excluir esta conversa?')) { deleteConversation(conv.id); toast.success('Excluída'); }}}
-                      className="rounded-[var(--radius-md)] border border-[var(--border)] p-1.5 text-[var(--muted-foreground)] hover:bg-[var(--destructive)]/10 hover:text-[var(--destructive)] hover:border-[var(--destructive)]/30 transition-colors">
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </motion.article>
-              ))}
-            </AnimatePresence>
-          </div>
-        ) : (
-          <div className="space-y-1.5">
-            <AnimatePresence>
-              {filtered.map((conv, i) => (
-                <motion.article key={conv.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2, delay: i * 0.02 }}
-                  className="group flex items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-1)] px-4 py-3 hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)] transition-all">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--surface-2)] text-[10px] font-bold text-[var(--muted-foreground)] group-hover:bg-[var(--brand-primary)]/10 group-hover:text-[var(--brand-primary)] transition-colors">
-                    {conv.title.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="truncate text-[var(--text-sm)] font-medium">{conv.title}</h3>
-                      {conv.pinned && <Pin className="h-3 w-3 shrink-0 text-[var(--warning)]" />}
-                    </div>
-                    <p className="text-[10px] text-[var(--subtle-foreground)] flex items-center gap-2 mt-0.5">
-                      <span>{conv.model}</span>
-                      <span>·</span>
-                      <MessageSquare className="h-2.5 w-2.5" /><span>{conv.messages.length} msgs</span>
-                      <span>·</span>
-                      <Clock3 className="h-2.5 w-2.5" /><span>{new Date(conv.updatedAt).toLocaleDateString('pt-BR')}</span>
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => { toggleConversationPinned(conv.id); trackEvent('library_toggle_pin', { conversationId: conv.id }); }}
-                      className="rounded-[var(--radius-sm)] p-1.5 text-[var(--muted-foreground)] hover:bg-[var(--surface-3)] transition-colors" title={conv.pinned ? 'Desafixar' : 'Fixar'}>
-                      <Pin className="h-3.5 w-3.5" />
-                    </button>
-                    <button onClick={() => { if (window.confirm('Excluir?')) { deleteConversation(conv.id); toast.success('Excluída'); }}}
-                      className="rounded-[var(--radius-sm)] p-1.5 text-[var(--muted-foreground)] hover:bg-[var(--destructive)]/10 hover:text-[var(--destructive)] transition-colors" title="Excluir">
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                    <button onClick={() => { setActiveConversation(conv.id); trackEvent('library_open_conversation', { conversationId: conv.id }); router.push('/chat'); toast.success('Conversa aberta'); }}
-                      className="flex items-center gap-1.5 rounded-[var(--radius-md)] bg-[var(--brand-primary)] px-3 py-1.5 text-[var(--text-xs)] font-medium text-white hover:opacity-90 transition-opacity">
-                      Abrir <ChevronRight className="h-3 w-3" />
-                    </button>
-                  </div>
-                </motion.article>
-              ))}
-            </AnimatePresence>
-          </div>
-        )}
+                  <p className="mt-1 text-[var(--text-xs)] text-[var(--muted-foreground)]">
+                    {recentConversation.model} · {new Date(recentConversation.updatedAt).toLocaleDateString('pt-BR')}
+                  </p>
+                  <button
+                    onClick={() => openConversation(recentConversation.id)}
+                    className="mt-4 inline-flex items-center gap-2 rounded-[var(--radius-pill)] border border-[var(--border)] px-4 py-2 text-[var(--text-xs)] font-semibold text-[var(--foreground)] hover:border-[var(--brand-primary)]/40 hover:bg-[rgba(96,115,255,0.08)]"
+                  >
+                    Abrir
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : null}
+            </section>
+
+            <section className="lume-panel-soft rounded-[var(--radius-2xl)] p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Filtros</p>
+                  <p className="mt-1 text-[var(--text-sm)] text-[var(--muted-foreground)]">Selecione recorte e ordem do historico.</p>
+                </div>
+                <ArrowUpDown className="h-4 w-4 text-[var(--muted-foreground)]" />
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  onClick={() => setFilterPinned((value) => !value)}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] border px-3 py-2 text-[var(--text-xs)] font-semibold transition-colors',
+                    filterPinned ? 'border-[var(--brand-primary)] bg-[rgba(96,115,255,0.1)] text-[var(--brand-primary)]' : 'border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]',
+                  )}
+                >
+                  <Pin className="h-3 w-3" /> Fixadas {pinnedCount > 0 ? `(${pinnedCount})` : ''}
+                </button>
+                {(['recent', 'name', 'size'] as SortKey[]).map((key) => (
+                  <button
+                    key={key}
+                    onClick={() => setSort(key)}
+                    className={cn(
+                      'rounded-[var(--radius-pill)] border px-3 py-2 text-[var(--text-xs)] font-semibold transition-colors',
+                      sort === key ? 'border-[var(--brand-primary)] bg-[rgba(96,115,255,0.1)] text-[var(--brand-primary)]' : 'border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]',
+                    )}
+                  >
+                    {key === 'recent' ? 'Recente' : key === 'name' ? 'Nome' : 'Tamanho'}
+                  </button>
+                ))}
+              </div>
+            </section>
+          </aside>
+
+          <section className="lume-panel rounded-[var(--radius-2xl)] p-5 md:p-6">
+            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[var(--border)] pb-4">
+              <div>
+                <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Historico ativo</p>
+                <h2 className="mt-2 text-[var(--text-xl)] font-semibold text-[var(--foreground)]">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''} pronto{filtered.length !== 1 ? 's' : ''} para retomada</h2>
+              </div>
+              <p className="text-[var(--text-xs)] text-[var(--muted-foreground)]">Alternancia entre lista e grid para priorizar densidade ou exploracao.</p>
+            </div>
+
+            {filtered.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex min-h-[420px] flex-col items-center justify-center rounded-[var(--radius-2xl)] border border-dashed border-[var(--border)] bg-[rgba(255,255,255,0.02)] px-6 text-center"
+              >
+                <BookOpen className="h-12 w-12 text-[var(--subtle-foreground)]" />
+                <p className="mt-4 text-[var(--text-lg)] font-semibold text-[var(--foreground)]">
+                  {query ? 'Nenhum resultado encontrado' : 'Nenhuma conversa ainda'}
+                </p>
+                <p className="mt-2 max-w-md text-[var(--text-sm)] text-[var(--muted-foreground)]">
+                  {query ? 'Refine a busca ou troque o filtro para recuperar mais conversas.' : 'Inicie um fluxo no chat e a memoria do workspace passa a aparecer aqui.'}
+                </p>
+              </motion.div>
+            ) : view === 'grid' ? (
+              <div className="mt-5 grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
+                <AnimatePresence>
+                  {filtered.map((conversation, index) => (
+                    <motion.article
+                      key={conversation.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.22, delay: index * 0.02 }}
+                      className="group rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-4 shadow-[var(--shadow-sm)]"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-[18px] border border-[var(--border)] bg-[rgba(96,115,255,0.12)] text-[0.78rem] font-bold text-[var(--brand-primary)]">
+                          {conversation.title.slice(0, 2).toUpperCase()}
+                        </span>
+                        {conversation.pinned ? <Pin className="h-4 w-4 text-[var(--warning)]" /> : null}
+                      </div>
+
+                      <h3 className="mt-5 truncate text-[var(--text-base)] font-semibold text-[var(--foreground)]">{conversation.title}</h3>
+                      <p className="mt-1 text-[var(--text-xs)] text-[var(--muted-foreground)]">{conversation.model}</p>
+
+                      <div className="mt-4 grid grid-cols-2 gap-2 text-[var(--text-xs)] text-[var(--muted-foreground)]">
+                        <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-3 py-2">
+                          <span className="block text-[0.68rem] uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Msgs</span>
+                          <span className="mt-1 block font-semibold text-[var(--foreground)]">{conversation.messages.length}</span>
+                        </div>
+                        <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-3 py-2">
+                          <span className="block text-[0.68rem] uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Update</span>
+                          <span className="mt-1 block font-semibold text-[var(--foreground)]">{new Date(conversation.updatedAt).toLocaleDateString('pt-BR')}</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex gap-2">
+                        <button
+                          onClick={() => openConversation(conversation.id)}
+                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-[var(--radius-pill)] bg-[var(--brand-primary)] px-4 py-2.5 text-[var(--text-xs)] font-semibold text-white shadow-[var(--shadow-brand)] hover:-translate-y-0.5"
+                        >
+                          Abrir
+                        </button>
+                        <button
+                          onClick={() => toggleConversationPinned(conversation.id)}
+                          aria-label={conversation.pinned ? 'Desafixar' : 'Fixar'}
+                          title={conversation.pinned ? 'Desafixar' : 'Fixar'}
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-pill)] border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                        >
+                          <Pin className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => removeConversation(conversation.id)}
+                          aria-label="Excluir"
+                          title="Excluir"
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-pill)] border border-[var(--border)] text-[var(--muted-foreground)] hover:border-[rgba(255,107,135,0.3)] hover:text-[var(--destructive)]"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </motion.article>
+                  ))}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <div className="mt-5 space-y-3">
+                <AnimatePresence>
+                  {filtered.map((conversation, index) => (
+                    <motion.article
+                      key={conversation.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 8 }}
+                      transition={{ duration: 0.2, delay: index * 0.02 }}
+                      className="group flex flex-col gap-4 rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-4 py-4 md:flex-row md:items-center"
+                    >
+                      <div className="flex min-w-0 flex-1 items-start gap-4">
+                        <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] text-[0.78rem] font-bold text-[var(--muted-foreground)] group-hover:text-[var(--brand-primary)]">
+                          {conversation.title.slice(0, 2).toUpperCase()}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="truncate text-[var(--text-base)] font-semibold text-[var(--foreground)]">{conversation.title}</h3>
+                            {conversation.pinned ? <Pin className="h-3.5 w-3.5 shrink-0 text-[var(--warning)]" /> : null}
+                          </div>
+                          <p className="mt-1 text-[var(--text-xs)] text-[var(--muted-foreground)]">{conversation.model}</p>
+                          <div className="mt-3 flex flex-wrap gap-2 text-[0.72rem] text-[var(--subtle-foreground)]">
+                            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--border)] px-2.5 py-1">
+                              <MessageSquare className="h-3 w-3" /> {conversation.messages.length} msgs
+                            </span>
+                            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--border)] px-2.5 py-1">
+                              <Clock3 className="h-3 w-3" /> {new Date(conversation.updatedAt).toLocaleDateString('pt-BR')}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                        <button
+                          onClick={() => toggleConversationPinned(conversation.id)}
+                          aria-label={conversation.pinned ? 'Desafixar' : 'Fixar'}
+                          title={conversation.pinned ? 'Desafixar' : 'Fixar'}
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-pill)] border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                        >
+                          <Pin className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => removeConversation(conversation.id)}
+                          aria-label="Excluir"
+                          title="Excluir"
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-pill)] border border-[var(--border)] text-[var(--muted-foreground)] hover:border-[rgba(255,107,135,0.3)] hover:text-[var(--destructive)]"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => openConversation(conversation.id)}
+                          className="inline-flex items-center gap-2 rounded-[var(--radius-pill)] bg-[var(--brand-primary)] px-4 py-2.5 text-[var(--text-xs)] font-semibold text-white shadow-[var(--shadow-brand)] hover:-translate-y-0.5"
+                        >
+                          Abrir
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </motion.article>
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+          </section>
+        </div>
       </div>
     </AppShell>
   );

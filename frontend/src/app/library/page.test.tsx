@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import LibraryPage from './page';
 
 const pushMock = jest.fn();
@@ -67,14 +67,16 @@ describe('LibraryPage', () => {
     expect(screen.getByText('Resumo executivo')).toBeInTheDocument();
   });
 
-  it('filters conversations by search query', () => {
+  it('filters conversations by search query', async () => {
     render(<LibraryPage />);
 
-    fireEvent.change(screen.getByPlaceholderText(/buscar/i), {
+    fireEvent.change(screen.getByPlaceholderText('Buscar...'), {
       target: { value: 'Resumo' },
     });
 
-    expect(screen.queryByText('Planejamento trimestral')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText('Planejamento trimestral')).not.toBeInTheDocument();
+    });
     expect(screen.getByText('Resumo executivo')).toBeInTheDocument();
   });
 
