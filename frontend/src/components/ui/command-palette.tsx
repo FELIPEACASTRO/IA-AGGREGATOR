@@ -7,6 +7,7 @@ import { Search, MessageSquare, BookOpen, Zap, CreditCard, Settings, Plus, Pin, 
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/cn';
 import { useChatStore } from '@/stores/chat-store';
+import { useTranslations } from 'next-intl';
 
 export interface CommandItem {
   id: string;
@@ -23,27 +24,60 @@ interface CommandPaletteProps {
   onClose: () => void;
 }
 
+const FREQUENCY_STORAGE_KEY = 'lume-command-palette-frequency';
+
+function bumpCommandUsage(commandId: string) {
+  if (typeof window === 'undefined') return;
+  const raw = localStorage.getItem(FREQUENCY_STORAGE_KEY);
+  const parsed = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+  parsed[commandId] = (parsed[commandId] || 0) + 1;
+  localStorage.setItem(FREQUENCY_STORAGE_KEY, JSON.stringify(parsed));
+}
+
+function readCommandUsage() {
+  if (typeof window === 'undefined') return {} as Record<string, number>;
+  const raw = localStorage.getItem(FREQUENCY_STORAGE_KEY);
+  return raw ? (JSON.parse(raw) as Record<string, number>) : {};
+}
+
 function useCommandItems(onClose: () => void): CommandItem[] {
+  const t = useTranslations();
   const router = useRouter();
   const { conversations, createConversation, setActiveConversation } = useChatStore();
 
+  const action = (id: string, run: () => void) => () => {
+    bumpCommandUsage(id);
+    run();
+  };
   const navigate = (path: string) => { router.push(path); onClose(); };
   const openConversation = (id: string) => { setActiveConversation(id); router.push('/chat'); onClose(); };
   const newConversation = () => { createConversation(); router.push('/chat'); onClose(); };
 
+  const baseItems: CommandItem[] = [
+    { id: 'nav-chat', label: t('commandPalette.actions.goChat'), icon: <MessageSquare className="h-4 w-4" />, group: t('commandPalette.groups.navigate'), action: action('nav-chat', () => navigate('/chat')), keywords: ['chat', 'conversa'] },
+    { id: 'nav-library', label: t('commandPalette.actions.goLibrary'), icon: <BookOpen className="h-4 w-4" />, group: t('commandPalette.groups.navigate'), action: action('nav-library', () => navigate('/library')), keywords: ['biblioteca', 'acervo'] },
+    { id: 'nav-prompts', label: t('commandPalette.actions.goPrompts'), icon: <Zap className="h-4 w-4" />, group: t('commandPalette.groups.navigate'), action: action('nav-prompts', () => navigate('/prompts')), keywords: ['template', 'prompt'] },
+    { id: 'nav-billing', label: t('commandPalette.actions.goBilling'), icon: <CreditCard className="h-4 w-4" />, group: t('commandPalette.groups.navigate'), action: action('nav-billing', () => navigate('/billing')), keywords: ['plano', 'billing'] },
+    { id: 'nav-settings', label: t('commandPalette.actions.goSettings'), icon: <Settings className="h-4 w-4" />, group: t('commandPalette.groups.navigate'), action: action('nav-settings', () => navigate('/settings')), keywords: ['configuracoes', 'perfil'] },
+    { id: 'action-new-conv', label: t('commandPalette.actions.newConversation'), description: t('commandPalette.descriptions.newConversation'), icon: <Plus className="h-4 w-4" />, group: t('commandPalette.groups.actions'), action: action('action-new-conv', newConversation), keywords: ['nova', 'criar'] },
+  ];
+
+  const frequency = readCommandUsage();
+  const frequentItems = [...baseItems]
+    .sort((a, b) => (frequency[b.id] || 0) - (frequency[a.id] || 0))
+    .filter((item) => (frequency[item.id] || 0) > 0)
+    .slice(0, 3)
+    .map((item) => ({ ...item, group: t('commandPalette.groups.frequent') }));
+
   return [
-    { id: 'nav-chat', label: 'Ir para Chat', icon: <MessageSquare className="h-4 w-4" />, group: 'Navegar', action: () => navigate('/chat'), keywords: ['chat', 'conversa'] },
-    { id: 'nav-library', label: 'Ir para Biblioteca', icon: <BookOpen className="h-4 w-4" />, group: 'Navegar', action: () => navigate('/library'), keywords: ['biblioteca', 'acervo'] },
-    { id: 'nav-prompts', label: 'Ir para Templates', icon: <Zap className="h-4 w-4" />, group: 'Navegar', action: () => navigate('/prompts'), keywords: ['template', 'prompt'] },
-    { id: 'nav-billing', label: 'Ir para Plano', icon: <CreditCard className="h-4 w-4" />, group: 'Navegar', action: () => navigate('/billing'), keywords: ['plano', 'billing'] },
-    { id: 'nav-settings', label: 'Ir para Configuracoes', icon: <Settings className="h-4 w-4" />, group: 'Navegar', action: () => navigate('/settings'), keywords: ['configuracoes', 'perfil'] },
-    { id: 'action-new-conv', label: 'Nova conversa', description: 'Abrir um chat em branco', icon: <Plus className="h-4 w-4" />, group: 'Acoes', action: newConversation, keywords: ['nova', 'criar'] },
+    ...frequentItems,
+    ...baseItems,
     ...conversations.slice(0, 8).map((conversation) => ({
       id: `conv-${conversation.id}`,
       label: conversation.title,
       description: `${conversation.model} · ${conversation.messages.length} mensagens`,
       icon: conversation.pinned ? <Pin className="h-4 w-4" /> : <MessageSquare className="h-4 w-4" />,
-      group: 'Conversas recentes',
+      group: t('commandPalette.groups.recentConversations'),
       action: () => openConversation(conversation.id),
       keywords: [conversation.title.toLowerCase(), conversation.model],
     })),
@@ -51,6 +85,7 @@ function useCommandItems(onClose: () => void): CommandItem[] {
 }
 
 export function CommandPalette({ open, onClose }: CommandPaletteProps) {
+  const t = useTranslations();
   const [query, setQuery] = useState('');
   const [highlighted, setHighlighted] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -121,9 +156,9 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                 ref={inputRef}
                 value={query}
                 onChange={(event) => { setQuery(event.target.value); setHighlighted(0); }}
-                placeholder="Buscar paginas, conversas e acoes..."
+                placeholder={t('commandPalette.searchPlaceholder')}
                 className="flex-1 bg-transparent text-[var(--text-sm)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none"
-                aria-label="Buscar comandos"
+                aria-label={t('commandPalette.searchCommands')}
                 autoComplete="off"
               />
               <kbd className="rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.04)] px-2 py-1 text-[0.62rem] text-[var(--muted-foreground)]">ESC</kbd>
@@ -131,7 +166,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
             <div className="max-h-[28rem] overflow-y-auto py-3">
               {filtered.length === 0 ? (
                 <div className="px-5 py-10 text-center text-[var(--text-sm)] text-[var(--muted-foreground)]">
-                  Nenhum resultado para &ldquo;{query}&rdquo;
+                  {t('commandPalette.empty', { query })}
                 </div>
               ) : (
                 Object.entries(groups).map(([group, groupItems]) => {

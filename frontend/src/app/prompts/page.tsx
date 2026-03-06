@@ -30,7 +30,7 @@ const templates = [
     iconColor: 'text-[var(--brand-primary)]',
     iconBg: 'bg-[var(--brand-primary)]/10',
     title: 'Resumo Executivo',
-    description: 'Condensa informacoes em topicos estrategicos para lideranca.',
+    description: 'Condensa informações em topicos estrategicos para lideranca.',
     tag: 'Analise',
     prompt: 'Crie um resumo executivo estruturado em até 7 bullets com foco em insights e decisões estratégicas sobre o seguinte tema:',
     uses: 847,
@@ -52,7 +52,7 @@ const templates = [
     iconColor: 'text-[var(--brand-secondary)]',
     iconBg: 'bg-[var(--brand-secondary)]/10',
     title: 'E-mail Profissional',
-    description: 'Rascunho claro, objetivo e com tom apropriado para comunicacoes formais.',
+    description: 'Rascunho claro, objetivo e com tom apropriado para comúnicações formais.',
     tag: 'Escrita',
     prompt: 'Escreva um e-mail profissional com tom cordial, objetivo e estrutura clara (assunto, abertura, corpo, encerramento) sobre:',
     uses: 1203,
@@ -74,7 +74,7 @@ const templates = [
     iconColor: 'text-[var(--muted-foreground)]',
     iconBg: 'bg-[var(--surface-3)]',
     title: 'Documento Tecnico',
-    description: 'Estrutura clara para documentacao tecnica, RFCs ou especificacoes.',
+    description: 'Estrutura clara para documentação tecnica, RFCs ou especificações.',
     tag: 'Escrita',
     prompt: 'Escreva um documento técnico com seções: Objetivo, Contexto, Solução proposta, Requisitos, Considerações e Plano de implementação para:',
     uses: 312,
@@ -149,7 +149,7 @@ export default function PromptsPage() {
                 <Workflow className="h-3.5 w-3.5" /> Prompt operating system
               </span>
               <h2 className="mt-5 max-w-3xl text-[var(--text-3xl)] font-semibold text-[var(--foreground)]">
-                Estruture seus fluxos como um catalogo de playbooks, nao como uma lista solta de prompts.
+                Estruture seus fluxos como um catálogo de playbooks, não como uma lista solta de prompts.
               </h2>
               <p className="mt-3 max-w-2xl text-[var(--text-sm)] text-[var(--muted-foreground)]">
                 O objetivo aqui e operacional: descoberta clara, contexto rapido e execucao em um clique com CTA recorrente.
@@ -260,3 +260,4 @@ export default function PromptsPage() {
     </AppShell>
   );
 }
+

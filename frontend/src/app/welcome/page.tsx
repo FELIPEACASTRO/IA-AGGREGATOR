@@ -66,15 +66,15 @@ const goals: GoalCard[] = [
   },
   {
     id: 'writing',
-    title: 'Escrita e comunicacao',
-    description: 'Emails, documentos, comunicados e textos com mais consistencia e velocidade.',
+    title: 'Escrita e comúnicação',
+    description: 'Emails, documentos, comúnicados e textos com mais consistencia e velocidade.',
     icon: FileText,
     colorClass: 'text-[var(--brand-secondary)]',
     suggestedModel: 'claude-3-5-haiku',
     prompts: [
       'Escreva um email profissional e objetivo sobre:',
       'Reescreva este texto para deixá-lo mais claro e persuasivo:',
-      'Crie um comunicado interno com tom executivo para:',
+      'Crie um comúnicado interno com tom executivo para:',
     ],
   },
   {
@@ -85,7 +85,7 @@ const goals: GoalCard[] = [
     colorClass: 'text-[var(--success)]',
     suggestedModel: 'gpt-4o-mini',
     prompts: [
-      'Monte um plano de acao com etapas, responsaveis e riscos para:',
+      'Monte um plano de ação com etapas, responsaveis e riscos para:',
       'Crie um roadmap de 90 dias para atingir este objetivo:',
       'Transforme o objetivo abaixo em milestones semanais:',
     ],
@@ -93,7 +93,7 @@ const goals: GoalCard[] = [
   {
     id: 'general',
     title: 'Assistente geral',
-    description: 'Pesquise, explore, aprenda e teste ideias sem travar em uma unica categoria.',
+    description: 'Pesquise, explore, aprenda e teste ideias sem travar em uma única categoria.',
     icon: Sparkles,
     colorClass: 'text-[var(--warning)]',
     suggestedModel: 'deepseek-chat',
@@ -115,7 +115,7 @@ const models: ModelCard[] = [
 ];
 
 const tierMeta: Record<Tier, { label: string; icon: React.ElementType; tone: string }> = {
-  fast: { label: 'Rapido', icon: Zap, tone: 'text-[var(--success)]' },
+  fast: { label: 'Rápido', icon: Zap, tone: 'text-[var(--success)]' },
   balanced: { label: 'Equilibrado', icon: Scale, tone: 'text-[var(--brand-primary)]' },
   powerful: { label: 'Profundo', icon: Brain, tone: 'text-[var(--warning)]' },
 };
@@ -385,3 +385,4 @@ export default function WelcomePage() {
     </main>
   );
 }
+

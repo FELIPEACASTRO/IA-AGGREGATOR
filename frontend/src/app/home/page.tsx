@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -146,7 +146,7 @@ export default function WorkspaceHomePage() {
                   { label: 'Abrir chat', href: '/chat' },
                   { label: 'Ver templates', href: '/prompts' },
                   { label: 'Plano e consumo', href: '/billing' },
-                  { label: 'Configuracoes', href: '/settings' },
+                  { label: 'Configurações', href: '/settings' },
                 ].map((item) => (
                   <Link key={item.href} href={item.href} className="flex items-center justify-between rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-[var(--text-sm)] font-medium text-[var(--foreground)] hover:border-[var(--border-strong)]">
                     {item.label}
@@ -171,4 +171,5 @@ export default function WorkspaceHomePage() {
     </AppShell>
   );
 }
+
 

@@ -6,11 +6,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/stores/auth-store';
 import { useChatStore, ChatMessage } from '@/stores/chat-store';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { AppShell } from '@/components/app/app-shell';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Dropdown, DropdownOption } from '@/components/ui/dropdown';
-import { ProgressBar } from '@/components/ui/progress-bar';
 import { MessageContent } from '@/components/chat/message-content';
 import { cn } from '@/lib/cn';
 import { toast } from '@/stores/toast-store';
@@ -41,14 +41,14 @@ const MODEL_META: Record<string, { tier: Tier; color: string }> = {
 };
 
 const TIER_CONFIG: Record<Tier, { icon: React.ElementType; label: string; color: string }> = {
-  fast:     { icon: Zap,   label: 'Rapido',      color: 'text-[var(--success)]'       },
+  fast:     { icon: Zap,   label: 'Rápido',      color: 'text-[var(--success)]'       },
   balanced: { icon: Scale, label: 'Equilibrado',  color: 'text-[var(--warning)]'       },
   powerful: { icon: Brain, label: 'Poderoso',     color: 'text-[var(--brand-primary)]' },
 };
 
 const quickActions = [
   'Resuma os pontos principais em 5 bullets executivos.',
-  'Monte um plano de acao com etapas, responsaveis e riscos.',
+  'Monte um plano de ação com etapas, responsaveis e riscos.',
   'Reescreva em tom profissional e objetivo.',
   'Compare duas alternativas e recomende com justificativa.',
 ];
@@ -119,7 +119,7 @@ function MessageActions({
                 : 'text-[var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[var(--success)]')}>
             <ThumbsUp className="h-3 w-3" />
           </button>
-          <button onClick={() => onFeedback('down')} title="Nao util"
+          <button onClick={() => onFeedback('down')} title="Não útil"
             className={cn('rounded-[var(--radius-sm)] p-1.5 transition-colors',
               feedback === 'down' ? 'text-[var(--destructive)] bg-[var(--surface-2)]'
                 : 'text-[var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[var(--destructive)]')}>
@@ -131,17 +131,33 @@ function MessageActions({
   );
 }
 
-function ContextIndicator({ messages }: { messages: Array<{ content: string }> }) {
-  const MAX_TOKENS = 8000;
+function ContextIndicator({
+  messages,
+  maxTokens,
+  t,
+}: {
+  messages: Array<{ content: string }>;
+  maxTokens: number;
+  t: (key: string, values?: Record<string, string | number>) => string;
+}) {
   const used = messages.reduce((s, m) => s + Math.round(m.content.length / 4), 0);
-  const pct = Math.min(100, Math.round((used / MAX_TOKENS) * 100));
+  const pct = Math.min(100, Math.round((used / maxTokens) * 100));
+  const tone =
+    pct >= 95
+      ? 'text-[var(--destructive)]'
+      : pct >= 80
+        ? 'text-[var(--warning)]'
+        : 'text-[var(--muted-foreground)]';
+
   return (
-    <div className="flex items-center gap-2 min-w-[120px]" title={`Contexto: ~${used} / ${MAX_TOKENS} tokens (${pct}%)`}>
-      <span className={cn('text-[10px] tabular-nums shrink-0',
-        pct >= 95 ? 'text-[var(--destructive)]' : pct >= 80 ? 'text-[var(--warning)]' : 'text-[var(--muted-foreground)]')}>
+    <div
+      className="inline-flex items-center gap-2 rounded-[var(--radius-pill)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-3 py-1.5 text-[var(--text-xs)] text-[var(--muted-foreground)]"
+      title={t('chat.context.title', { used, max: maxTokens, pct })}
+    >
+      <span>{t('chat.context.used', { used: used.toLocaleString('pt-BR') })}</span>
+      <span className={cn('text-[10px] tabular-nums shrink-0', tone)}>
         {pct}%
       </span>
-      <ProgressBar value={pct} size="sm" className="flex-1" />
     </div>
   );
 }
@@ -203,6 +219,7 @@ function ConversationItem({ conversation, isActive, onSelect, onRename, onPin, o
 }
 
 function ChatPageContent() {
+  const t = useTranslations();
   const { user, isAuthenticated, isLoading } = useAuthStore();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -224,8 +241,11 @@ function ChatPageContent() {
   const [recentPrompts, setRecentPrompts] = useState<string[]>([]);
   const [promptHistoryIdx, setPromptHistoryIdx] = useState(-1);
   const [draftBeforeHistory, setDraftBeforeHistory] = useState('');
+  const [modelMaxTokens, setModelMaxTokens] = useState<Record<string, number>>({});
+  const [autoScrollPaused, setAutoScrollPaused] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const activeConversation = useMemo(
@@ -240,6 +260,10 @@ function ChatPageContent() {
   );
 
   const featuredModels = availableModels.slice(0, 6);
+  const currentMaxTokens =
+    modelMaxTokens[currentModel] ||
+    availableModels.find((model) => model.id === currentModel)?.maxContextTokens ||
+    128000;
 
   const modelOptions: DropdownOption[] = useMemo(
     () => availableModels.map((m) => {
@@ -269,11 +293,29 @@ function ChatPageContent() {
     if (activeConversation) setCanvasOrder(activeConversation.messages.map((m) => m.id));
   }, [activeConversation]);
   useEffect(() => {
-    if (!canvasMode) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [activeConversation?.messages, canvasMode]);
+    if (!canvasMode && !autoScrollPaused) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [activeConversation?.messages, canvasMode, autoScrollPaused]);
   useEffect(() => {
     if (activeConversationId) inputRef.current?.focus();
   }, [activeConversationId]);
+  useEffect(() => {
+    let canceled = false;
+    const loadCapabilities = async () => {
+      try {
+        const response = await fetch('/api/models/capabilities', { cache: 'no-store' });
+        const payload = (await response.json()) as { data?: { models?: Array<{ id: string; maxContextTokens: number }> } };
+        if (canceled) return;
+        const entries = payload.data?.models ?? [];
+        setModelMaxTokens(Object.fromEntries(entries.map((model) => [model.id, model.maxContextTokens])));
+      } catch {
+        if (!canceled) setModelMaxTokens({});
+      }
+    };
+    loadCapabilities();
+    return () => {
+      canceled = true;
+    };
+  }, []);
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
@@ -359,12 +401,12 @@ function ChatPageContent() {
   return (
     <AppShell
       title="Chat"
-      subtitle={`${user?.fullName?.split(' ')[0] || 'Usuario'} · ${conversations.length} conversa${conversations.length !== 1 ? 's' : ''}`}
+      subtitle={`${user?.fullName?.split(' ')[0] || 'Usuário'} · ${conversations.length} conversa${conversations.length !== 1 ? 's' : ''}`}
       noPadding
       headerActions={
         <div className="flex items-center gap-2 flex-wrap">
           {activeConversation && activeConversation.messages.length > 0 && (
-            <ContextIndicator messages={activeConversation.messages} />
+            <ContextIndicator messages={activeConversation.messages} maxTokens={currentMaxTokens} t={t} />
           )}
           <div className="flex rounded-[var(--radius-md)] border border-[var(--border)] overflow-hidden">
             <button onClick={() => setCanvasMode(false)}
@@ -390,7 +432,6 @@ function ChatPageContent() {
           {isSending && (
             <Button variant="ghost" size="sm" onClick={() => { stopGenerating(); trackEvent('chat_stop_generation'); }}>Parar</Button>
           )}
-          <Dropdown options={modelOptions} value={currentModel} onChange={(val) => { setSelectedModel(val); trackEvent('chat_change_model', { model: val }); }} triggerClassName="h-8 min-w-[140px] text-xs" />
         </div>
       }
     >
@@ -426,7 +467,16 @@ function ChatPageContent() {
         </aside>
 
         <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
+          <div
+            ref={messagesContainerRef}
+            className="flex-1 overflow-y-auto"
+            onScroll={() => {
+              const target = messagesContainerRef.current;
+              if (!target) return;
+              const distanceFromBottom = target.scrollHeight - target.scrollTop - target.clientHeight;
+              setAutoScrollPaused(distanceFromBottom > 140);
+            }}
+          >
             {canvasMode && activeConversation && activeConversation.messages.length > 0 ? (
               <ChatCanvasBoard
                 messages={activeConversation.messages}
@@ -495,6 +545,19 @@ function ChatPageContent() {
                     </div>
                   )}
                 </AnimatePresence>
+                {autoScrollPaused && (
+                  <div className="sticky bottom-4 z-10 flex justify-center">
+                    <button
+                      onClick={() => {
+                        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                        setAutoScrollPaused(false);
+                      }}
+                      className="rounded-[var(--radius-pill)] border border-[var(--border)] bg-[var(--surface-1)] px-4 py-2 text-[var(--text-xs)] font-semibold text-[var(--foreground)] shadow-[var(--shadow-md)]"
+                    >
+                      ↓ {t('chat.floatingNewMessages')}
+                    </button>
+                  </div>
+                )}
                 <div ref={messagesEndRef} />
               </div>
             )}
@@ -503,16 +566,19 @@ function ChatPageContent() {
           <div className="border-t border-[var(--border)] bg-[var(--background)] p-3 md:p-4">
             <div className="mx-auto w-full max-w-3xl">
               <div className="flex min-h-[56px] items-end gap-2 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-1)] px-3 py-2.5 shadow-[var(--shadow-md)] transition-all focus-within:border-[var(--ring)] focus-within:shadow-[var(--shadow-brand)]">
-                <button type="button" aria-label="Anexar arquivo"
+                <button type="button" aria-label={t('chat.attachFile')}
                   className="mb-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] text-[var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)] transition-colors">
                   <Plus className="h-4 w-4" />
                 </button>
+                <div className="mb-0.5 w-[180px] shrink-0">
+                  <Dropdown options={modelOptions} value={currentModel} onChange={(val) => { setSelectedModel(val); trackEvent('chat_change_model', { model: val }); }} triggerClassName="h-11 min-w-full text-xs" />
+                </div>
                 <Textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown} rows={1} placeholder="Envie uma mensagem..."
+                  onKeyDown={handleKeyDown} rows={1} placeholder={t('chat.messagePlaceholder')}
                   style={{ maxHeight: '160px' }} disabled={isSending}
                   className="flex-1 border-0 bg-transparent p-0 text-[var(--text-sm)] focus:ring-0 resize-none min-h-8" />
                 <motion.button type="button" onClick={handleSend} disabled={!input.trim() || isSending}
-                  whileTap={{ scale: 0.94 }} aria-label="Enviar mensagem"
+                  whileTap={{ scale: 0.94 }} aria-label={t('chat.sendMessage')}
                   className="mb-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--brand-primary)] text-white shadow-[var(--shadow-brand)] transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none">
                   <ArrowUp className="h-4 w-4" />
                 </motion.button>
@@ -527,7 +593,7 @@ function ChatPageContent() {
                 ))}
               </div>
               <p className="mt-1.5 text-center text-[10px] text-[var(--subtle-foreground)]">
-                Seta cima/baixo = historico · Enter envia · Shift+Enter = nova linha · Ctrl+N = nova conversa
+                Seta cima/baixo = histórico · Enter envia · Shift+Enter = nova linha · Ctrl+N = nova conversa
               </p>
             </div>
           </div>
@@ -548,3 +614,6 @@ export default function ChatPage() {
     </Suspense>
   );
 }
+
+
+

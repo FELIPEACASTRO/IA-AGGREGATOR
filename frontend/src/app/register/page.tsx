@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 import { AuthShell } from '@/components/app/auth-shell';
 import { Alert } from '@/components/ui/alert';
@@ -12,6 +13,7 @@ import { trackEvent } from '@/lib/analytics';
 import { useAuthStore } from '@/stores/auth-store';
 
 export default function RegisterPage() {
+  const t = useTranslations();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,18 +22,23 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const register = useAuthStore((state) => state.register);
   const router = useRouter();
+  const passwordChecks = {
+    minLength: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    number: /\d/.test(password),
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
 
     if (password !== confirmPassword) {
-      setError('As senhas nao coincidem');
+      setError(t('auth.register.errors.passwordMismatch'));
       return;
     }
 
     if (password.length < 8) {
-      setError('A senha deve ter pelo menos 8 caracteres');
+      setError(t('auth.register.errors.passwordMinLength'));
       return;
     }
 
@@ -42,7 +49,7 @@ export default function RegisterPage() {
       router.push('/welcome');
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } };
-      const message = axiosErr?.response?.data?.message || (err instanceof Error ? err.message : 'Erro ao criar conta');
+      const message = axiosErr?.response?.data?.message || (err instanceof Error ? err.message : t('auth.register.errors.default'));
       trackEvent('auth_register_error', { message });
       setError(message);
     } finally {
@@ -51,64 +58,75 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthShell title="Criar conta" subtitle="Abra seu workspace no Lume e deixe o onboarding preparar o fluxo ideal para o seu uso.">
+    <AuthShell title={t('auth.register.title')} subtitle={t('auth.register.subtitle')}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error ? <Alert variant="error">{error}</Alert> : null}
 
         <Field
           id="fullName"
           type="text"
-          label="Nome completo"
+          label={t('auth.register.fullName')}
           value={fullName}
           onChange={(event) => setFullName(event.target.value)}
           required
-          placeholder="Seu nome"
+          placeholder={t('auth.register.fullNamePlaceholder')}
           autoComplete="name"
         />
 
         <Field
           id="email"
           type="email"
-          label="Email"
+          label={t('auth.register.email')}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
-          placeholder="voce@empresa.com"
+          placeholder={t('auth.register.emailPlaceholder')}
           autoComplete="email"
         />
 
         <Field
           id="password"
           type="password"
-          label="Senha"
+          label={t('auth.register.password')}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           required
           minLength={8}
-          placeholder="Minimo de 8 caracteres"
+          placeholder={t('auth.register.passwordPlaceholder')}
           autoComplete="new-password"
         />
+        <div className="grid gap-1 rounded-[var(--radius-md)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] px-3 py-2.5 text-[0.72rem] text-[var(--muted-foreground)]">
+          <span className={passwordChecks.minLength ? 'text-[var(--success)]' : undefined}>
+            {passwordChecks.minLength ? '✓' : '•'} {t('auth.register.passwordChecklist.minLength')}
+          </span>
+          <span className={passwordChecks.uppercase ? 'text-[var(--success)]' : undefined}>
+            {passwordChecks.uppercase ? '✓' : '•'} {t('auth.register.passwordChecklist.uppercase')}
+          </span>
+          <span className={passwordChecks.number ? 'text-[var(--success)]' : undefined}>
+            {passwordChecks.number ? '✓' : '•'} {t('auth.register.passwordChecklist.number')}
+          </span>
+        </div>
 
         <Field
           id="confirmPassword"
           type="password"
-          label="Confirmar senha"
+          label={t('auth.register.confirmPassword')}
           value={confirmPassword}
           onChange={(event) => setConfirmPassword(event.target.value)}
           required
-          placeholder="Repita a senha"
+          placeholder={t('auth.register.confirmPasswordPlaceholder')}
           autoComplete="new-password"
         />
 
         <Button type="submit" variant="brand" size="lg" disabled={loading} className="w-full">
-          {loading ? 'Criando conta...' : 'Criar acesso ao Lume'}
+          {loading ? t('auth.register.submitting') : t('auth.register.submit')}
         </Button>
       </form>
 
       <p className="mt-5 text-center text-[0.82rem] text-[var(--muted-foreground)]">
-        Ja possui conta?{' '}
+        {t('auth.register.hasAccount')}{' '}
         <Link href="/login" className="font-semibold text-[var(--foreground)] hover:text-[var(--brand-primary)]">
-          Entrar
+          {t('auth.register.login')}
         </Link>
       </p>
     </AuthShell>

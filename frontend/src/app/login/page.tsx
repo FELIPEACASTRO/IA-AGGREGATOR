@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 import { AuthShell } from '@/components/app/auth-shell';
 import { Alert } from '@/components/ui/alert';
@@ -12,6 +13,7 @@ import { trackEvent } from '@/lib/analytics';
 import { useAuthStore } from '@/stores/auth-store';
 
 export default function LoginPage() {
+  const t = useTranslations();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -30,7 +32,7 @@ export default function LoginPage() {
       router.push('/chat');
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } };
-      const message = axiosErr?.response?.data?.message || (err instanceof Error ? err.message : 'Erro ao fazer login');
+      const message = axiosErr?.response?.data?.message || (err instanceof Error ? err.message : t('auth.login.defaultError'));
       trackEvent('auth_login_error', { message });
       setError(message);
     } finally {
@@ -39,41 +41,41 @@ export default function LoginPage() {
   };
 
   return (
-    <AuthShell title="Entrar" subtitle="Acesse o Lume para abrir seus chats, templates e biblioteca em uma experiencia premium.">
+    <AuthShell title={t('auth.login.title')} subtitle={t('auth.login.subtitle')}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error ? <Alert variant="error">{error}</Alert> : null}
 
         <Field
           id="email"
           type="email"
-          label="Email"
+          label={t('auth.login.email')}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
-          placeholder="voce@empresa.com"
+          placeholder={t('auth.login.emailPlaceholder')}
           autoComplete="email"
         />
 
         <Field
           id="password"
           type="password"
-          label="Senha"
+          label={t('auth.login.password')}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           required
-          placeholder="Sua senha"
+          placeholder={t('auth.login.passwordPlaceholder')}
           autoComplete="current-password"
         />
 
         <Button type="submit" variant="brand" size="lg" disabled={loading} className="w-full">
-          {loading ? 'Entrando...' : 'Entrar no Lume'}
+          {loading ? t('auth.login.submitting') : t('auth.login.submit')}
         </Button>
       </form>
 
       <p className="mt-5 text-center text-[0.82rem] text-[var(--muted-foreground)]">
-        Ainda nao tem conta?{' '}
+        {t('auth.login.noAccount')}{' '}
         <Link href="/register" className="font-semibold text-[var(--foreground)] hover:text-[var(--brand-primary)]">
-          Criar acesso
+          {t('auth.login.createAccess')}
         </Link>
       </p>
     </AuthShell>

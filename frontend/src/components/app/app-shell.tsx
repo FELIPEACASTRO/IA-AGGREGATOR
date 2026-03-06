@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useThemeStore } from '@/stores/theme-store';
 import { cn } from '@/lib/cn';
 import { Avatar } from '@/components/ui/avatar';
 import { CommandPalette, useCommandPalette } from '@/components/ui/command-palette';
+import { useTranslations } from 'next-intl';
 import {
   Bot,
   Cloud,
@@ -36,13 +37,13 @@ type AppShellProps = {
 };
 
 const navItems = [
-  { href: '/codex', label: 'Codex Cloud', icon: Cloud },
-  { href: '/home', label: 'Home', icon: House },
-  { href: '/chat', label: 'Chat', icon: MessageSquare },
-  { href: '/library', label: 'Biblioteca', icon: BookOpen },
-  { href: '/prompts', label: 'Templates', icon: Zap },
-  { href: '/billing', label: 'Plano', icon: CreditCard },
-  { href: '/settings', label: 'Configuracoes', icon: Settings },
+  { href: '/codex', labelKey: 'shell.nav.codex', icon: Cloud },
+  { href: '/home', labelKey: 'shell.nav.home', icon: House },
+  { href: '/chat', labelKey: 'shell.nav.chat', icon: MessageSquare, shortcutKey: 'shell.shortcuts.chat' },
+  { href: '/library', labelKey: 'shell.nav.library', icon: BookOpen, shortcutKey: 'shell.shortcuts.library' },
+  { href: '/prompts', labelKey: 'shell.nav.prompts', icon: Zap, shortcutKey: 'shell.shortcuts.prompts' },
+  { href: '/billing', labelKey: 'shell.nav.billing', icon: CreditCard, shortcutKey: 'shell.shortcuts.billing' },
+  { href: '/settings', labelKey: 'shell.nav.settings', icon: Settings },
 ];
 
 const SIDEBAR_KEY = 'lume-sidebar-collapsed';
@@ -79,6 +80,7 @@ function useSidebarState() {
 }
 
 function ThemeCycler({ collapsed = false }: { collapsed?: boolean }) {
+  const t = useTranslations();
   const { theme, setTheme } = useThemeStore();
 
   const next = () => {
@@ -86,7 +88,7 @@ function ThemeCycler({ collapsed = false }: { collapsed?: boolean }) {
   };
 
   const Icon = theme === 'light' ? Sun : theme === 'dark' ? Moon : Monitor;
-  const label = theme === 'light' ? 'Claro' : theme === 'dark' ? 'Escuro' : 'Sistema';
+  const label = theme === 'light' ? t('shell.theme.light') : theme === 'dark' ? t('shell.theme.dark') : t('shell.theme.system');
 
   return (
     <button
@@ -110,6 +112,7 @@ function SidebarContent({ collapsed, pathname, onNavigate, onLogout }: {
   onNavigate?: () => void;
   onLogout: () => void;
 }) {
+  const t = useTranslations();
   const user = useAuthStore((state) => state.user);
   const { open: cmdOpen, setOpen: setCmdOpen } = useCommandPalette();
 
@@ -131,10 +134,10 @@ function SidebarContent({ collapsed, pathname, onNavigate, onLogout }: {
           <button
             onClick={() => setCmdOpen(true)}
             className="hidden items-center gap-2 rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[0.74rem] text-[var(--muted-foreground)] hover:border-[var(--border-strong)] hover:text-[var(--foreground)] lg:inline-flex"
-            aria-label="Abrir busca"
+            aria-label={t('shell.openSearch')}
           >
             <Search className="h-3.5 w-3.5" />
-            Buscar
+            {t('shell.search')}
             <kbd className="rounded-full border border-[var(--border)] px-1.5 py-0.5 text-[0.62rem]">CMD+K</kbd>
           </button>
         )}
@@ -145,31 +148,33 @@ function SidebarContent({ collapsed, pathname, onNavigate, onLogout }: {
           <button
             onClick={() => setCmdOpen(true)}
             className="flex w-full items-center gap-3 rounded-[var(--radius-pill)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-[0.82rem] text-[var(--muted-foreground)] hover:border-[var(--border-strong)] hover:text-[var(--foreground)] lg:hidden"
-            aria-label="Abrir busca"
+            aria-label={t('shell.openSearch')}
           >
             <Search className="h-4 w-4" />
-            Buscar, paginas e acoes
+            {t('shell.searchPagesActions')}
           </button>
         ) : (
           <button
             onClick={() => setCmdOpen(true)}
             className="flex h-11 w-full items-center justify-center rounded-[var(--radius-pill)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] text-[var(--muted-foreground)] hover:border-[var(--border-strong)] hover:text-[var(--foreground)]"
-            aria-label="Abrir busca"
+            aria-label={t('shell.openSearch')}
           >
             <Search className="h-4 w-4" />
           </button>
         )}
       </div>
 
-      <nav className="mt-4 flex-1 space-y-1 px-3 pb-4 overflow-y-auto" aria-label="Navegacao principal">
-        {navItems.map(({ href, label, icon: Icon }) => {
+      <nav className="mt-4 flex-1 space-y-1 px-3 pb-4 overflow-y-auto" aria-label={t('shell.mainNavigation')}>
+        {navItems.map(({ href, labelKey, icon: Icon, shortcutKey }) => {
+          const label = t(labelKey);
+          const shortcut = shortcutKey ? t(shortcutKey) : null;
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link
               key={href}
               href={href}
               onClick={onNavigate}
-              title={collapsed ? label : undefined}
+              title={collapsed ? label : shortcut ? `${label} [${shortcut}]` : label}
               className={cn(
                 'group flex items-center gap-3 rounded-[var(--radius-pill)] border px-3 py-3 transition-all',
                 active
@@ -183,6 +188,11 @@ function SidebarContent({ collapsed, pathname, onNavigate, onLogout }: {
               {!collapsed && (
                 <>
                   <span className="truncate text-[0.84rem] font-medium">{label}</span>
+                  {shortcut ? (
+                    <kbd className="ml-auto hidden rounded-full border border-[var(--border)] px-1.5 py-0.5 text-[0.62rem] text-[var(--subtle-foreground)] group-hover:inline-flex">
+                      {shortcut}
+                    </kbd>
+                  ) : null}
                   {active && <Sparkles className="ml-auto h-3.5 w-3.5 shrink-0 text-[var(--brand-primary)]" />}
                 </>
               )}
@@ -210,10 +220,10 @@ function SidebarContent({ collapsed, pathname, onNavigate, onLogout }: {
               collapsed && 'w-full px-0'
             )}
             aria-label="Sair"
-            title="Sair"
+            title={t('shell.logout')}
           >
             <LogOut className="h-4 w-4" />
-            {!collapsed && 'Sair'}
+            {!collapsed && t('shell.logout')}
           </button>
         </div>
       </div>
@@ -224,9 +234,19 @@ function SidebarContent({ collapsed, pathname, onNavigate, onLogout }: {
 }
 
 export function AppShell({ title, subtitle, children, headerActions, noPadding }: AppShellProps) {
+  const t = useTranslations();
   const pathname = usePathname();
   const router = useRouter();
   const { collapsed, toggle, mobileOpen, setMobileOpen } = useSidebarState();
+  const [healthStatus, setHealthStatus] = useState<'online' | 'degraded' | 'offline'>('offline');
+
+  const breadcrumb = useMemo(() => {
+    if (!pathname.startsWith('/settings/')) return null;
+    if (pathname.startsWith('/settings/analytics')) {
+      return `${t('shell.breadcrumb.settings')} > ${t('shell.breadcrumb.analytics')}`;
+    }
+    return t('shell.breadcrumb.settings');
+  }, [pathname, t]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -251,6 +271,28 @@ export function AppShell({ title, subtitle, children, headerActions, noPadding }
     };
   }, [mobileOpen, setMobileOpen]);
 
+  useEffect(() => {
+    let canceled = false;
+    const fetchHealth = async () => {
+      try {
+        const response = await fetch('/api/health/status', { cache: 'no-store' });
+        const payload = (await response.json()) as { data?: { status?: 'online' | 'degraded' | 'offline' } };
+        if (!canceled && payload.data?.status) {
+          setHealthStatus(payload.data.status);
+        }
+      } catch {
+        if (!canceled) setHealthStatus('offline');
+      }
+    };
+
+    fetchHealth();
+    const timer = setInterval(fetchHealth, 15000);
+    return () => {
+      canceled = true;
+      clearInterval(timer);
+    };
+  }, []);
+
   const handleLogout = () => {
     useAuthStore.getState().logout();
     router.push('/login');
@@ -264,12 +306,12 @@ export function AppShell({ title, subtitle, children, headerActions, noPadding }
             <button
               className="fixed inset-0 z-[var(--z-modal)] bg-[rgba(3,8,18,0.72)] backdrop-blur-md md:hidden"
               onClick={() => setMobileOpen(false)}
-              aria-label="Fechar menu"
+              aria-label={t('shell.closeMenu')}
             />
             <aside
               role="dialog"
               aria-modal="true"
-              aria-label="Menu principal"
+              aria-label={t('shell.menu')}
               className="fixed inset-y-3 left-3 z-[calc(var(--z-modal)+1)] flex w-[min(22rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-[var(--radius-2xl)] md:hidden lume-shell"
             >
               <SidebarContent collapsed={false} pathname={pathname} onNavigate={() => setMobileOpen(false)} onLogout={handleLogout} />
@@ -290,8 +332,8 @@ export function AppShell({ title, subtitle, children, headerActions, noPadding }
               'absolute bottom-5 hidden h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(8,17,31,0.94)] text-[var(--muted-foreground)] hover:border-[var(--border-strong)] hover:text-[var(--foreground)] md:inline-flex',
               collapsed ? 'left-1/2 -translate-x-1/2' : 'right-5'
             )}
-            aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
-            title={collapsed ? 'Expandir menu' : 'Recolher menu'}
+            aria-label={collapsed ? t('shell.expandMenu') : t('shell.collapseMenu')}
+            title={collapsed ? t('shell.expandMenu') : t('shell.collapseMenu')}
           >
             <ChevronLeft className={cn('h-4 w-4 transition-transform', collapsed && 'rotate-180')} />
           </button>
@@ -304,19 +346,30 @@ export function AppShell({ title, subtitle, children, headerActions, noPadding }
                 <button
                   onClick={() => setMobileOpen(true)}
                   className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.03)] text-[var(--foreground)] md:hidden"
-                  aria-label="Abrir menu"
+                  aria-label={t('shell.openMenu')}
                 >
                   <PanelLeft className="h-5 w-5" />
                 </button>
                 <div>
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-[var(--subtle-foreground)]">Lume workspace</p>
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-[var(--subtle-foreground)]">{t('shell.workspaceLabel')}</p>
                   <h1 className="mt-1 text-[var(--text-2xl)] font-semibold text-[var(--foreground)]">{title}</h1>
+                  {breadcrumb && <p className="mt-1 text-[0.72rem] uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">{breadcrumb}</p>}
                   {subtitle && <p className="mt-1 text-[var(--text-sm)] text-[var(--muted-foreground)]">{subtitle}</p>}
                 </div>
               </div>
               <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:justify-end">
                 <span className="hidden items-center gap-2 rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)] lg:inline-flex">
-                  Live workspace
+                  <span
+                    className={cn(
+                      'h-2 w-2 rounded-full',
+                      healthStatus === 'online'
+                        ? 'bg-[var(--success)]'
+                        : healthStatus === 'degraded'
+                          ? 'bg-[var(--warning)]'
+                          : 'bg-[var(--destructive)]'
+                    )}
+                  />
+                  {t('shell.statusLabel')}: {healthStatus === 'online' ? t('app.online') : healthStatus === 'degraded' ? t('app.degraded') : t('app.offline')}
                 </span>
                 {headerActions}
               </div>
@@ -336,8 +389,9 @@ export function AppShell({ title, subtitle, children, headerActions, noPadding }
         </div>
       </div>
 
-      <nav className="fixed bottom-3 left-3 right-3 z-[var(--z-sticky)] grid grid-cols-6 gap-2 rounded-[var(--radius-pill)] border border-[var(--border)] bg-[rgba(8,17,31,0.92)] p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-[var(--shadow-lg)] backdrop-blur-md md:hidden" aria-label="Atalhos rapidos">
-        {navItems.map(({ href, label, icon: Icon }) => {
+      <nav className="fixed bottom-3 left-3 right-3 z-[var(--z-sticky)] grid grid-cols-6 gap-2 rounded-[var(--radius-pill)] border border-[var(--border)] bg-[rgba(8,17,31,0.92)] p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-[var(--shadow-lg)] backdrop-blur-md md:hidden" aria-label={t('shell.quickNavigation')}>
+        {navItems.map(({ href, labelKey, icon: Icon }) => {
+          const label = t(labelKey);
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link

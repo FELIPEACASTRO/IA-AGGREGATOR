@@ -39,7 +39,7 @@ describe('RegisterPage', () => {
     fireEvent.change(screen.getByLabelText(/confirmar senha/i), { target: { value: 'Password999!' } });
     fireEvent.click(screen.getByRole('button', { name: 'Criar acesso ao Lume' }));
 
-    expect(await screen.findByText('As senhas nao coincidem')).toBeInTheDocument();
+    expect(await screen.findByText('As senhas não coincidem')).toBeInTheDocument();
     expect(registerMock).not.toHaveBeenCalled();
   });
 

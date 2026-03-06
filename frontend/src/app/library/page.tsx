@@ -151,7 +151,7 @@ export default function LibraryPage() {
           <StatCard label="Conversas" value={String(conversations.length)} helper="Biblioteca pronta para reabrir contexto" icon={FolderKanban} />
           <StatCard label="Mensagens" value={totalMessages.toLocaleString('pt-BR')} helper="Volume total salvo no workspace" icon={MessageSquare} />
           <StatCard label="Fixadas" value={String(pinnedCount)} helper="Acessos rapidos para fluxos recorrentes" icon={Pin} />
-          <StatCard label="Modelos" value={String(modelsInUse)} helper="Mix de engines usadas no historico" icon={BrainCircuit} />
+          <StatCard label="Modelos" value={String(modelsInUse)} helper="Mix de engines usadas no histórico" icon={BrainCircuit} />
         </section>
 
         <PageSplit
@@ -161,9 +161,9 @@ export default function LibraryPage() {
               <span className="lume-kicker">
                 <Sparkles className="h-3.5 w-3.5" /> Workspace memory
               </span>
-              <h2 className="mt-4 text-[var(--text-xl)] font-semibold text-[var(--foreground)]">Biblioteca curada para retomar trabalho sem friccao.</h2>
+              <h2 className="mt-4 text-[var(--text-xl)] font-semibold text-[var(--foreground)]">Biblioteca curada para retomar trabalho sem fricção.</h2>
               <p className="mt-3 text-[var(--text-sm)] text-[var(--muted-foreground)]">
-                A biblioteca foi desenhada para manter contexto vivo: filtros claros, retomada imediata e historico com leitura rapida.
+                A biblioteca foi desenhada para manter contexto vivo: filtros claros, retomada imediata e histórico com leitura rapida.
               </p>
               {recentConversation ? (
                 <div className="mt-5 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-4">
@@ -190,7 +190,7 @@ export default function LibraryPage() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Filtros</p>
-                  <p className="mt-1 text-[var(--text-sm)] text-[var(--muted-foreground)]">Selecione recorte e ordem do historico.</p>
+                  <p className="mt-1 text-[var(--text-sm)] text-[var(--muted-foreground)]">Selecione recorte e ordem do histórico.</p>
                 </div>
                 <ArrowUpDown className="h-4 w-4 text-[var(--muted-foreground)]" />
               </div>
@@ -225,7 +225,7 @@ export default function LibraryPage() {
             <PageSection className="p-5 md:p-6">
             <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[var(--border)] pb-4">
               <div>
-                <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Historico ativo</p>
+                <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Histórico ativo</p>
                 <h2 className="mt-2 text-[var(--text-xl)] font-semibold text-[var(--foreground)]">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''} pronto{filtered.length !== 1 ? 's' : ''} para retomada</h2>
               </div>
               <p className="text-[var(--text-xs)] text-[var(--muted-foreground)]">Alternancia entre lista e grid para priorizar densidade ou exploracao.</p>
@@ -376,3 +376,4 @@ export default function LibraryPage() {
     </AppShell>
   );
 }
+

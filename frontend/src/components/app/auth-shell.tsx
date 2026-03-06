@@ -42,7 +42,7 @@ export function AuthShell({ title, subtitle, children }: AuthShellProps) {
                 IA para quem quer operar com clareza, ritmo e controle.
               </h1>
               <p className="mt-5 max-w-lg text-[var(--text-base)] text-[var(--muted-foreground)]">
-                Converse com os melhores modelos, organize ativos do time e transforme prompts em operacao real sem trocar de ambiente.
+                Converse com os melhores modelos, organize ativos do time e transforme prompts em operação real sem trocar de ambiente.
               </p>
             </div>
 
@@ -60,7 +60,7 @@ export function AuthShell({ title, subtitle, children }: AuthShellProps) {
             <div className="mt-auto flex items-center justify-between rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-4 py-4">
               <div>
                 <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Lume access</p>
-                <p className="mt-1 text-[var(--text-sm)] text-[var(--muted-foreground)]">Autenticacao segura, experiencia consistente e onboarding rapido.</p>
+                <p className="mt-1 text-[var(--text-sm)] text-[var(--muted-foreground)]">Autenticação segura, experiência consistente e onboarding rapido.</p>
               </div>
               <ArrowRight className="h-4 w-4 text-[var(--brand-primary)]" />
             </div>
@@ -101,3 +101,5 @@ export function AuthShell({ title, subtitle, children }: AuthShellProps) {
     </main>
   );
 }
+
+

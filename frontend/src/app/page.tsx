@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -44,17 +44,17 @@ const modelStrip = ['GPT', 'Claude', 'Gemini', 'DeepSeek', 'Llama', 'Mistral', '
 const capabilityCards = [
   {
     title: 'Chat multimodelo com decisao mais rapida',
-    description: 'Troque de modelo sem trocar de fluxo. Converse, refine, compare respostas e mantenha o historico limpo.',
+    description: 'Troque de modelo sem trocar de fluxo. Converse, refine, compare respostas e mantenha o histórico limpo.',
     icon: MessageSquare,
   },
   {
     title: 'Templates prontos para times reais',
-    description: 'Use prompts curados para planejamento, vendas, marketing, analise, comunicacao e operacao diaria.',
+    description: 'Use prompts curados para planejamento, vendas, marketing, analise, comúnicação e operação diaria.',
     icon: WandSparkles,
   },
   {
-    title: 'Biblioteca operacional, nao deposito morto',
-    description: 'Recupere conversas, reutilize conhecimento e transforme interacoes em ativos reutilizaveis.',
+    title: 'Biblioteca operacional, não deposito morto',
+    description: 'Recupere conversas, reutilize conhecimento e transforme interações em ativos reutilizaveis.',
     icon: Layers,
   },
   {
@@ -77,14 +77,14 @@ const workflowBlocks = [
   },
   {
     step: '03',
-    title: 'Transforme conversa em operacao',
+    title: 'Transforme conversa em operação',
     body: 'Salve, recupere, compare e organize resultados dentro da biblioteca e das paginas do app.',
   },
 ];
 
 const securityPoints = [
   'Workspace com navegacao consistente e dados organizados por fluxo.',
-  'Interface pensada para times que usam IA todos os dias, nao apenas para testes.',
+  'Interface pensada para times que usam IA todos os dias, não apenas para testes.',
   'Camada visual premium com contraste, hierarquia e CTA claros em todas as rotas.',
 ];
 
@@ -153,7 +153,7 @@ function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
                 Execute com IA em um workspace premium, consistente e pronto para escalar.
               </h1>
               <p className="lume-subtitle mt-5">
-                Chat multimodelo, templates curados, biblioteca operacional e analytics no mesmo lugar, com experiencia visual limpa e foco total em produtividade.
+                Chat multimodelo, templates curados, biblioteca operacional e analytics no mesmo lugar, com experiência visual limpa e foco total em produtividade.
               </p>
             </motion.div>
 
@@ -169,7 +169,7 @@ function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
                   value={promptText}
                   onChange={(event) => setPromptText(event.target.value)}
                   rows={2}
-                  placeholder="O que voce quer destravar hoje?"
+                  placeholder="O que você quer destravar hoje?"
                   className="flex-1 resize-none bg-transparent text-[var(--text-sm)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none"
                   style={{ maxHeight: '160px' }}
                 />
@@ -212,7 +212,7 @@ function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
               <div className="flex items-center justify-between gap-3 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-4 py-3">
                 <div>
                   <p className="text-[0.68rem] uppercase tracking-[0.2em] text-[var(--subtle-foreground)]">Workspace snapshot</p>
-                  <p className="mt-1 text-[var(--text-lg)] font-semibold text-[var(--foreground)]">Tudo conectado em uma unica experiencia</p>
+                  <p className="mt-1 text-[var(--text-lg)] font-semibold text-[var(--foreground)]">Tudo conectado em uma única experiência</p>
                 </div>
                 <Badge variant="brand">Live</Badge>
               </div>
@@ -237,7 +237,7 @@ function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
                     <Brain className="h-5 w-5 text-[var(--brand-primary)]" />
                   </div>
                   <div className="mt-4 space-y-3">
-                    {['Chat multimodelo', 'Template aplicado', 'Historico salvo', 'Insights atualizados'].map((item, index) => (
+                    {['Chat multimodelo', 'Template aplicado', 'Histórico salvo', 'Insights atualizados'].map((item, index) => (
                       <div key={item} className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(8,17,31,0.62)] px-4 py-3">
                         <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(96,115,255,0.14)] text-[0.72rem] font-semibold text-[var(--brand-primary)]">0{index + 1}</span>
                         <p className="text-[0.84rem] text-[var(--foreground)]">{item}</p>
@@ -255,9 +255,9 @@ function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
         <div className="grid gap-5 lg:grid-cols-[0.94fr_1.06fr]">
           <div className="lume-panel rounded-[var(--radius-2xl)] p-6 md:p-7">
             <Badge variant="outline">Por que Lume</Badge>
-            <h2 className="mt-4 text-[var(--text-3xl)] font-semibold text-[var(--foreground)]">Menos ferramentas isoladas. Mais operacao com contexto continuo.</h2>
+            <h2 className="mt-4 text-[var(--text-3xl)] font-semibold text-[var(--foreground)]">Menos ferramentas isoladas. Mais operação com contexto continuo.</h2>
             <p className="mt-4 text-[var(--text-sm)] leading-7 text-[var(--muted-foreground)]">
-              O Lume foi desenhado para distribuir proposta de valor, prova de capacidade e CTA em blocos claros. Resultado: menos friccao e mais execucao.
+              O Lume foi desenhado para distribuir proposta de valor, prova de capacidade e CTA em blocos claros. Resultado: menos fricção e mais execucao.
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-4">
@@ -313,7 +313,7 @@ function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
       <section className="lume-section mt-12 md:mt-16">
         <div className="grid gap-5 lg:grid-cols-[0.92fr_1.08fr]">
           <div className="lume-panel rounded-[var(--radius-2xl)] p-6 md:p-8">
-            <Badge variant="outline">Seguranca e confianca</Badge>
+            <Badge variant="outline">Segurança e confianca</Badge>
             <h2 className="mt-4 text-[var(--text-3xl)] font-semibold text-[var(--foreground)]">Uma interface escura, precisa e madura para uso recorrente.</h2>
             <div className="mt-6 space-y-3">
               {securityPoints.map((point) => (
@@ -329,7 +329,7 @@ function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
               <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-5">
                 <Building2 className="h-5 w-5 text-[var(--brand-primary)]" />
                 <h3 className="mt-3 text-[var(--text-lg)] font-semibold text-[var(--foreground)]">Workspace para times</h3>
-                <p className="mt-2 text-[var(--text-sm)] leading-7 text-[var(--muted-foreground)]">Landing, auth e area autenticada com assinatura visual unica.</p>
+                <p className="mt-2 text-[var(--text-sm)] leading-7 text-[var(--muted-foreground)]">Landing, auth e area autenticada com assinatura visual única.</p>
               </div>
               <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-5">
                 <CreditCard className="h-5 w-5 text-[var(--brand-primary)]" />
@@ -344,7 +344,7 @@ function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
               <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-5">
                 <Zap className="h-5 w-5 text-[var(--brand-primary)]" />
                 <h3 className="mt-3 text-[var(--text-lg)] font-semibold text-[var(--foreground)]">Pronto para operar</h3>
-                <p className="mt-2 text-[var(--text-sm)] leading-7 text-[var(--muted-foreground)]">Design orientado a repeticao de uso, nao apenas primeira impressao.</p>
+                <p className="mt-2 text-[var(--text-sm)] leading-7 text-[var(--muted-foreground)]">Design orientado a repetição de uso, não apenas primeira impressao.</p>
               </div>
             </div>
           </div>
@@ -391,4 +391,6 @@ export default function HomePage() {
 
   return <LandingPage isAuthenticated={isAuthenticated} />;
 }
+
+
 

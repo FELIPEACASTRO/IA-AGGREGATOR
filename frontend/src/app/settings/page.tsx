@@ -69,11 +69,11 @@ export default function SettingsPage() {
   const handleSave = (event: React.FormEvent) => {
     event.preventDefault();
     trackEvent('settings_save_preferences', { locale, hasName: Boolean(fullName) });
-    toast.success('Preferencias salvas', 'Alteracoes aplicadas com sucesso.');
+    toast.success('Preferencias salvas', 'Alterações aplicadas com sucesso.');
   };
 
   return (
-    <AppShell title="Configuracoes" subtitle="Personalize sua conta e experiencia">
+    <AppShell title="Configurações" subtitle="Personalize sua conta e experiência">
       <motion.form
         onSubmit={handleSave}
         initial={{ opacity: 0, y: 8 }}
@@ -97,7 +97,7 @@ export default function SettingsPage() {
                   <div className="mt-5 grid gap-3">
                     <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.52)] p-4">
                       <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Perfil</p>
-                      <p className="mt-2 text-[var(--text-sm)] text-[var(--muted-foreground)]">Preferencias salvas localmente para iteracao rapida do workspace.</p>
+                      <p className="mt-2 text-[var(--text-sm)] text-[var(--muted-foreground)]">Preferencias salvas localmente para iteração rapida do workspace.</p>
                     </div>
                     <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.52)] p-4">
                       <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Tema</p>
@@ -158,7 +158,7 @@ export default function SettingsPage() {
             </div>
           </SectionCard>
 
-          <SectionCard title="Notificacoes" helper="Ajuste o que merece interrupcao no seu fluxo." icon={Bell}>
+          <SectionCard title="Notificações" helper="Ajuste o que merece interrupcao no seu fluxo." icon={Bell}>
             <div className="space-y-3">
               {[
                 { id: 'chat', label: 'Respostas do chat', desc: 'Alerta quando a IA terminar de responder', value: notifChat, setValue: setNotifChat },
@@ -191,7 +191,7 @@ export default function SettingsPage() {
             </div>
           </SectionCard>
 
-          <SectionCard title="Privacidade e dados" helper="Dados locais para testes e iteracao rapida da experiencia." icon={Shield}>
+          <SectionCard title="Privacidade e dados" helper="Dados locais para testes e iteração rapida da experiência." icon={Shield}>
             <div className="space-y-3">
               <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-4">
                 <p className="inline-flex items-center gap-2 text-[var(--text-sm)] font-semibold text-[var(--foreground)]">
@@ -204,7 +204,7 @@ export default function SettingsPage() {
                 variant="outline"
                 className="w-full justify-center border-[rgba(255,107,135,0.25)] text-[var(--destructive)] hover:bg-[rgba(255,107,135,0.08)]"
                 onClick={() => {
-                  if (!window.confirm('Limpar todos os dados locais? Esta acao e irreversivel.')) return;
+                  if (!window.confirm('Limpar todos os dados locais? Esta ação e irreversivel.')) return;
                   localStorage.clear();
                   toast.success('Dados limpos');
                 }}
@@ -246,3 +246,4 @@ export default function SettingsPage() {
     </AppShell>
   );
 }
+

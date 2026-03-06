@@ -1,0 +1,146 @@
+﻿{
+  "app": {
+    "name": "Lume",
+    "workspace": "Workspace",
+    "online": "Online",
+    "degraded": "Degradado",
+    "offline": "Offline"
+  },
+  "auth": {
+    "login": {
+      "title": "Entrar",
+      "subtitle": "Acesse o Lume para abrir seus chats, templates e biblioteca em uma experiência premium.",
+      "email": "Email",
+      "password": "Senha",
+      "emailPlaceholder": "voce@empresa.com",
+      "passwordPlaceholder": "Sua senha",
+      "submit": "Entrar no Lume",
+      "submitting": "Entrando...",
+      "noAccount": "Ainda não tem conta?",
+      "createAccess": "Criar acesso",
+      "defaultError": "Erro ao fazer login"
+    },
+    "register": {
+      "title": "Criar conta",
+      "subtitle": "Abra seu workspace no Lume e deixe o onboarding preparar o fluxo ideal para o seu uso.",
+      "fullName": "Nome completo",
+      "email": "Email",
+      "password": "Senha",
+      "confirmPassword": "Confirmar senha",
+      "fullNamePlaceholder": "Seu nome",
+      "emailPlaceholder": "voce@empresa.com",
+      "passwordPlaceholder": "Mínimo de 8 caracteres",
+      "confirmPasswordPlaceholder": "Repita a senha",
+      "submit": "Criar acesso ao Lume",
+      "submitting": "Criando conta...",
+      "hasAccount": "Já possui conta?",
+      "login": "Entrar",
+      "errors": {
+        "passwordMismatch": "As senhas não coincidem",
+        "passwordMinLength": "A senha deve ter pelo menos 8 caracteres",
+        "default": "Erro ao criar conta"
+      },
+      "passwordChecklist": {
+        "minLength": "8 caracteres",
+        "uppercase": "Letra maiúscula",
+        "number": "Número"
+      }
+    }
+  },
+  "shell": {
+    "search": "Buscar",
+    "searchAndRun": "Buscar ou executar",
+    "searchPagesActions": "Buscar, páginas e ações",
+    "quickNavigation": "Navegação rápida",
+    "mainNavigation": "Navegação principal",
+    "menu": "Menu",
+    "openMenu": "Abrir menu",
+    "closeMenu": "Fechar menu",
+    "collapseMenu": "Recolher menu",
+    "expandMenu": "Expandir menu",
+    "openSearch": "Abrir busca",
+    "signifier": "⌘ K",
+    "workspaceLabel": "Lume workspace",
+    "statusLabel": "Status da API",
+    "logout": "Sair",
+    "theme": {
+      "light": "Claro",
+      "dark": "Escuro",
+      "system": "Sistema"
+    },
+    "nav": {
+      "codex": "Codex Cloud",
+      "home": "Home",
+      "chat": "Chat",
+      "library": "Biblioteca",
+      "prompts": "Templates",
+      "billing": "Plano",
+      "settings": "Configurações"
+    },
+    "shortcuts": {
+      "chat": "C",
+      "library": "B",
+      "prompts": "T",
+      "billing": "P"
+    },
+    "breadcrumb": {
+      "settings": "Configurações",
+      "analytics": "Analytics"
+    }
+  },
+  "commandPalette": {
+    "groups": {
+      "navigate": "Navegar",
+      "actions": "Ações",
+      "recentConversations": "Conversas recentes",
+      "frequent": "Mais usadas"
+    },
+    "actions": {
+      "goChat": "Ir para Chat",
+      "goLibrary": "Ir para Biblioteca",
+      "goPrompts": "Ir para Templates",
+      "goBilling": "Ir para Plano",
+      "goSettings": "Ir para Configurações",
+      "newConversation": "Nova conversa"
+    },
+    "descriptions": {
+      "newConversation": "Abrir um chat em branco"
+    },
+    "searchPlaceholder": "Buscar páginas, conversas e ações...",
+    "empty": "Nenhum resultado para \"{query}\"",
+    "searchCommands": "Buscar comandos"
+  },
+  "billing": {
+    "title": "Plano e uso",
+    "subtitle": "Monitore seu consumo e faça upgrade quando precisar",
+    "loading": "Carregando uso real...",
+    "error": "Não foi possível carregar dados reais de billing.",
+    "retry": "Tentar novamente",
+    "currentPlan": "Plano atual",
+    "tokensUsed": "Tokens usados",
+    "resetIn": "Reset em",
+    "usageHealth": "Saúde do consumo",
+    "healthy": "Saudável",
+    "used": "{value}% usado",
+    "remaining": "{value} restantes",
+    "usedTokens": "{value} tokens usados",
+    "weeklyTrend": "Tendência semanal",
+    "last7Days": "últimos 7 dias",
+    "availablePlans": "Planos disponíveis",
+    "upgrade": "Fazer upgrade",
+    "current": "Plano atual"
+  },
+  "chat": {
+    "newConversation": "Nova conversa",
+    "sendMessage": "Enviar mensagem",
+    "attachFile": "Anexar arquivo",
+    "messagePlaceholder": "Envie uma mensagem...",
+    "context": {
+      "label": "Contexto",
+      "used": "~{used} tokens usados",
+      "title": "Contexto: ~{used} / {max} tokens ({pct}%)"
+    },
+    "floatingNewMessages": "Novas mensagens",
+    "switchToLatest": "Ir para o fim"
+  }
+}

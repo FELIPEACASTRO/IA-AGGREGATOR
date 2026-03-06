@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import FocusTrap from 'focus-trap-react';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/cn';
@@ -63,28 +64,37 @@ export function Modal({ open, onClose, title, description, children, size = 'md'
             onClick={onClose}
           />
 
-          <motion.div
-            className={cn('glass relative w-full rounded-[var(--radius-xl)] shadow-[var(--shadow-xl)]', sizeWidths[size], className)}
-            initial={{ opacity: 0, scale: 0.96, y: 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 12 }}
-            transition={{ duration: 0.2, ease: [0.34, 1.56, 0.64, 1] }}
+          <FocusTrap
+            active={open}
+            focusTrapOptions={{
+              clickOutsideDeactivates: true,
+              escapeDeactivates: true,
+              returnFocusOnDeactivate: true,
+            }}
           >
-            {(title || description) && (
-              <div className="border-b border-[var(--glass-border)] px-6 py-5">
-                {title && <h2 className="text-[var(--text-xl)] font-semibold text-[var(--foreground)]">{title}</h2>}
-                {description && <p className="mt-1.5 text-[var(--text-sm)] text-[var(--muted-foreground)]">{description}</p>}
-              </div>
-            )}
-            <div className="p-6">{children}</div>
-            <button
-              onClick={onClose}
-              className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"
-              aria-label="Fechar"
+            <motion.div
+              className={cn('glass relative w-full rounded-[var(--radius-xl)] shadow-[var(--shadow-xl)]', sizeWidths[size], className)}
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              transition={{ duration: 0.2, ease: [0.34, 1.56, 0.64, 1] }}
             >
-              <X className="h-4 w-4" />
-            </button>
-          </motion.div>
+              {(title || description) && (
+                <div className="border-b border-[var(--glass-border)] px-6 py-5">
+                  {title && <h2 className="text-[var(--text-xl)] font-semibold text-[var(--foreground)]">{title}</h2>}
+                  {description && <p className="mt-1.5 text-[var(--text-sm)] text-[var(--muted-foreground)]">{description}</p>}
+                </div>
+              )}
+              <div className="p-6">{children}</div>
+              <button
+                onClick={onClose}
+                className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"
+                aria-label="Fechar"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </motion.div>
+          </FocusTrap>
         </div>
       )}
     </AnimatePresence>,

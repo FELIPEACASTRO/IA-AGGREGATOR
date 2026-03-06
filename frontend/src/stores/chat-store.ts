@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import api from '@/lib/api';
+import { MODEL_CATALOG } from '@/lib/model-catalog';
 
 export interface ChatMessage {
   id: string;
@@ -31,7 +32,7 @@ interface ChatState {
   isStreaming: boolean;
   activeRequestController: AbortController | null;
   activeStreamId: string | null;
-  availableModels: { id: string; label: string; provider: string }[];
+  availableModels: { id: string; label: string; provider: string; maxContextTokens: number }[];
 
   setSelectedModel: (model: string) => void;
   createConversation: () => string;
@@ -44,22 +45,7 @@ interface ChatState {
   deleteConversation: (id: string) => void;
 }
 
-const AVAILABLE_MODELS = [
-  { id: 'gpt-4o-mini', label: 'GPT-4o Mini', provider: 'OpenAI' },
-  { id: 'gpt-4.1-mini', label: 'GPT-4.1 Mini', provider: 'OpenAI' },
-  { id: 'claude-3-5-haiku', label: 'Claude 3.5 Haiku', provider: 'Anthropic' },
-  { id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', provider: 'Google' },
-  { id: 'deepseek-chat', label: 'DeepSeek Chat', provider: 'DeepSeek' },
-  { id: 'deepseek-reasoner', label: 'DeepSeek Reasoner', provider: 'DeepSeek' },
-  { id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B', provider: 'Groq' },
-  { id: 'llama-3.1-70b-versatile', label: 'Llama 3.1 70B', provider: 'Groq' },
-  { id: 'mistral-small-latest', label: 'Mistral Small', provider: 'Mistral' },
-  { id: 'mistral-large-latest', label: 'Mistral Large', provider: 'Mistral' },
-  { id: 'command-r', label: 'Command R', provider: 'Cohere' },
-  { id: 'command-r-plus', label: 'Command R+', provider: 'Cohere' },
-  { id: 'sonar', label: 'Sonar', provider: 'Perplexity' },
-  { id: 'sonar-pro', label: 'Sonar Pro', provider: 'Perplexity' },
-];
+const AVAILABLE_MODELS = MODEL_CATALOG;
 
 let nextMsgId = 1;
 const uid = () => `msg-${Date.now()}-${nextMsgId++}`;
