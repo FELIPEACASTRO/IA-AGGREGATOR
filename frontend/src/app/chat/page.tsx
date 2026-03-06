@@ -1,13 +1,8 @@
 ﻿'use client';
 
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeHighlight from 'rehype-highlight';
+import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { SortableContext, useSortable, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { useAuthStore } from '@/stores/auth-store';
 import { useChatStore, ChatMessage } from '@/stores/chat-store';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -16,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Dropdown, DropdownOption } from '@/components/ui/dropdown';
 import { ProgressBar } from '@/components/ui/progress-bar';
+import { MessageContent } from '@/components/chat/message-content';
 import { cn } from '@/lib/cn';
 import { toast } from '@/stores/toast-store';
 import { createPerfTimer, trackEvent } from '@/lib/analytics';
@@ -23,7 +19,7 @@ import {
   ArrowUp, Plus, WandSparkles, Copy, Check, RefreshCw,
   ThumbsUp, ThumbsDown, LayoutGrid, MessageSquare,
   Pin, Trash2, Pencil, MoreHorizontal,
-  Zap, Brain, Scale, GripVertical, Search,
+  Zap, Brain, Scale, Search,
 } from 'lucide-react';
 
 type Tier = 'fast' | 'balanced' | 'powerful';
@@ -57,6 +53,22 @@ const quickActions = [
   'Compare duas alternativas e recomende com justificativa.',
 ];
 
+const ChatCanvasBoard = dynamic(
+  () => import('@/components/chat/chat-canvas-board').then((mod) => mod.ChatCanvasBoard),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="canvas-viewport min-h-full p-6">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="shimmer h-36 rounded-[var(--radius-lg)] border border-[var(--border)]" />
+          ))}
+        </div>
+      </div>
+    ),
+  }
+);
+
 function StreamingIndicator({ model }: { model?: string }) {
   const color = model ? MODEL_META[model]?.color : undefined;
   return (
@@ -73,19 +85,6 @@ function StreamingIndicator({ model }: { model?: string }) {
       </div>
       <span className="text-[var(--text-xs)] text-[var(--muted-foreground)]">Gerando resposta</span>
     </motion.div>
-  );
-}
-
-function MessageContent({ content, role }: { content: string; role: string }) {
-  if (role !== 'assistant') {
-    return <p className="text-[var(--text-sm)] whitespace-pre-wrap leading-relaxed">{content}</p>;
-  }
-  return (
-    <div className="prose-chat">
-      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
-        {content}
-      </ReactMarkdown>
-    </div>
   );
 }
 
@@ -132,37 +131,6 @@ function MessageActions({
   );
 }
 
-function CanvasCard({ message, isCopied, onCopy }: { message: ChatMessage; isCopied: boolean; onCopy: () => void }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: message.id });
-  return (
-    <div ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
-      className={cn('relative rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-1)] p-4 shadow-[var(--shadow-md)] transition-shadow hover:shadow-[var(--shadow-lg)]',
-        message.role === 'user' && 'border-[var(--brand-primary)]/30',
-        isDragging && 'shadow-[var(--shadow-xl)] z-10')}>
-      <div className="flex items-center gap-2 mb-3">
-        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-[var(--muted-foreground)] touch-none">
-          <GripVertical className="h-4 w-4" />
-        </div>
-        <span className={cn('inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold',
-          message.role === 'user' ? 'bg-[var(--brand-primary)] text-white' : 'bg-[var(--surface-2)] text-[var(--muted-foreground)]')}>
-          {message.role === 'user' ? 'U' : 'IA'}
-        </span>
-        <span className="text-[10px] text-[var(--subtle-foreground)]">
-          {new Date(message.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-        </span>
-      </div>
-      <div className="pl-6 text-[var(--text-sm)] line-clamp-6 leading-relaxed">
-        <MessageContent content={message.content} role={message.role} />
-      </div>
-      <button onClick={onCopy}
-        className="absolute top-2 right-2 rounded-md p-1.5 text-[var(--muted-foreground)] hover:bg-[var(--surface-2)] transition-colors">
-        {isCopied ? <Check className="h-3 w-3 text-[var(--success)]" /> : <Copy className="h-3 w-3" />}
-      </button>
-    </div>
-  );
-}
-
 function ContextIndicator({ messages }: { messages: Array<{ content: string }> }) {
   const MAX_TOKENS = 8000;
   const used = messages.reduce((s, m) => s + Math.round(m.content.length / 4), 0);
@@ -200,7 +168,7 @@ function ConversationItem({ conversation, isActive, onSelect, onRename, onPin, o
       </div>
       <div className="relative shrink-0">
         <button onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}
-          className={cn('rounded-[var(--radius-sm)] p-1 text-[var(--muted-foreground)] transition-colors opacity-0 group-hover:opacity-100',
+          className={cn('inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-sm)] p-1 text-[var(--muted-foreground)] transition-colors opacity-0 group-hover:opacity-100 md:h-7 md:w-7',
             isActive && 'opacity-100', 'hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]')}
           aria-label="Opcoes">
           <MoreHorizontal className="h-3.5 w-3.5" />
@@ -235,7 +203,7 @@ function ConversationItem({ conversation, isActive, onSelect, onRename, onPin, o
 }
 
 function ChatPageContent() {
-  const { user, isAuthenticated, isLoading, fetchUser } = useAuthStore();
+  const { user, isAuthenticated, isLoading } = useAuthStore();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -290,9 +258,6 @@ function ChatPageContent() {
     [availableModels],
   );
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
-
-  useEffect(() => { fetchUser(); }, [fetchUser]);
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.push('/login');
   }, [isLoading, isAuthenticated, router]);
@@ -382,17 +347,6 @@ function ChatPageContent() {
     toast.success(type === 'up' ? 'Obrigado pelo feedback!' : 'Feedback registrado');
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      setCanvasOrder((items) => {
-        const from = items.indexOf(String(active.id));
-        const to = items.indexOf(String(over.id));
-        return arrayMove(items, from, to);
-      });
-    }
-  };
-
   if (isLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center">
@@ -401,10 +355,6 @@ function ChatPageContent() {
     );
   }
   if (!isAuthenticated) return null;
-
-  const canvasMessages = canvasMode && activeConversation
-    ? canvasOrder.map((id) => activeConversation.messages.find((m) => m.id === id)).filter((m): m is ChatMessage => !!m)
-    : activeConversation?.messages ?? [];
 
   return (
     <AppShell
@@ -478,17 +428,13 @@ function ChatPageContent() {
         <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto">
             {canvasMode && activeConversation && activeConversation.messages.length > 0 ? (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={canvasOrder} strategy={rectSortingStrategy}>
-                  <div className="canvas-viewport min-h-full p-6">
-                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                      {canvasMessages.map((msg) => (
-                        <CanvasCard key={msg.id} message={msg} isCopied={copiedId === msg.id} onCopy={() => handleCopy(msg.id, msg.content)} />
-                      ))}
-                    </div>
-                  </div>
-                </SortableContext>
-              </DndContext>
+              <ChatCanvasBoard
+                messages={activeConversation.messages}
+                order={canvasOrder}
+                setOrder={setCanvasOrder}
+                copiedId={copiedId}
+                onCopy={handleCopy}
+              />
             ) : !activeConversation || activeConversation.messages.length === 0 ? (
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
@@ -558,7 +504,7 @@ function ChatPageContent() {
             <div className="mx-auto w-full max-w-3xl">
               <div className="flex min-h-[56px] items-end gap-2 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-1)] px-3 py-2.5 shadow-[var(--shadow-md)] transition-all focus-within:border-[var(--ring)] focus-within:shadow-[var(--shadow-brand)]">
                 <button type="button" aria-label="Anexar arquivo"
-                  className="mb-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-md)] text-[var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)] transition-colors">
+                  className="mb-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] text-[var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)] transition-colors">
                   <Plus className="h-4 w-4" />
                 </button>
                 <Textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)}
@@ -567,7 +513,7 @@ function ChatPageContent() {
                   className="flex-1 border-0 bg-transparent p-0 text-[var(--text-sm)] focus:ring-0 resize-none min-h-8" />
                 <motion.button type="button" onClick={handleSend} disabled={!input.trim() || isSending}
                   whileTap={{ scale: 0.94 }} aria-label="Enviar mensagem"
-                  className="mb-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--brand-primary)] text-white shadow-[var(--shadow-brand)] transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none">
+                  className="mb-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--brand-primary)] text-white shadow-[var(--shadow-brand)] transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none">
                   <ArrowUp className="h-4 w-4" />
                 </motion.button>
               </div>

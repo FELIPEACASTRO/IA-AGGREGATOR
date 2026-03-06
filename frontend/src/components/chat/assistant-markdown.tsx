@@ -1,0 +1,16 @@
+'use client';
+
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
+
+export function AssistantMarkdown({ content }: { content: string }) {
+  return (
+    <div className="prose-chat">
+      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
