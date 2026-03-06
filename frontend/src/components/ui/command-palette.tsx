@@ -151,7 +151,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                             onClick={item.action}
                             className={cn(
                               'flex w-full items-center gap-3 px-5 py-3 text-left transition-colors',
-                              flatIndex === highlighted ? 'bg-[rgba(96,115,255,0.12)] text-[#dfe6ff]' : 'text-[var(--foreground)]'
+                              flatIndex === highlighted ? 'bg-[rgba(96,115,255,0.12)] text-[var(--foreground)]' : 'text-[var(--foreground)]'
                             )}
                           >
                             <span className={cn('shrink-0', flatIndex === highlighted ? 'text-[var(--brand-primary)]' : 'text-[var(--muted-foreground)]')}>

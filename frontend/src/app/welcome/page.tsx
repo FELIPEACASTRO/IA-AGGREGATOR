@@ -135,7 +135,7 @@ function StepIndicator({ current }: { current: number }) {
 }
 
 export default function WelcomePage() {
-  const { isAuthenticated, isLoading, fetchUser, user } = useAuthStore();
+  const { isAuthenticated, isLoading, user } = useAuthStore();
   const { setSelectedModel, createConversation } = useChatStore();
   const router = useRouter();
 
@@ -143,10 +143,6 @@ export default function WelcomePage() {
   const [goal, setGoal] = useState<Goal | null>(null);
   const [modelId, setModelId] = useState<string | null>(null);
   const [firstPrompt, setFirstPrompt] = useState('');
-
-  useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login');

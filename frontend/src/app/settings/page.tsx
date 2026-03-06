@@ -3,17 +3,20 @@
 import { AppShell } from '@/components/app/app-shell';
 import { useAuthStore } from '@/stores/auth-store';
 import { useThemeStore } from '@/stores/theme-store';
+import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from '@/stores/toast-store';
 import { trackEvent } from '@/lib/analytics';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/cn';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Field, SelectField } from '@/components/ui/form-field';
+import { PageSection, PageSplit, PageStack } from '@/components/app/page-blueprint';
 import {
   Bell,
   Database,
   Globe2,
+  LineChart,
   Monitor,
   Moon,
   Save,
@@ -76,48 +79,47 @@ export default function SettingsPage() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="grid gap-4 py-6 xl:grid-cols-[320px_minmax(0,1fr)]"
+        className="py-6"
       >
-        <aside className="space-y-4">
-          <section className="lume-panel rounded-[var(--radius-2xl)] p-5">
-            <span className="lume-kicker">
-              <Sparkles className="h-3.5 w-3.5" /> Workspace profile
-            </span>
-            <div className="mt-5 rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-5">
-              <div className="inline-flex h-14 w-14 items-center justify-center rounded-[20px] bg-[var(--brand-gradient)] text-white shadow-[var(--shadow-brand)]">
-                <UserRound className="h-6 w-6" />
-              </div>
-              <p className="mt-4 text-[var(--text-xl)] font-semibold text-[var(--foreground)]">{user?.fullName || 'Conta Lume'}</p>
-              <p className="mt-1 text-[var(--text-sm)] text-[var(--muted-foreground)]">{user?.email}</p>
-              <div className="mt-5 grid gap-3">
-                <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.52)] p-4">
-                  <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Perfil</p>
-                  <p className="mt-2 text-[var(--text-sm)] text-[var(--muted-foreground)]">Preferencias salvas localmente para iteracao rapida do workspace.</p>
+        <PageSplit
+          left={
+            <aside className="space-y-4">
+              <PageSection>
+                <span className="lume-kicker">
+                  <Sparkles className="h-3.5 w-3.5" /> Workspace profile
+                </span>
+                <div className="mt-5 rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-5">
+                  <div className="inline-flex h-14 w-14 items-center justify-center rounded-[20px] bg-[var(--brand-gradient)] text-white shadow-[var(--shadow-brand)]">
+                    <UserRound className="h-6 w-6" />
+                  </div>
+                  <p className="mt-4 text-[var(--text-xl)] font-semibold text-[var(--foreground)]">{user?.fullName || 'Conta Lume'}</p>
+                  <p className="mt-1 text-[var(--text-sm)] text-[var(--muted-foreground)]">{user?.email}</p>
+                  <div className="mt-5 grid gap-3">
+                    <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.52)] p-4">
+                      <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Perfil</p>
+                      <p className="mt-2 text-[var(--text-sm)] text-[var(--muted-foreground)]">Preferencias salvas localmente para iteracao rapida do workspace.</p>
+                    </div>
+                    <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.52)] p-4">
+                      <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Tema</p>
+                      <p className="mt-2 text-[var(--text-sm)] text-[var(--muted-foreground)]">Dark-first com opcao de override local para homologacao.</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.52)] p-4">
-                  <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Tema</p>
-                  <p className="mt-2 text-[var(--text-sm)] text-[var(--muted-foreground)]">Dark-first com opcao de override local para homologacao.</p>
-                </div>
-              </div>
-            </div>
-          </section>
-        </aside>
-
-        <div className="space-y-4">
+              </PageSection>
+            </aside>
+          }
+          right={
+            <PageStack className="space-y-4 py-0">
           <SectionCard title="Perfil" helper="Dados principais da conta visivel no workspace." icon={UserRound}>
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <label htmlFor="fullName" className="text-[var(--text-xs)] font-semibold text-[var(--muted-foreground)]">
-                  Nome de exibicao
-                </label>
-                <Input id="fullName" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Seu nome" />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-[var(--text-xs)] font-semibold text-[var(--muted-foreground)]">
-                  E-mail
-                </label>
-                <Input id="email" value={user?.email || ''} disabled />
-              </div>
+              <Field
+                id="fullName"
+                label="Nome de exibicao"
+                value={fullName}
+                onChange={(event) => setFullName(event.target.value)}
+                placeholder="Seu nome"
+              />
+              <Field id="email" label="E-mail" value={user?.email || ''} disabled />
             </div>
           </SectionCard>
 
@@ -145,21 +147,14 @@ export default function SettingsPage() {
                   ))}
                 </div>
               </div>
-              <div className="space-y-2">
-                <label htmlFor="locale" className="inline-flex items-center gap-2 text-[var(--text-xs)] font-semibold text-[var(--muted-foreground)]">
-                  <Globe2 className="h-4 w-4" /> Idioma
-                </label>
-                <select
-                  id="locale"
-                  value={locale}
-                  onChange={(event) => setLocale(event.target.value)}
-                  className="lume-field"
-                >
-                  {localeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </div>
+              <SelectField
+                id="locale"
+                label="Idioma"
+                value={locale}
+                onChange={setLocale}
+                options={localeOptions}
+                icon={<Globe2 className="h-4 w-4" />}
+              />
             </div>
           </SectionCard>
 
@@ -219,13 +214,34 @@ export default function SettingsPage() {
             </div>
           </SectionCard>
 
+          <SectionCard title="Analytics" helper="Separe leitura executiva de diagnostico tecnico." icon={LineChart}>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Link
+                href="/settings/analytics"
+                className="inline-flex items-center justify-between rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-[var(--text-sm)] font-semibold text-[var(--foreground)] hover:border-[var(--border-strong)]"
+              >
+                Abrir insights
+                <LineChart className="h-4 w-4 text-[var(--brand-primary)]" />
+              </Link>
+              <Link
+                href="/settings/analytics/debug"
+                className="inline-flex items-center justify-between rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-[var(--text-sm)] font-semibold text-[var(--foreground)] hover:border-[var(--border-strong)]"
+              >
+                Abrir diagnostico
+                <Database className="h-4 w-4 text-[var(--warning)]" />
+              </Link>
+            </div>
+          </SectionCard>
+
           <div className="flex flex-wrap items-center gap-3">
             <Button type="submit" variant="brand" size="lg">
               <Save className="h-4 w-4" /> Salvar preferencias
             </Button>
             <p className="text-[var(--text-xs)] text-[var(--muted-foreground)]">Preview local do workspace. Nenhuma preferencia sai do navegador nesta tela.</p>
           </div>
-        </div>
+            </PageStack>
+          }
+        />
       </motion.form>
     </AppShell>
   );

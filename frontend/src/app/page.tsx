@@ -1,8 +1,8 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
@@ -24,7 +24,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/stores/auth-store';
-import { useChatStore } from '@/stores/chat-store';
 
 const heroPrompts = [
   'Resumo executivo',
@@ -35,7 +34,7 @@ const heroPrompts = [
 
 const trustMetrics = [
   { value: '13+', label: 'Modelos premium no mesmo painel' },
-  { value: '1', label: 'Workspace para chat, templates, acervo e analytics' },
+  { value: '1', label: 'Workspace para chat, templates, acervo e insights' },
   { value: '24/7', label: 'Operacao pronta para desktop e mobile' },
   { value: '0', label: 'Atrito entre descoberta, execucao e memoria' },
 ];
@@ -59,8 +58,8 @@ const capabilityCards = [
     icon: Layers,
   },
   {
-    title: 'Analytics para evoluir o uso de IA',
-    description: 'Entenda onboarding, funil, retencao e ritmo de uso para melhorar a adocao do produto.',
+    title: 'Insights para evoluir adocao de IA',
+    description: 'Entenda onboarding, funil, retencao e ritmo de uso para melhorar o impacto do produto.',
     icon: TrendingUp,
   },
 ];
@@ -89,9 +88,14 @@ const securityPoints = [
   'Camada visual premium com contraste, hierarquia e CTA claros em todas as rotas.',
 ];
 
-function LandingPage() {
+function LandingPage({ isAuthenticated }: { isAuthenticated: boolean }) {
   const router = useRouter();
   const [promptText, setPromptText] = useState('');
+
+  const heroCta = useMemo(() => ({
+    href: isAuthenticated ? '/home' : '/register',
+    label: isAuthenticated ? 'Abrir workspace' : 'Comecar agora',
+  }), [isAuthenticated]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -101,7 +105,7 @@ function LandingPage() {
   };
 
   return (
-    <main className="pb-16 pt-3 md:pt-4">
+    <main id="main-content" className="pb-16 pt-3 md:pt-4">
       <header className="lume-section sticky top-3 z-40 rounded-[var(--radius-pill)] border border-[var(--border)] bg-[rgba(8,17,31,0.76)] px-4 py-3 shadow-[var(--shadow-md)] backdrop-blur-md md:px-5">
         <div className="flex items-center justify-between gap-4">
           <Link href="/" className="inline-flex items-center gap-3 text-[var(--text-sm)] font-semibold text-[var(--foreground)]">
@@ -121,11 +125,17 @@ function LandingPage() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <Link href="/login" className="hidden rounded-[var(--radius-pill)] border border-[var(--border)] px-4 py-2 text-[0.82rem] font-semibold text-[var(--foreground)] hover:border-[var(--border-strong)] md:inline-flex">
-              Entrar
-            </Link>
-            <Button variant="brand" size="md" onClick={() => router.push('/register')}>
-              Comecar agora
+            {isAuthenticated ? (
+              <Link href="/chat" className="hidden rounded-[var(--radius-pill)] border border-[var(--border)] px-4 py-2 text-[0.82rem] font-semibold text-[var(--foreground)] hover:border-[var(--border-strong)] md:inline-flex">
+                Ir para chat
+              </Link>
+            ) : (
+              <Link href="/login" className="hidden rounded-[var(--radius-pill)] border border-[var(--border)] px-4 py-2 text-[0.82rem] font-semibold text-[var(--foreground)] hover:border-[var(--border-strong)] md:inline-flex">
+                Entrar
+              </Link>
+            )}
+            <Button variant="brand" size="md" onClick={() => router.push(heroCta.href)}>
+              {heroCta.label}
             </Button>
           </div>
         </div>
@@ -140,10 +150,10 @@ function LandingPage() {
                 Lume unifica os fluxos mais importantes de IA para negocio
               </span>
               <h1 className="lume-display mt-5 text-[var(--foreground)]">
-                Execute com IA em um workspace que parece produto premium, nao gambiarra.
+                Execute com IA em um workspace premium, consistente e pronto para escalar.
               </h1>
               <p className="lume-subtitle mt-5">
-                Chat multimodelo, templates curados, biblioteca operacional e analytics no mesmo lugar, com uma experiencia visual limpa, escura e precisa.
+                Chat multimodelo, templates curados, biblioteca operacional e analytics no mesmo lugar, com experiencia visual limpa e foco total em produtividade.
               </p>
             </motion.div>
 
@@ -227,7 +237,7 @@ function LandingPage() {
                     <Brain className="h-5 w-5 text-[var(--brand-primary)]" />
                   </div>
                   <div className="mt-4 space-y-3">
-                    {['Chat multimodelo', 'Template aplicado', 'Historico salvo', 'Analytics atualizado'].map((item, index) => (
+                    {['Chat multimodelo', 'Template aplicado', 'Historico salvo', 'Insights atualizados'].map((item, index) => (
                       <div key={item} className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(8,17,31,0.62)] px-4 py-3">
                         <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(96,115,255,0.14)] text-[0.72rem] font-semibold text-[var(--brand-primary)]">0{index + 1}</span>
                         <p className="text-[0.84rem] text-[var(--foreground)]">{item}</p>
@@ -242,28 +252,12 @@ function LandingPage() {
       </section>
 
       <section className="lume-section mt-12 md:mt-16">
-        <div className="lume-panel rounded-[var(--radius-2xl)] px-4 py-5 md:px-6">
-          <div className="flex flex-wrap items-center gap-3 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">
-            <span>Modelos e fluxos disponiveis</span>
-            <div className="lume-divider max-w-[8rem] flex-1" />
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
-            {modelStrip.map((model) => (
-              <div key={model} className="rounded-[var(--radius-pill)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-3 py-3 text-center text-[0.82rem] font-medium text-[var(--foreground)]">
-                {model}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="lume-section mt-12 md:mt-16">
         <div className="grid gap-5 lg:grid-cols-[0.94fr_1.06fr]">
           <div className="lume-panel rounded-[var(--radius-2xl)] p-6 md:p-7">
             <Badge variant="outline">Por que Lume</Badge>
-            <h2 className="mt-4 text-[var(--text-3xl)] font-semibold text-[var(--foreground)]">Pare de pagar em ferramentas isoladas e operar com interfaces desconectadas.</h2>
+            <h2 className="mt-4 text-[var(--text-3xl)] font-semibold text-[var(--foreground)]">Menos ferramentas isoladas. Mais operacao com contexto continuo.</h2>
             <p className="mt-4 text-[var(--text-sm)] leading-7 text-[var(--muted-foreground)]">
-              A referencia que analisamos vence porque distribui valor, prova social e CTA em blocos claros. O Lume vai seguir a mesma logica, mas com identidade propria e foco total em workflow premium.
+              O Lume foi desenhado para distribuir proposta de valor, prova de capacidade e CTA em blocos claros. Resultado: menos friccao e mais execucao.
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-4">
@@ -298,9 +292,9 @@ function LandingPage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <Badge variant="brand">Workflow</Badge>
-              <h2 className="mt-4 text-[var(--text-3xl)] font-semibold text-[var(--foreground)]">Um caminho mais limpo entre intencao, resposta e memoria.</h2>
+              <h2 className="mt-4 text-[var(--text-3xl)] font-semibold text-[var(--foreground)]">Um caminho limpo entre intencao, resposta e memoria.</h2>
             </div>
-            <Button variant="outline" size="md" onClick={() => router.push('/register')}>
+            <Button variant="outline" size="md" onClick={() => router.push(heroCta.href)}>
               Ver na pratica
             </Button>
           </div>
@@ -335,22 +329,22 @@ function LandingPage() {
               <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-5">
                 <Building2 className="h-5 w-5 text-[var(--brand-primary)]" />
                 <h3 className="mt-3 text-[var(--text-lg)] font-semibold text-[var(--foreground)]">Workspace para times</h3>
-                <p className="mt-2 text-[var(--text-sm)] leading-7 text-[var(--muted-foreground)]">Landing, auth e area autenticada passam a ter a mesma assinatura visual.</p>
+                <p className="mt-2 text-[var(--text-sm)] leading-7 text-[var(--muted-foreground)]">Landing, auth e area autenticada com assinatura visual unica.</p>
               </div>
               <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-5">
                 <CreditCard className="h-5 w-5 text-[var(--brand-primary)]" />
                 <h3 className="mt-3 text-[var(--text-lg)] font-semibold text-[var(--foreground)]">Valor claro</h3>
-                <p className="mt-2 text-[var(--text-sm)] leading-7 text-[var(--muted-foreground)]">Plano, uso e consumo ficam mais executivos, com leitura imediata e CTA forte.</p>
+                <p className="mt-2 text-[var(--text-sm)] leading-7 text-[var(--muted-foreground)]">Plano, uso e consumo com leitura executiva e CTA objetivo.</p>
               </div>
               <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-5">
                 <Lock className="h-5 w-5 text-[var(--brand-primary)]" />
                 <h3 className="mt-3 text-[var(--text-lg)] font-semibold text-[var(--foreground)]">Navegacao disciplinada</h3>
-                <p className="mt-2 text-[var(--text-sm)] leading-7 text-[var(--muted-foreground)]">Sidebar, menu mobile, header e toasts falam a mesma lingua visual.</p>
+                <p className="mt-2 text-[var(--text-sm)] leading-7 text-[var(--muted-foreground)]">Sidebar, menu mobile, header e toasts falam a mesma linguagem.</p>
               </div>
               <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-5">
                 <Zap className="h-5 w-5 text-[var(--brand-primary)]" />
                 <h3 className="mt-3 text-[var(--text-lg)] font-semibold text-[var(--foreground)]">Pronto para operar</h3>
-                <p className="mt-2 text-[var(--text-sm)] leading-7 text-[var(--muted-foreground)]">Design orientado a repeticao de uso, nao apenas a primeira impressao.</p>
+                <p className="mt-2 text-[var(--text-sm)] leading-7 text-[var(--muted-foreground)]">Design orientado a repeticao de uso, nao apenas primeira impressao.</p>
               </div>
             </div>
           </div>
@@ -364,152 +358,15 @@ function LandingPage() {
             Um frontend que finalmente faz jus ao produto.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-[var(--text-base)] leading-8 text-[var(--muted-foreground)]">
-            Entre, crie sua conta ou leve o primeiro prompt para o chat. O objetivo aqui e simples: transformar o Lume em uma referencia visual e operacional, nao em mais um painel genrico.
+            Entre, crie sua conta ou leve o primeiro prompt para o chat. O foco e transformar o Lume em referencia visual e operacional.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-            <Button variant="brand" size="lg" onClick={() => router.push('/register')}>
-              Criar conta <ArrowRight className="h-4 w-4" />
+            <Button variant="brand" size="lg" onClick={() => router.push(heroCta.href)}>
+              {isAuthenticated ? 'Abrir workspace' : 'Criar conta'} <ArrowRight className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="lg" onClick={() => router.push('/login')}>
-              Ja tenho acesso
+            <Button variant="outline" size="lg" onClick={() => router.push(isAuthenticated ? '/chat' : '/login')}>
+              {isAuthenticated ? 'Ir para chat' : 'Ja tenho acesso'}
             </Button>
-          </div>
-        </div>
-      </section>
-    </main>
-  );
-}
-
-function AuthDashboard() {
-  const { user } = useAuthStore();
-  const { conversations, availableModels } = useChatStore();
-  const router = useRouter();
-  const [promptText, setPromptText] = useState('');
-
-  const recentConversations = conversations.slice(0, 4);
-  const totalMessages = conversations.reduce((sum, conversation) => sum + conversation.messages.length, 0);
-  const pinnedConversations = conversations.filter((conversation) => conversation.pinned).length;
-
-  const metrics = useMemo(() => ([
-    { label: 'Conversas', value: conversations.length, icon: MessageSquare },
-    { label: 'Mensagens', value: totalMessages, icon: TrendingUp },
-    { label: 'Fixadas', value: pinnedConversations, icon: Layers },
-    { label: 'Modelos', value: availableModels.length || 13, icon: Brain },
-  ]), [availableModels.length, conversations.length, pinnedConversations, totalMessages]);
-
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    const trimmed = promptText.trim();
-    if (!trimmed) return;
-    router.push(`/chat?prompt=${encodeURIComponent(trimmed)}`);
-  };
-
-  return (
-    <main className="pb-12 pt-3 md:pt-4">
-      <section className="lume-section">
-        <div className="lume-panel rounded-[var(--radius-2xl)] p-6 md:p-8">
-          <div className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr] lg:items-end">
-            <div>
-              <Badge variant="brand">Workspace home</Badge>
-              <h1 className="mt-4 text-[var(--text-4xl)] font-semibold text-[var(--foreground)]">Bem-vindo de volta, {user?.fullName?.split(' ')[0] || 'time'}.</h1>
-              <p className="mt-4 max-w-2xl text-[var(--text-base)] leading-8 text-[var(--muted-foreground)]">
-                Continue de onde parou, abra uma conversa recente ou dispare um novo fluxo com o melhor modelo para a tarefa.
-              </p>
-            </div>
-            <form onSubmit={handleSubmit} className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-4 shadow-[var(--shadow-sm)]">
-              <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Novo prompt</p>
-              <textarea
-                value={promptText}
-                onChange={(event) => setPromptText(event.target.value)}
-                rows={3}
-                placeholder="Descreva a tarefa ou cole o contexto aqui"
-                className="mt-3 w-full resize-none rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-[var(--text-sm)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
-              />
-              <div className="mt-3 flex justify-end">
-                <Button variant="brand" size="md" type="submit">Abrir no chat</Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </section>
-
-      <section className="lume-section mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {metrics.map((metric) => (
-          <div key={metric.label} className="lume-panel rounded-[var(--radius-xl)] p-5">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-[18px] bg-[rgba(96,115,255,0.12)] text-[var(--brand-primary)]">
-              <metric.icon className="h-5 w-5" />
-            </span>
-            <p className="mt-4 text-[var(--text-3xl)] font-semibold text-[var(--foreground)]">{metric.value}</p>
-            <p className="mt-1 text-[0.8rem] text-[var(--muted-foreground)]">{metric.label}</p>
-          </div>
-        ))}
-      </section>
-
-      <section className="lume-section mt-6 grid gap-5 lg:grid-cols-[1.08fr_0.92fr]">
-        <div className="lume-panel rounded-[var(--radius-2xl)] p-6">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Conversas recentes</p>
-              <h2 className="mt-2 text-[var(--text-2xl)] font-semibold text-[var(--foreground)]">Continue sem perder contexto.</h2>
-            </div>
-            <Button variant="outline" size="sm" onClick={() => router.push('/library')}>
-              Ver biblioteca
-            </Button>
-          </div>
-          <div className="mt-5 space-y-3">
-            {recentConversations.length === 0 ? (
-              <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-4 py-10 text-center">
-                <MessageSquare className="mx-auto h-8 w-8 text-[var(--muted-foreground)]" />
-                <p className="mt-3 text-[var(--text-sm)] text-[var(--muted-foreground)]">Nenhuma conversa por aqui ainda.</p>
-              </div>
-            ) : (
-              recentConversations.map((conversation) => (
-                <button
-                  key={conversation.id}
-                  type="button"
-                  onClick={() => router.push('/chat')}
-                  className="flex w-full items-center gap-4 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-4 py-4 text-left hover:border-[var(--border-strong)]"
-                >
-                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[rgba(96,115,255,0.12)] text-[0.82rem] font-semibold text-[var(--brand-primary)]">
-                    {conversation.title.slice(0, 2).toUpperCase()}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[var(--text-sm)] font-semibold text-[var(--foreground)]">{conversation.title}</span>
-                    <span className="block truncate text-[0.74rem] text-[var(--muted-foreground)]">{conversation.model} · {conversation.messages.length} mensagens</span>
-                  </span>
-                  <ArrowRight className="h-4 w-4 text-[var(--subtle-foreground)]" />
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-5">
-          <div className="lume-panel rounded-[var(--radius-2xl)] p-6">
-            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Atalhos</p>
-            <div className="mt-4 space-y-3">
-              {[
-                { label: 'Abrir chat', href: '/chat' },
-                { label: 'Ver templates', href: '/prompts' },
-                { label: 'Plano e consumo', href: '/billing' },
-                { label: 'Configuracoes', href: '/settings' },
-              ].map((item) => (
-                <Link key={item.href} href={item.href} className="flex items-center justify-between rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-[var(--text-sm)] font-medium text-[var(--foreground)] hover:border-[var(--border-strong)]">
-                  {item.label}
-                  <ArrowRight className="h-4 w-4 text-[var(--subtle-foreground)]" />
-                </Link>
-              ))}
-            </div>
-          </div>
-          <div className="lume-panel rounded-[var(--radius-2xl)] p-6">
-            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Modelos ativos</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {(availableModels.slice(0, 8).length > 0 ? availableModels.slice(0, 8) : modelStrip).map((model) => (
-                <span key={typeof model === 'string' ? model : model.id} className="rounded-[var(--radius-pill)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[0.76rem] font-medium text-[var(--foreground)]">
-                  {typeof model === 'string' ? model : model.label}
-                </span>
-              ))}
-            </div>
           </div>
         </div>
       </section>
@@ -518,11 +375,7 @@ function AuthDashboard() {
 }
 
 export default function HomePage() {
-  const { isAuthenticated, isLoading, fetchUser } = useAuthStore();
-
-  useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
+  const { isAuthenticated, isLoading } = useAuthStore();
 
   if (isLoading) {
     return (
@@ -536,6 +389,6 @@ export default function HomePage() {
     );
   }
 
-  if (isAuthenticated) return <AuthDashboard />;
-  return <LandingPage />;
+  return <LandingPage isAuthenticated={isAuthenticated} />;
 }
+

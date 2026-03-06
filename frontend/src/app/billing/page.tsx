@@ -4,6 +4,7 @@ import { AppShell } from '@/components/app/app-shell';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/cn';
 import { ProgressBar } from '@/components/ui/progress-bar';
+import { PageSection, PageStack } from '@/components/app/page-blueprint';
 import {
   Activity,
   AlertTriangle,
@@ -90,8 +91,8 @@ export default function BillingPage() {
 
   return (
     <AppShell title="Plano e uso" subtitle="Monitore seu consumo e faca upgrade quando precisar">
-      <div className="space-y-6 py-6">
-        <section className="lume-panel rounded-[var(--radius-2xl)] p-5 md:p-6">
+      <PageStack>
+        <PageSection className="p-5 md:p-6">
           <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr] xl:items-start">
             <div>
               <span className="lume-kicker">
@@ -101,7 +102,7 @@ export default function BillingPage() {
                 Controle de plano, consumo e capacidade em uma camada executiva unica.
               </h2>
               <p className="mt-3 max-w-2xl text-[var(--text-sm)] text-[var(--muted-foreground)]">
-                A referencia premium aqui e simples: hierarquia clara, status atual evidente e CTA de upgrade bem colocado. O usuario precisa entender em segundos quanto pode consumir e qual e o proximo nivel.
+                O objetivo e leitura imediata: status do plano, consumo atual, capacidade restante e proximo passo com clareza.
               </p>
               <div className="mt-5 grid gap-4 sm:grid-cols-3">
                 <UsageStat label="Plano atual" value={currentPlan.name} sub={currentPlan.desc} icon={CreditCard} iconClass="text-[var(--brand-primary)]" />
@@ -141,7 +142,7 @@ export default function BillingPage() {
               </div>
             </div>
           </div>
-        </section>
+        </PageSection>
 
         <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
           <motion.div
@@ -245,7 +246,7 @@ export default function BillingPage() {
             ))}
           </div>
         </section>
-      </div>
+      </PageStack>
     </AppShell>
   );
 }

@@ -10,6 +10,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { CommandPalette, useCommandPalette } from '@/components/ui/command-palette';
 import {
   Bot,
+  House,
   MessageSquare,
   BookOpen,
   Zap,
@@ -34,6 +35,7 @@ type AppShellProps = {
 };
 
 const navItems = [
+  { href: '/home', label: 'Home', icon: House },
   { href: '/chat', label: 'Chat', icon: MessageSquare },
   { href: '/library', label: 'Biblioteca', icon: BookOpen },
   { href: '/prompts', label: 'Templates', icon: Zap },
@@ -169,7 +171,7 @@ function SidebarContent({ collapsed, pathname, onNavigate, onLogout }: {
               className={cn(
                 'group flex items-center gap-3 rounded-[var(--radius-pill)] border px-3 py-3 transition-all',
                 active
-                  ? 'border-[rgba(96,115,255,0.28)] bg-[rgba(96,115,255,0.12)] text-[#e4e9ff] shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]'
+                  ? 'border-[rgba(96,115,255,0.28)] bg-[rgba(96,115,255,0.12)] text-[var(--foreground)] shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]'
                   : 'border-transparent text-[var(--muted-foreground)] hover:border-[var(--border)] hover:bg-[rgba(255,255,255,0.03)] hover:text-[var(--foreground)]',
                 collapsed && 'justify-center px-0'
               )}
@@ -224,20 +226,53 @@ export function AppShell({ title, subtitle, children, headerActions, noPadding }
   const router = useRouter();
   const { collapsed, toggle, mobileOpen, setMobileOpen } = useSidebarState();
 
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname, setMobileOpen]);
+
+  useEffect(() => {
+    if (!mobileOpen) {
+      document.body.style.overflow = '';
+      return;
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileOpen(false);
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, [mobileOpen, setMobileOpen]);
+
   const handleLogout = () => {
     useAuthStore.getState().logout();
     router.push('/login');
   };
 
   return (
-    <div className="min-h-screen px-3 py-3 md:px-4 md:py-4">
+    <div className="min-h-screen px-3 py-3 pb-24 md:px-4 md:py-4 md:pb-4">
       <div className="lume-page flex min-h-[calc(100vh-1.5rem)] gap-3 md:gap-4">
         {mobileOpen && (
-          <button
-            className="fixed inset-0 z-[var(--z-modal)] bg-[rgba(3,8,18,0.72)] backdrop-blur-md md:hidden"
-            onClick={() => setMobileOpen(false)}
-            aria-label="Fechar menu"
-          />
+          <>
+            <button
+              className="fixed inset-0 z-[var(--z-modal)] bg-[rgba(3,8,18,0.72)] backdrop-blur-md md:hidden"
+              onClick={() => setMobileOpen(false)}
+              aria-label="Fechar menu"
+            />
+            <aside
+              role="dialog"
+              aria-modal="true"
+              aria-label="Menu principal"
+              className="fixed inset-y-3 left-3 z-[calc(var(--z-modal)+1)] flex w-[min(22rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-[var(--radius-2xl)] md:hidden lume-shell"
+            >
+              <SidebarContent collapsed={false} pathname={pathname} onNavigate={() => setMobileOpen(false)} onLogout={handleLogout} />
+            </aside>
+          </>
         )}
 
         <aside
@@ -258,16 +293,6 @@ export function AppShell({ title, subtitle, children, headerActions, noPadding }
           >
             <ChevronLeft className={cn('h-4 w-4 transition-transform', collapsed && 'rotate-180')} />
           </button>
-        </aside>
-
-        <aside
-          className={cn(
-            'fixed inset-y-3 left-3 z-[calc(var(--z-modal)+1)] flex w-[min(22rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-[var(--radius-2xl)] md:hidden',
-            'lume-shell transition-transform duration-[var(--dur-slow)] ease-[var(--ease-standard)]',
-            mobileOpen ? 'translate-x-0' : '-translate-x-[110%]'
-          )}
-        >
-          <SidebarContent collapsed={false} pathname={pathname} onNavigate={() => setMobileOpen(false)} onLogout={handleLogout} />
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col gap-3 md:gap-4">
@@ -297,7 +322,8 @@ export function AppShell({ title, subtitle, children, headerActions, noPadding }
           </header>
 
           <main
-            id="main-content"
+            id="workspace-main-content"
+            data-main-content
             className={cn(
               'lume-shell flex-1 overflow-hidden rounded-[var(--radius-2xl)]',
               noPadding ? 'p-0' : 'px-4 py-4 md:px-6 md:py-6'
@@ -308,7 +334,7 @@ export function AppShell({ title, subtitle, children, headerActions, noPadding }
         </div>
       </div>
 
-      <nav className="fixed bottom-3 left-3 right-3 z-[var(--z-sticky)] grid grid-cols-5 gap-2 rounded-[var(--radius-pill)] border border-[var(--border)] bg-[rgba(8,17,31,0.92)] p-2 shadow-[var(--shadow-lg)] backdrop-blur-md md:hidden" aria-label="Atalhos rapidos">
+      <nav className="fixed bottom-3 left-3 right-3 z-[var(--z-sticky)] grid grid-cols-6 gap-2 rounded-[var(--radius-pill)] border border-[var(--border)] bg-[rgba(8,17,31,0.92)] p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-[var(--shadow-lg)] backdrop-blur-md md:hidden" aria-label="Atalhos rapidos">
         {navItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
@@ -316,8 +342,8 @@ export function AppShell({ title, subtitle, children, headerActions, noPadding }
               key={href}
               href={href}
               className={cn(
-                'flex flex-col items-center gap-1 rounded-[var(--radius-pill)] px-2 py-2 text-center transition-colors',
-                active ? 'bg-[rgba(96,115,255,0.14)] text-[#dfe6ff]' : 'text-[var(--muted-foreground)]'
+                'flex min-h-11 flex-col items-center justify-center gap-1 rounded-[var(--radius-pill)] px-2 py-2 text-center transition-colors',
+                active ? 'bg-[rgba(96,115,255,0.14)] text-[var(--foreground)]' : 'text-[var(--muted-foreground)]'
               )}
               aria-current={active ? 'page' : undefined}
             >

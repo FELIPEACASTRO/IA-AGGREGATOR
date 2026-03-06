@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { AuthShell } from '@/components/app/auth-shell';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Field } from '@/components/ui/form-field';
 import { trackEvent } from '@/lib/analytics';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -55,33 +55,50 @@ export default function RegisterPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {error ? <Alert variant="error">{error}</Alert> : null}
 
-        <div className="space-y-2">
-          <label htmlFor="fullName" className="text-[0.8rem] font-semibold text-[var(--muted-foreground)]">
-            Nome completo
-          </label>
-          <Input id="fullName" type="text" value={fullName} onChange={(event) => setFullName(event.target.value)} required placeholder="Seu nome" autoComplete="name" />
-        </div>
+        <Field
+          id="fullName"
+          type="text"
+          label="Nome completo"
+          value={fullName}
+          onChange={(event) => setFullName(event.target.value)}
+          required
+          placeholder="Seu nome"
+          autoComplete="name"
+        />
 
-        <div className="space-y-2">
-          <label htmlFor="email" className="text-[0.8rem] font-semibold text-[var(--muted-foreground)]">
-            Email
-          </label>
-          <Input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required placeholder="voce@empresa.com" autoComplete="email" />
-        </div>
+        <Field
+          id="email"
+          type="email"
+          label="Email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          required
+          placeholder="voce@empresa.com"
+          autoComplete="email"
+        />
 
-        <div className="space-y-2">
-          <label htmlFor="password" className="text-[0.8rem] font-semibold text-[var(--muted-foreground)]">
-            Senha
-          </label>
-          <Input id="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} placeholder="Minimo de 8 caracteres" autoComplete="new-password" />
-        </div>
+        <Field
+          id="password"
+          type="password"
+          label="Senha"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          required
+          minLength={8}
+          placeholder="Minimo de 8 caracteres"
+          autoComplete="new-password"
+        />
 
-        <div className="space-y-2">
-          <label htmlFor="confirmPassword" className="text-[0.8rem] font-semibold text-[var(--muted-foreground)]">
-            Confirmar senha
-          </label>
-          <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required placeholder="Repita a senha" autoComplete="new-password" />
-        </div>
+        <Field
+          id="confirmPassword"
+          type="password"
+          label="Confirmar senha"
+          value={confirmPassword}
+          onChange={(event) => setConfirmPassword(event.target.value)}
+          required
+          placeholder="Repita a senha"
+          autoComplete="new-password"
+        />
 
         <Button type="submit" variant="brand" size="lg" disabled={loading} className="w-full">
           {loading ? 'Criando conta...' : 'Criar acesso ao Lume'}

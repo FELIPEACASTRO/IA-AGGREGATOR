@@ -29,7 +29,7 @@ export function ProgressBar({
     ? 'bg-[var(--destructive)]'
     : isWarn
       ? 'bg-[var(--warning)]'
-      : 'bg-[linear-gradient(90deg,#6073ff_0%,#f25d9c_100%)]';
+      : 'bg-[var(--brand-gradient)]';
 
   const trackHeight = size === 'sm' ? 'h-1.5' : size === 'lg' ? 'h-3' : 'h-2';
 

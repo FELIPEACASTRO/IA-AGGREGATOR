@@ -4,6 +4,8 @@ import './globals.css';
 import { ToastViewport } from '@/components/ui/toast-viewport';
 import { ThemeProvider } from '@/components/app/theme-provider';
 import { AnalyticsProvider } from '@/components/app/analytics-provider';
+import { SkipToContent } from '@/components/app/skip-to-content';
+import { AuthBootstrap } from '@/components/app/auth-bootstrap';
 
 const bodyFont = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-body' });
 const displayFont = Sora({ subsets: ['latin'], variable: '--font-display' });
@@ -36,10 +38,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${bodyFont.variable} ${displayFont.variable} ${monoFont.variable}`}>
-        <a href="#main-content" className="skip-to-content">
-          Pular para o conteudo
-        </a>
+        <SkipToContent />
         <ThemeProvider>
+          <AuthBootstrap />
           <AnalyticsProvider />
           {children}
         </ThemeProvider>

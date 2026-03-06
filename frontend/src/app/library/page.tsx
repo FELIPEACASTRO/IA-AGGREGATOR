@@ -8,6 +8,7 @@ import { toast } from '@/stores/toast-store';
 import { trackEvent } from '@/lib/analytics';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/cn';
+import { PageSection, PageSplit, PageStack } from '@/components/app/page-blueprint';
 import {
   ArrowUpDown,
   BookOpen,
@@ -145,7 +146,7 @@ export default function LibraryPage() {
         </div>
       }
     >
-      <div className="space-y-6 py-6">
+      <PageStack>
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatCard label="Conversas" value={String(conversations.length)} helper="Biblioteca pronta para reabrir contexto" icon={FolderKanban} />
           <StatCard label="Mensagens" value={totalMessages.toLocaleString('pt-BR')} helper="Volume total salvo no workspace" icon={MessageSquare} />
@@ -153,15 +154,16 @@ export default function LibraryPage() {
           <StatCard label="Modelos" value={String(modelsInUse)} helper="Mix de engines usadas no historico" icon={BrainCircuit} />
         </section>
 
-        <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
-          <aside className="space-y-4">
-            <section className="lume-panel rounded-[var(--radius-2xl)] p-5">
+        <PageSplit
+          left={(
+            <aside className="space-y-4">
+            <PageSection className="p-5">
               <span className="lume-kicker">
                 <Sparkles className="h-3.5 w-3.5" /> Workspace memory
               </span>
               <h2 className="mt-4 text-[var(--text-xl)] font-semibold text-[var(--foreground)]">Biblioteca curada para retomar trabalho sem friccao.</h2>
               <p className="mt-3 text-[var(--text-sm)] text-[var(--muted-foreground)]">
-                O InnerAI usa a ideia de workspace orientado por contexto. Aqui o Lume replica isso com conversa recente, filtros claros e retomada imediata.
+                A biblioteca foi desenhada para manter contexto vivo: filtros claros, retomada imediata e historico com leitura rapida.
               </p>
               {recentConversation ? (
                 <div className="mt-5 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-4">
@@ -182,9 +184,9 @@ export default function LibraryPage() {
                   </button>
                 </div>
               ) : null}
-            </section>
+            </PageSection>
 
-            <section className="lume-panel-soft rounded-[var(--radius-2xl)] p-5">
+            <PageSection variant="soft" className="p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Filtros</p>
@@ -216,10 +218,11 @@ export default function LibraryPage() {
                   </button>
                 ))}
               </div>
-            </section>
-          </aside>
-
-          <section className="lume-panel rounded-[var(--radius-2xl)] p-5 md:p-6">
+            </PageSection>
+            </aside>
+          )}
+          right={(
+            <PageSection className="p-5 md:p-6">
             <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[var(--border)] pb-4">
               <div>
                 <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">Historico ativo</p>
@@ -366,9 +369,10 @@ export default function LibraryPage() {
                 </AnimatePresence>
               </div>
             )}
-          </section>
-        </div>
-      </div>
+            </PageSection>
+          )}
+        />
+      </PageStack>
     </AppShell>
   );
 }

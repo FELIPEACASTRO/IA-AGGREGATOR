@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { AuthShell } from '@/components/app/auth-shell';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Field } from '@/components/ui/form-field';
 import { trackEvent } from '@/lib/analytics';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -43,19 +43,27 @@ export default function LoginPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {error ? <Alert variant="error">{error}</Alert> : null}
 
-        <div className="space-y-2">
-          <label htmlFor="email" className="text-[0.8rem] font-semibold text-[var(--muted-foreground)]">
-            Email
-          </label>
-          <Input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required placeholder="voce@empresa.com" autoComplete="email" />
-        </div>
+        <Field
+          id="email"
+          type="email"
+          label="Email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          required
+          placeholder="voce@empresa.com"
+          autoComplete="email"
+        />
 
-        <div className="space-y-2">
-          <label htmlFor="password" className="text-[0.8rem] font-semibold text-[var(--muted-foreground)]">
-            Senha
-          </label>
-          <Input id="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required placeholder="Sua senha" autoComplete="current-password" />
-        </div>
+        <Field
+          id="password"
+          type="password"
+          label="Senha"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          required
+          placeholder="Sua senha"
+          autoComplete="current-password"
+        />
 
         <Button type="submit" variant="brand" size="lg" disabled={loading} className="w-full">
           {loading ? 'Entrando...' : 'Entrar no Lume'}

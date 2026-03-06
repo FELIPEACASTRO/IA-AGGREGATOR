@@ -6,6 +6,7 @@ import { trackEvent } from '@/lib/analytics';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/cn';
 import { useMemo, useState } from 'react';
+import { PageSection, PageStack } from '@/components/app/page-blueprint';
 import {
   BarChart3,
   ChevronRight,
@@ -140,8 +141,8 @@ export default function PromptsPage() {
         </div>
       }
     >
-      <div className="space-y-6 py-6">
-        <section className="lume-panel rounded-[var(--radius-2xl)] p-5 md:p-6">
+      <PageStack>
+        <PageSection className="p-5 md:p-6">
           <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr] xl:items-start">
             <div>
               <span className="lume-kicker">
@@ -151,7 +152,7 @@ export default function PromptsPage() {
                 Estruture seus fluxos como um catalogo de playbooks, nao como uma lista solta de prompts.
               </h2>
               <p className="mt-3 max-w-2xl text-[var(--text-sm)] text-[var(--muted-foreground)]">
-                O referencial do InnerAI combina descoberta, contexto e CTA recorrente. Aqui o Lume faz o mesmo: destaque editorial, filtros simples e cards prontos para execucao.
+                O objetivo aqui e operacional: descoberta clara, contexto rapido e execucao em um clique com CTA recorrente.
               </p>
               <div className="mt-5 grid gap-4 sm:grid-cols-3">
                 <TopMetric label="Catalogo" value={String(templates.length)} helper="templates ativos no workspace" />
@@ -186,7 +187,7 @@ export default function PromptsPage() {
               </button>
             </div>
           </div>
-        </section>
+        </PageSection>
 
         <section className="flex flex-wrap items-center gap-2">
           {categories.map((category) => (
@@ -255,7 +256,7 @@ export default function PromptsPage() {
             </motion.article>
           ))}
         </section>
-      </div>
+      </PageStack>
     </AppShell>
   );
 }

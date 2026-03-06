@@ -79,8 +79,3 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 }));
-
-// Auto-hydrate on module load (client-side only)
-if (typeof window !== 'undefined') {
-  useAuthStore.getState().fetchUser();
-}

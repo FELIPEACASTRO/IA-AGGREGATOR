@@ -138,7 +138,7 @@ export function Dropdown({
                     className={cn(
                       'flex cursor-pointer items-center gap-3 px-3.5 py-2.5 transition-colors',
                       index === highlighted && 'bg-[rgba(96,115,255,0.12)]',
-                      option.value === value && 'text-[#dfe6ff]',
+                      option.value === value && 'text-[var(--foreground)]',
                       option.disabled && 'cursor-not-allowed opacity-40'
                     )}
                   >
