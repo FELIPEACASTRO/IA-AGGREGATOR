@@ -1,10 +1,7 @@
-﻿'use client';
+'use client';
 
-import { useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import FocusTrap from 'focus-trap-react';
+import { useEffect, useCallback, ReactNode } from 'react';
 import { X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/cn';
 
 interface ModalProps {
@@ -12,7 +9,7 @@ interface ModalProps {
   onClose: () => void;
   title?: string;
   description?: string;
-  children: React.ReactNode;
+  children: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
@@ -25,79 +22,53 @@ const sizeWidths = {
 };
 
 export function Modal({ open, onClose, title, description, children, size = 'md', className }: ModalProps) {
-  const overlayRef = useRef<HTMLDivElement>(null);
+  const handleEscape = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    },
+    [onClose],
+  );
 
   useEffect(() => {
-    if (!open) return undefined;
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
-  }, [open, onClose]);
-
-  useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : '';
+    if (!open) return;
+    document.addEventListener('keydown', handleEscape);
+    document.body.style.overflow = 'hidden';
     return () => {
+      document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = '';
     };
-  }, [open]);
+  }, [open, handleEscape]);
 
-  if (typeof document === 'undefined') return null;
+  if (!open) return null;
 
-  return createPortal(
-    <AnimatePresence>
-      {open && (
-        <div
-          ref={overlayRef}
-          className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-label={title}
+  return (
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className={cn(
+          'relative w-full rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)] fade-in',
+          sizeWidths[size],
+          className,
+        )}
+      >
+        {(title || description) && (
+          <div className="border-b border-[var(--border)] px-6 py-4">
+            {title && <h2 className="text-[16px] font-semibold text-[var(--foreground)]">{title}</h2>}
+            {description && <p className="mt-1 text-[13px] text-[var(--muted-foreground)]">{description}</p>}
+          </div>
+        )}
+        <div className="p-6">{children}</div>
+        <button
+          onClick={onClose}
+          className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-md)] text-[var(--muted-foreground)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] transition-colors"
+          aria-label="Fechar"
         >
-          <motion.div
-            className="absolute inset-0 bg-[rgba(3,8,18,0.72)] backdrop-blur-md"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            onClick={onClose}
-          />
-
-          <FocusTrap
-            active={open}
-            focusTrapOptions={{
-              clickOutsideDeactivates: true,
-              escapeDeactivates: true,
-              returnFocusOnDeactivate: true,
-            }}
-          >
-            <motion.div
-              className={cn('glass relative w-full rounded-[var(--radius-xl)] shadow-[var(--shadow-xl)]', sizeWidths[size], className)}
-              initial={{ opacity: 0, scale: 0.96, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 12 }}
-              transition={{ duration: 0.2, ease: [0.34, 1.56, 0.64, 1] }}
-            >
-              {(title || description) && (
-                <div className="border-b border-[var(--glass-border)] px-6 py-5">
-                  {title && <h2 className="text-[var(--text-xl)] font-semibold text-[var(--foreground)]">{title}</h2>}
-                  {description && <p className="mt-1.5 text-[var(--text-sm)] text-[var(--muted-foreground)]">{description}</p>}
-                </div>
-              )}
-              <div className="p-6">{children}</div>
-              <button
-                onClick={onClose}
-                className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"
-                aria-label="Fechar"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </motion.div>
-          </FocusTrap>
-        </div>
-      )}
-    </AnimatePresence>,
-    document.body
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
   );
 }

@@ -13,15 +13,15 @@ export default function GlobalError({
     <html>
       <body className="bg-[var(--background)] text-[var(--foreground)]">
         <main className="grid min-h-screen place-items-center px-4">
-          <div className="max-w-lg rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-6">
-            <p className="text-xs uppercase tracking-[0.16em] text-[var(--subtle-foreground)]">Runtime Error</p>
-            <h1 className="mt-2 text-xl font-semibold tracking-[-0.03em]">Falha ao processar a rota</h1>
-            <p className="mt-2 text-sm text-[var(--muted-foreground)]">{error.message}</p>
+          <div className="max-w-lg rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-6">
+            <p className="text-[12px] uppercase tracking-[0.16em] text-[var(--subtle-foreground)]">Runtime Error</p>
+            <h1 className="mt-2 text-[24px] font-semibold tracking-[-0.03em]">Falha ao processar a rota</h1>
+            <p className="mt-2 text-[14px] text-[var(--muted-foreground)]">{error.message}</p>
             <div className="mt-4 flex gap-2">
-              <button className="rounded-full border border-[var(--border)] px-4 py-2 text-sm" onClick={() => reset()}>
+              <button className="rounded-full border border-[var(--border)] px-4 py-2 text-[14px]" onClick={() => reset()}>
                 Tentar novamente
               </button>
-              <Link href="/codex" className="rounded-full border border-[var(--border)] px-4 py-2 text-sm">
+              <Link href="/chat" className="rounded-full border border-[var(--border)] px-4 py-2 text-[14px]">
                 Ir para dashboard
               </Link>
             </div>

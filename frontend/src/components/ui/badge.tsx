@@ -1,45 +1,46 @@
-﻿import { cn } from '@/lib/cn';
+'use client';
 
-type BadgeVariant = 'default' | 'brand' | 'success' | 'warning' | 'error' | 'info' | 'outline';
+import { cn } from '@/lib/cn';
 
-interface BadgeProps {
-  variant?: BadgeVariant;
-  children: React.ReactNode;
-  className?: string;
-  dot?: boolean;
-}
+type BadgeVariant = 'default' | 'outline' | 'accent' | 'success' | 'warning' | 'error' | 'brand';
 
 const variantStyles: Record<BadgeVariant, string> = {
-  default: 'bg-[rgba(160,176,215,0.08)] text-[var(--foreground)] border-[var(--border)]',
-  brand: 'bg-[rgba(96,115,255,0.12)] text-[var(--foreground)] border-[rgba(96,115,255,0.24)]',
-  success: 'bg-[rgba(78,217,167,0.12)] text-[var(--success)] border-[rgba(78,217,167,0.24)]',
-  warning: 'bg-[rgba(255,191,102,0.2)] text-[var(--warning-foreground)] border-[rgba(255,191,102,0.35)]',
-  error: 'bg-[rgba(255,107,135,0.12)] text-[var(--destructive)] border-[rgba(255,107,135,0.24)]',
-  info: 'bg-[rgba(119,184,255,0.12)] text-[var(--info)] border-[rgba(119,184,255,0.24)]',
-  outline: 'bg-transparent text-[var(--muted-foreground)] border-[var(--border)]',
+  default: 'bg-[var(--surface-hover)] text-[var(--foreground)]',
+  outline: 'border border-[var(--border)] text-[var(--muted-foreground)]',
+  accent: 'bg-[var(--accent-light)] text-[var(--accent)]',
+  brand: 'bg-[var(--accent-light)] text-[var(--accent)]',
+  success: 'bg-[var(--success-light)] text-[var(--success)]',
+  warning: 'bg-[var(--warning-light)] text-[var(--warning)]',
+  error: 'bg-[var(--destructive-light)] text-[var(--destructive)]',
 };
 
-const dotStyles: Record<BadgeVariant, string> = {
-  default: 'bg-[var(--muted-foreground)]',
-  brand: 'bg-[var(--brand-primary)]',
-  success: 'bg-[var(--success)]',
-  warning: 'bg-[var(--warning)]',
-  error: 'bg-[var(--destructive)]',
-  info: 'bg-[var(--info)]',
-  outline: 'bg-[var(--muted-foreground)]',
+type BadgeProps = {
+  variant?: BadgeVariant;
+  dot?: boolean;
+  children: React.ReactNode;
+  className?: string;
 };
 
-export function Badge({ variant = 'default', children, className, dot }: BadgeProps) {
+export function Badge({ variant = 'default', dot, children, className }: BadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-[var(--radius-pill)] border px-2.5 py-1',
-        'text-[0.64rem] font-semibold leading-none uppercase tracking-[0.12em]',
+        'inline-flex items-center gap-1.5 rounded-[var(--radius-full)] px-2.5 py-0.5 text-[11px] font-medium',
         variantStyles[variant],
-        className
+        className,
       )}
     >
-      {dot && <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', dotStyles[variant])} />}
+      {dot && (
+        <span
+          className={cn(
+            'h-1.5 w-1.5 rounded-full',
+            variant === 'success' ? 'bg-[var(--success)]' :
+            variant === 'error' ? 'bg-[var(--destructive)]' :
+            variant === 'warning' ? 'bg-[var(--warning)]' :
+            'bg-current',
+          )}
+        />
+      )}
       {children}
     </span>
   );
