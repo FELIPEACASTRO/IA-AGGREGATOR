@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { AppShell } from '@/components/app/app-shell';
+import { AppLayout } from '@/components/app/app-layout';
 import { Button } from '@/components/ui/button';
 import { clearTrackedEvents, flushTrackedEvents, getTrackedEvents, type AnalyticsEvent } from '@/lib/analytics';
 import {
@@ -120,14 +120,14 @@ function SummaryTile({
 }) {
   return (
 
-    <div className="lume-panel-soft rounded-[var(--radius-xl)] p-4">
+    <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--subtle-foreground)]">{label}</p>
-          <p className="mt-2 text-[var(--text-2xl)] font-semibold text-[var(--foreground)]">{value}</p>
-          <p className="mt-1 text-[var(--text-xs)] text-[var(--muted-foreground)]">{helper}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--subtle-foreground)]">{label}</p>
+          <p className="mt-2 text-[20px] font-semibold text-[var(--foreground)]">{value}</p>
+          <p className="mt-1 text-[12px] text-[var(--muted-foreground)]">{helper}</p>
         </div>
-        <span className="inline-flex h-11 w-11 items-center justify-center rounded-[18px] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] text-[var(--brand-primary)]">
+        <span className="inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--background)] text-[var(--accent)]">
           <Icon className="h-5 w-5" />
         </span>
       </div>
@@ -740,47 +740,49 @@ export default function AnalyticsDiagnosticsPage() {
 
   return (
 
-    <AppShell
-      title="Analytics"
-      subtitle="Diagnóstico local de eventos UX para Product/Data"
-      headerActions={
-        <div className="flex flex-wrap items-center gap-2">
-          {activeFilterCount > 0 && (
-            <span className="inline-flex items-center rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-primary)]/10 px-2.5 py-1 text-[10px] font-semibold text-[var(--brand-primary)]">
-              {activeFilterCount} filtro(s) ativo(s)
-            </span>
-          )}
-          <Button variant="secondary" onClick={refresh}>
-            Atualizar
-          </Button>
-          <Button variant="primary" onClick={sendReport} disabled={events.length === 0 || isSendingReport}>
-            {isSendingReport ? 'Enviando...' : 'Enviar relatório'}
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setHistoryNextPage(0);
-              setHasMorePersistedReports(false);
-              setPersistedReports([]);
-              loadPersistedReports({ append: false, page: 0 });
-            }}
-            disabled={isLoadingHistory}
-          >
-            {isLoadingHistory ? 'Carregando...' : 'Carregar histórico'}
-          </Button>
-          <Button variant="ghost" onClick={exportJson} disabled={events.length === 0}>
-            Exportar JSON
-          </Button>
-          <Button variant="ghost" onClick={resetFilters} disabled={activeFilterCount === 0}>
-            Resetar filtros
-          </Button>
-          <Button variant="destructive" onClick={clearAll} disabled={events.length === 0}>
-            Limpar eventos
-          </Button>
+    <AppLayout>
+      <div className="mx-auto max-w-6xl px-6 py-8 space-y-6">
+        {/* Header */}
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-[24px] font-semibold text-[var(--foreground)]">Analytics</h1>
+            <p className="mt-1 text-[14px] text-[var(--muted-foreground)]">Diagnóstico local de eventos UX para Product/Data</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {activeFilterCount > 0 && (
+              <span className="inline-flex items-center rounded-full border border-[var(--accent)] bg-[var(--accent-light)] px-2.5 py-1 text-[10px] font-semibold text-[var(--accent)]">
+                {activeFilterCount} filtro(s) ativo(s)
+              </span>
+            )}
+            <Button variant="secondary" onClick={refresh}>
+              Atualizar
+            </Button>
+            <Button variant="primary" onClick={sendReport} disabled={events.length === 0 || isSendingReport}>
+              {isSendingReport ? 'Enviando...' : 'Enviar relatório'}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setHistoryNextPage(0);
+                setHasMorePersistedReports(false);
+                setPersistedReports([]);
+                loadPersistedReports({ append: false, page: 0 });
+              }}
+              disabled={isLoadingHistory}
+            >
+              {isLoadingHistory ? 'Carregando...' : 'Carregar histórico'}
+            </Button>
+            <Button variant="ghost" onClick={exportJson} disabled={events.length === 0}>
+              Exportar JSON
+            </Button>
+            <Button variant="ghost" onClick={resetFilters} disabled={activeFilterCount === 0}>
+              Resetar filtros
+            </Button>
+            <Button variant="destructive" onClick={clearAll} disabled={events.length === 0}>
+              Limpar eventos
+            </Button>
+          </div>
         </div>
-      }
-    >
-      <div className="space-y-4 py-6">
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {summaryCards.map((card) => (
             <SummaryTile
@@ -794,7 +796,7 @@ export default function AnalyticsDiagnosticsPage() {
         </section>
 
         <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-        <aside className="lume-panel rounded-[var(--radius-2xl)] p-4">
+        <aside className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4">
           <p className="text-sm font-semibold">Resumo</p>
           <p className="mt-1 text-xs text-[var(--muted-foreground)]">
             Total de eventos: {events.length}
@@ -841,7 +843,7 @@ export default function AnalyticsDiagnosticsPage() {
                     return (
 
                       <div key={point.day} className="group flex-1">
-                        <div className="w-full rounded-t-sm bg-[var(--brand-primary)]/60" style={{ height: `${height}px` }} title={`${point.day}: ${point.events}`} />
+                        <div className="w-full rounded-t-sm bg-[var(--accent)] opacity-60" style={{ height: `${height}px` }} title={`${point.day}: ${point.events}`} />
                       </div>
                     );
                   })}
@@ -974,7 +976,7 @@ export default function AnalyticsDiagnosticsPage() {
           </div>
         </aside>
 
-        <section className="lume-panel rounded-[var(--radius-2xl)] p-4">
+        <section className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4">
           <p className="text-sm font-semibold">Eventos</p>
           <div className="mt-3 max-h-[520px] space-y-2 overflow-y-auto pr-1">
             {events.length === 0 ? (
@@ -1194,7 +1196,7 @@ export default function AnalyticsDiagnosticsPage() {
         </section>
         </div>
       </div>
-    </AppShell>
+    </AppLayout>
   );
 }
 

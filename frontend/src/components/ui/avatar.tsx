@@ -1,14 +1,22 @@
-﻿import { cn } from '@/lib/cn';
+'use client';
 
-const COLORS = ['#6073ff', '#8b6cff', '#f25d9c', '#4ed9a7', '#77b8ff', '#ffbf66'];
+import { cn } from '@/lib/cn';
 
-function getColorForName(name: string): string {
-  let hash = 0;
-  for (let index = 0; index < name.length; index += 1) {
-    hash = name.charCodeAt(index) + ((hash << 5) - hash);
-  }
-  return COLORS[Math.abs(hash) % COLORS.length];
+interface AvatarProps {
+  name?: string;
+  src?: string;
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  className?: string;
+  accent?: boolean;
 }
+
+const sizeStyles: Record<string, string> = {
+  xs: 'h-6 w-6 text-[10px]',
+  sm: 'h-7 w-7 text-[11px]',
+  md: 'h-8 w-8 text-[12px]',
+  lg: 'h-10 w-10 text-[14px]',
+  xl: 'h-12 w-12 text-[16px]',
+};
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -16,40 +24,31 @@ function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-interface AvatarProps {
-  name?: string;
-  src?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
-  className?: string;
-}
-
-const sizeStyles = {
-  sm: 'h-8 w-8 text-[0.62rem]',
-  md: 'h-10 w-10 text-[0.75rem]',
-  lg: 'h-12 w-12 text-[0.92rem]',
-  xl: 'h-16 w-16 text-[1.02rem]',
-};
-
-export function Avatar({ name = 'LU', src, size = 'md', className }: AvatarProps) {
+export function Avatar({ name = 'U', src, size = 'md', className, accent }: AvatarProps) {
   const initials = getInitials(name);
-  const color = getColorForName(name);
 
   if (src) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt={name} className={cn('rounded-full object-cover ring-1 ring-[var(--border)]', sizeStyles[size], className)} />
+      <img
+        src={src}
+        alt={name}
+        className={cn('shrink-0 rounded-full object-cover', sizeStyles[size], className)}
+      />
     );
   }
 
   return (
     <span
       className={cn(
-        'inline-flex items-center justify-center rounded-full font-semibold text-white select-none shrink-0 ring-1 ring-white/10 shadow-[var(--shadow-sm)]',
+        'inline-flex shrink-0 items-center justify-center rounded-full font-semibold select-none',
+        accent
+          ? 'bg-[var(--accent)] text-white'
+          : 'bg-[var(--surface-hover)] text-[var(--muted-foreground)]',
         sizeStyles[size],
         className,
       )}
-      style={{ background: `linear-gradient(135deg, ${color} 0%, #08111f 160%)` }}
-      aria-label={name}
+      title={name}
     >
       {initials}
     </span>

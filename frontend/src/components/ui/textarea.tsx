@@ -1,23 +1,56 @@
-﻿import { TextareaHTMLAttributes, forwardRef } from 'react';
+'use client';
+
+import { TextareaHTMLAttributes, forwardRef, useRef, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/cn';
 
-type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement>;
+interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  autoResize?: boolean;
+  maxHeight?: number;
+}
 
-export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
-  { className, ...props },
-  ref
-) {
-  return (
-    <textarea
-      ref={ref}
-      className={cn(
-        'w-full rounded-[var(--radius-md)] border border-[var(--input)] bg-[rgba(9,17,31,0.68)] px-4 py-3 text-[var(--text-sm)] text-[var(--foreground)]',
-        'placeholder:text-[var(--muted-foreground)] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] resize-none',
-        'transition-[border-color,box-shadow,background-color] duration-[var(--dur-base)] ease-[var(--ease-standard)]',
-        'hover:border-[var(--border-strong)] focus:outline-none focus:border-[rgba(96,115,255,0.48)] focus:shadow-[0_0_0_4px_rgba(96,115,255,0.12)]',
-        className
-      )}
-      {...props}
-    />
-  );
-});
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, autoResize = false, maxHeight = 200, onChange, ...props }, ref) => {
+    const internalRef = useRef<HTMLTextAreaElement | null>(null);
+
+    const setRef = useCallback(
+      (node: HTMLTextAreaElement | null) => {
+        internalRef.current = node;
+        if (typeof ref === 'function') ref(node);
+        else if (ref) ref.current = node;
+      },
+      [ref],
+    );
+
+    const resize = useCallback(() => {
+      const el = internalRef.current;
+      if (!el || !autoResize) return;
+      el.style.height = 'auto';
+      el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
+    }, [autoResize, maxHeight]);
+
+    useEffect(() => {
+      resize();
+    }, [props.value, resize]);
+
+    return (
+      <textarea
+        ref={setRef}
+        onChange={(e) => {
+          onChange?.(e);
+          resize();
+        }}
+        className={cn(
+          'w-full resize-none rounded-[var(--radius-md)] border border-[var(--input-border)] bg-[var(--input-bg)]',
+          'px-3 py-2.5 text-[14px] text-[var(--foreground)] placeholder:text-[var(--subtle-foreground)]',
+          'transition-colors',
+          'hover:border-[var(--border-strong)]',
+          'focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--accent)]',
+          className,
+        )}
+        {...props}
+      />
+    );
+  },
+);
+
+Textarea.displayName = 'Textarea';

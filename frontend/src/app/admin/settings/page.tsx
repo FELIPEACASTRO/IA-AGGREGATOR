@@ -26,7 +26,7 @@ export default function AdminSettingsPage() {
 
   return (
     <CodexShell title="Admin Settings" subtitle="Toggles de workspace: cloud tasks, internet policy, connectors e retenção.">
-      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4">
+      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4">
         <div className="grid gap-2 md:grid-cols-2">
           {[
             { key: 'workspace.cloudTasksEnabled', value: true },
@@ -55,9 +55,9 @@ export default function AdminSettingsPage() {
         </div>
       </section>
 
-      <section className="mt-3 rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Current workspace configs</h2>
-        <ul className="mt-3 space-y-2 text-xs text-[var(--muted-foreground)]">
+      <section className="mt-3 rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4">
+        <h2 className="text-[14px] font-semibold uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Current workspace configs</h2>
+        <ul className="mt-3 space-y-2 text-[12px] text-[var(--muted-foreground)]">
           {configs.map((config) => (
             <li key={config.id}>
               {config.configKey} • lock={String(config.isLocked)} • {JSON.stringify(config.configValue)}
