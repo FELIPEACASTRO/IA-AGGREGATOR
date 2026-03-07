@@ -6,7 +6,7 @@ import { useChatStore } from '@/stores/chat-store';
 import { createPerfTimer, trackEvent } from '@/lib/analytics';
 import { ModelSelector } from './model-selector';
 import { cn } from '@/lib/cn';
-import { ArrowUp, Paperclip } from 'lucide-react';
+import { ArrowUp, Plus, Pen, GraduationCap, Code2, Home, Lightbulb } from 'lucide-react';
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -14,6 +14,37 @@ function getGreeting(): string {
   if (hour < 18) return 'Boa tarde';
   return 'Boa noite';
 }
+
+/* Claude.ai sparkle/asterisk icon in terracotta */
+function SparkleIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="32"
+      height="32"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <line x1="12" y1="2" x2="12" y2="22" />
+      <line x1="2" y1="12" x2="22" y2="12" />
+      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+      <line x1="19.07" y1="4.93" x2="4.93" y2="19.07" />
+    </svg>
+  );
+}
+
+const quickActions = [
+  { icon: Pen, label: 'Escrever' },
+  { icon: GraduationCap, label: 'Aprender' },
+  { icon: Code2, label: 'Codigo' },
+  { icon: Home, label: 'Assuntos pessoais' },
+  { icon: Lightbulb, label: 'Escolha do Lume' },
+];
 
 export function EmptyState() {
   const { user } = useAuthStore();
@@ -81,24 +112,20 @@ export function EmptyState() {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-4">
-      {/* Claude-exact layout: mx-auto, gap-7, max-w-2xl */}
       <div className="mx-auto flex w-full flex-col items-center gap-7 max-w-2xl">
 
-        {/* Model pill (above greeting like Claude Web) */}
-        <div className="inline-flex items-center gap-1.5 rounded-lg h-8 pl-2 pr-2.5 text-center text-[13px] bg-[var(--surface-active)] text-[var(--subtle-foreground)] select-none">
-          <ModelSelector />
-        </div>
-
-        {/* Greeting - Claude exact: text-text-200, font-display, clamp font-size, line-height 1.5 */}
+        {/* Greeting - Claude exact: font-weight 290, text-text-200, sparkle icon */}
         <h1
-          className="text-[var(--foreground-secondary)] w-full text-center font-semibold"
+          className="text-[var(--foreground-secondary)] w-full text-center flex items-center justify-center gap-2"
           style={{
             lineHeight: 1.5,
             fontSize: 'clamp(1.875rem, 1.2rem + 2vw, 2.5rem)',
-            letterSpacing: '-0.02em',
+            fontWeight: 290,
+            letterSpacing: 'normal',
           }}
         >
-          {getGreeting()}, {firstName}.
+          <SparkleIcon className="text-[var(--accent)] shrink-0" />
+          {getGreeting()}, {firstName}
         </h1>
 
         {/* Input box - Claude exact: rounded-[20px], border-transparent, shadow system */}
@@ -125,7 +152,6 @@ export function EmptyState() {
               }
             }}
           >
-            {/* Inner content: m-3.5 gap-3 (Claude exact) */}
             <div className="flex flex-col m-3.5 gap-3">
               {/* Textarea wrapper */}
               <div className="relative">
@@ -150,19 +176,21 @@ export function EmptyState() {
                 </div>
               </div>
 
-              {/* Bottom controls */}
+              {/* Bottom controls - Claude exact: + left, model selector + controls right */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
                     className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--muted-foreground)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] transition-colors"
-                    aria-label="Anexar arquivo"
+                    aria-label="Mais opcoes"
                   >
-                    <Paperclip className="h-[18px] w-[18px]" />
+                    <Plus className="h-[18px] w-[18px]" />
                   </button>
                 </div>
 
                 <div className="flex items-center gap-2">
+                  <ModelSelector />
+
                   <button
                     type="button"
                     onClick={handleSend}
@@ -182,10 +210,19 @@ export function EmptyState() {
             </div>
           </div>
 
-          {/* Disclaimer */}
-          <p className="mt-3 text-center text-[12px] text-[var(--subtle-foreground)]">
-            Lume pode cometer erros. Verifique informacoes importantes.
-          </p>
+          {/* Quick action chips - Claude exact: 14px, h-8, rounded-[8px], border 0.8px */}
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            {quickActions.map(({ icon: Icon, label }) => (
+              <button
+                key={label}
+                className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-[8px] text-[14px] text-[var(--foreground-secondary)] bg-[var(--background)] hover:bg-[var(--surface-hover)] transition-colors"
+                style={{ border: '0.8px solid hsla(var(--border-200) / 0.15)' }}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

@@ -5,7 +5,7 @@ import { useChatStore } from '@/stores/chat-store';
 import { cn } from '@/lib/cn';
 import { createPerfTimer, trackEvent } from '@/lib/analytics';
 import { ModelSelector } from './model-selector';
-import { ArrowUp, Square, Paperclip } from 'lucide-react';
+import { ArrowUp, Square, Plus } from 'lucide-react';
 
 interface ChatInputProps {
   className?: string;
@@ -147,9 +147,9 @@ export function ChatInput({ className }: ChatInputProps) {
                 <button
                   type="button"
                   className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--muted-foreground)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] transition-colors"
-                  aria-label="Anexar arquivo"
+                  aria-label="Mais opcoes"
                 >
-                  <Paperclip className="h-[18px] w-[18px]" />
+                  <Plus className="h-[18px] w-[18px]" />
                 </button>
               </div>
 
@@ -189,10 +189,6 @@ export function ChatInput({ className }: ChatInputProps) {
           </div>
         </div>
 
-        {/* Disclaimer */}
-        <p className="mt-2 text-center text-[12px] text-[var(--subtle-foreground)]">
-          Lume pode cometer erros. Verifique informacoes importantes.
-        </p>
       </div>
     </div>
   );

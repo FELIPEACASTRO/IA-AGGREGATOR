@@ -68,10 +68,10 @@ export function ConversationList({ searchTerm }: ConversationListProps) {
   }
 
   return (
-    <div className="px-2 py-1">
+    <div className="py-0.5">
       {groups.map((group) => (
         <div key={group.label} className="mb-1">
-          <p className="px-2 py-1.5 text-[11px] font-medium uppercase tracking-wider text-[var(--subtle-foreground)]">
+          <p className="px-4 py-1.5 text-[11px] font-medium text-[var(--subtle-foreground)]">
             {group.label}
           </p>
           <div className="space-y-0.5">

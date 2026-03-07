@@ -107,21 +107,23 @@
 .dark {
   color-scheme: dark;
 
-  --bg-000: #2b2a27;
-  --bg-100: #1a1915;
+  /* Claude.ai exact dark HSL: bg-000=60 2.1% 18.4%, bg-100=60 2.7% 14.5% */
+  --bg-000: #30302e;
+  --bg-100: #262624;
   --bg-200: #343330;
   --bg-300: #3d3c38;
   --bg-400: #4a4843;
 
-  --text-000: #ece9e1;
-  --text-100: #dedad1;
-  --text-200: #a9a69e;
+  /* Claude.ai exact: text-000/100=48 33.3% 97.1%, text-200/300=50 9% 73.7% */
+  --text-000: #faf9f5;
+  --text-100: #faf9f5;
+  --text-200: #c2c0b6;
   --text-300: #85827a;
   --text-400: #6b6860;
   --text-500: #504e48;
 
-  --border-200: 40 6% 32%;
-  --border-300: 40 6% 28%;
+  --border-200: 51 16.5% 84.5%;
+  --border-300: 51 16.5% 84.5%;
   --always-black: 0 0% 0%;
 
   --background: var(--bg-100);
