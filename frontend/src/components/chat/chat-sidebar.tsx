@@ -18,6 +18,33 @@ import {
   Download,
 } from 'lucide-react';
 
+/* SVG wordmark "Lume" — matches Claude.ai logo pattern: SVG text, h-4, fill currentColor */
+function LumeLogo({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 68 16"
+      className={className}
+      height="16"
+      fill="currentColor"
+      aria-label="Lume"
+    >
+      <text
+        x="0"
+        y="13"
+        style={{
+          fontFamily: "var(--font-display), Georgia, 'Times New Roman', serif",
+          fontSize: '15px',
+          fontWeight: 600,
+          letterSpacing: '-0.3px',
+        }}
+      >
+        Lume
+      </text>
+    </svg>
+  );
+}
+
 export function ChatSidebar() {
   const { user } = useAuthStore();
   const { createConversation } = useChatStore();
@@ -37,17 +64,16 @@ export function ChatSidebar() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header: Logo text - Claude exact: font-serif "Claude" */}
+      {/* Header: Logo + toggle — Claude exact: logo as SVG wordmark, h-4, flex-shrink-0 */}
       <div className="flex items-center justify-between px-4 pt-3 pb-1">
         <a
           onClick={(e) => { e.preventDefault(); handleNewChat(); }}
           href="#"
-          className="text-[18px] font-semibold tracking-[-0.02em] text-[var(--foreground)] hover:opacity-80 transition-opacity"
+          className="flex flex-col justify-start items-start"
           aria-label="Inicio"
         >
-          Lume
+          <LumeLogo className="h-4 flex-shrink-0 text-[var(--foreground)]" />
         </a>
-        {/* Sidebar toggle icon (cosmetic, matches Claude top-right icon) */}
         <button
           className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted-foreground)] hover:bg-[var(--surface-active)] hover:text-[var(--foreground)] transition-colors"
           aria-label="Alternar painel"
@@ -59,11 +85,11 @@ export function ChatSidebar() {
         </button>
       </div>
 
-      {/* Primary nav items - Claude exact: py-1.5 px-4 text-[12px] h-8 rounded-[6px] gap-2 */}
+      {/* Primary nav — Claude exact: inline-flex, 12px, weight 400, h-8, py-1.5 px-4, radius 6px */}
       <nav className="flex flex-col px-2 mt-1 gap-0.5">
         <button
           onClick={handleNewChat}
-          className="flex items-center gap-2 h-8 px-4 py-1.5 rounded-[6px] text-[12px] text-[var(--foreground-secondary)] hover:bg-[var(--surface-active)] transition-colors active:scale-[1.0]"
+          className="inline-flex items-center gap-2 h-8 px-4 py-1.5 rounded-[6px] text-[12px] font-normal text-[var(--foreground-secondary)] hover:bg-[var(--surface-active)] transition-colors"
         >
           <Plus className="h-4 w-4" />
           <span>Novo bate-papo</span>
@@ -71,18 +97,18 @@ export function ChatSidebar() {
 
         <button
           onClick={() => setSearchOpen((v) => !v)}
-          className="flex items-center gap-2 h-8 px-4 py-1.5 rounded-[6px] text-[12px] text-[var(--foreground-secondary)] hover:bg-[var(--surface-active)] transition-colors active:scale-[1.0]"
+          className="inline-flex items-center gap-2 h-8 px-4 py-1.5 rounded-[6px] text-[12px] font-normal text-[var(--foreground-secondary)] hover:bg-[var(--surface-active)] transition-colors"
         >
-          <Search className="h-4 w-4" />
+          <Search className="h-5 w-5" />
           <span>Procurar</span>
         </button>
 
         <button
           onClick={cycleTheme}
-          className="flex items-center gap-2 h-8 px-4 py-1.5 rounded-[6px] text-[12px] text-[var(--foreground-secondary)] hover:bg-[var(--surface-active)] transition-colors active:scale-[1.0]"
+          className="inline-flex items-center gap-2 h-8 px-4 py-1.5 rounded-[6px] text-[12px] font-normal text-[var(--foreground-secondary)] hover:bg-[var(--surface-active)] transition-colors"
           title={`Tema: ${themeLabel}`}
         >
-          <Sliders className="h-4 w-4" />
+          <Sliders className="h-5 w-5" />
           <span>Personalizar</span>
         </button>
       </nav>
@@ -95,45 +121,42 @@ export function ChatSidebar() {
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar conversas..."
             autoFocus
-            className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] py-1.5 px-3 text-[13px] text-[var(--foreground)] placeholder:text-[var(--subtle-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-colors"
+            className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] py-1.5 px-3 text-[13px] font-normal text-[var(--foreground)] placeholder:text-[var(--subtle-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-colors"
           />
         </div>
       )}
 
-      {/* Separator */}
-      <div className="mx-4 my-1.5 h-px bg-[var(--border)]" />
-
-      {/* Secondary nav - Claude exact: separated section with different icons */}
-      <nav className="flex flex-col px-2 gap-0.5">
-        <button className="flex items-center gap-2 h-8 px-4 py-1.5 rounded-[6px] text-[12px] text-[var(--foreground-secondary)] hover:bg-[var(--surface-active)] transition-colors active:scale-[1.0]">
-          <MessageSquare className="h-4 w-4" />
+      {/* Secondary nav — Claude exact: separate group, space above (no visible divider line) */}
+      <nav className="flex flex-col px-2 mt-3 gap-0.5">
+        <button className="inline-flex items-center gap-2 h-8 px-4 py-1.5 rounded-[6px] text-[12px] font-normal text-[var(--foreground-secondary)] hover:bg-[var(--surface-active)] transition-colors">
+          <MessageSquare className="h-5 w-5" />
           <span>Conversas</span>
         </button>
-        <button className="flex items-center gap-2 h-8 px-4 py-1.5 rounded-[6px] text-[12px] text-[var(--foreground-secondary)] hover:bg-[var(--surface-active)] transition-colors active:scale-[1.0]">
-          <FolderOpen className="h-4 w-4" />
+        <button className="inline-flex items-center gap-2 h-8 px-4 py-1.5 rounded-[6px] text-[12px] font-normal text-[var(--foreground-secondary)] hover:bg-[var(--surface-active)] transition-colors">
+          <FolderOpen className="h-5 w-5" />
           <span>Projetos</span>
         </button>
-        <button className="flex items-center gap-2 h-8 px-4 py-1.5 rounded-[6px] text-[12px] text-[var(--foreground-secondary)] hover:bg-[var(--surface-active)] transition-colors active:scale-[1.0]">
-          <LayoutGrid className="h-4 w-4" />
+        <button className="inline-flex items-center gap-2 h-8 px-4 py-1.5 rounded-[6px] text-[12px] font-normal text-[var(--foreground-secondary)] hover:bg-[var(--surface-active)] transition-colors">
+          <LayoutGrid className="h-5 w-5" />
           <span>Artefatos</span>
         </button>
-        <button className="flex items-center gap-2 h-8 px-4 py-1.5 rounded-[6px] text-[12px] text-[var(--foreground-secondary)] hover:bg-[var(--surface-active)] transition-colors active:scale-[1.0]">
-          <Code2 className="h-4 w-4" />
+        <button className="inline-flex items-center gap-2 h-8 px-4 py-1.5 rounded-[6px] text-[12px] font-normal text-[var(--foreground-secondary)] hover:bg-[var(--surface-active)] transition-colors">
+          <Code2 className="h-5 w-5" />
           <span>Codigo</span>
         </button>
       </nav>
 
-      {/* Recentes label + Conversation list */}
+      {/* Recentes label + Conversation list — Claude exact: h2, 12px, weight 400, text-500 */}
       <div className="flex-1 overflow-y-auto mt-2">
-        <p className="px-4 py-1.5 text-[11px] font-medium text-[var(--subtle-foreground)]">
+        <h2 className="px-4 pb-2 mt-1 text-[12px] font-normal text-[var(--text-500)] select-none" style={{ lineHeight: '16px' }}>
           Recentes
-        </p>
+        </h2>
         <div className="px-0">
           <ConversationList searchTerm={searchTerm} />
         </div>
       </div>
 
-      {/* Footer: User profile - Claude exact: avatar + name + plan + icons */}
+      {/* Footer: User profile — Claude exact: avatar + name + plan + download + chevron */}
       <div className="p-2">
         <div className="flex items-center gap-3 rounded-lg py-2 px-3 hover:bg-[var(--surface-active)] transition-colors cursor-pointer active:scale-[0.985]">
           <Avatar name={user?.fullName || 'U'} size="sm" />
@@ -141,7 +164,7 @@ export function ChatSidebar() {
             <p className="truncate text-[13px] font-medium text-[var(--foreground)]">
               {user?.fullName || 'Usuario'}
             </p>
-            <p className="truncate text-[11px] text-[var(--muted-foreground)]">
+            <p className="truncate text-[11px] font-normal text-[var(--muted-foreground)]">
               Plano Pro
             </p>
           </div>

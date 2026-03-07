@@ -47,13 +47,13 @@ export function ConversationItem({ conversation, isActive }: ConversationItemPro
         }
       }}
       className={cn(
-        'group relative flex items-center gap-2 py-1.5 rounded-lg px-4 cursor-pointer select-none transition-colors duration-75 overflow-hidden active:bg-[var(--surface-active)] active:scale-[1.0]',
+        'group relative inline-flex items-center gap-2 h-8 py-1.5 rounded-[6px] px-4 cursor-pointer select-none transition-colors duration-75 overflow-hidden active:bg-[var(--surface-active)]',
         isActive
           ? 'bg-[var(--surface-hover)] text-[var(--foreground)]'
           : 'text-[var(--foreground-secondary)] hover:bg-[var(--surface-hover)]',
       )}
     >
-      <p className="flex-1 truncate text-[13px]">{conversation.title}</p>
+      <p className="flex-1 truncate text-[12px] font-normal" style={{ lineHeight: '16px' }}>{conversation.title}</p>
 
       {/* More menu trigger */}
       <div className="relative shrink-0">

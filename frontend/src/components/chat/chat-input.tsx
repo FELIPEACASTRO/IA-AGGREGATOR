@@ -96,8 +96,8 @@ export function ChatInput({ className }: ChatInputProps) {
         {/* Input box - Claude exact: rounded-[20px], transparent border, shadow system */}
         <div
           ref={containerRef}
-          className="flex flex-col bg-[var(--input-bg)] items-stretch transition-all duration-200 relative rounded-[20px] cursor-text border border-transparent"
-          style={{ boxShadow: 'var(--input-shadow)' }}
+          className="flex flex-col bg-[var(--input-bg)] items-stretch transition-all duration-200 relative rounded-[20px] cursor-text"
+          style={{ boxShadow: 'var(--input-shadow)', border: '0.8px solid transparent' }}
           onClick={() => inputRef.current?.focus()}
           onMouseEnter={() => {
             if (!containerRef.current?.contains(document.activeElement)) {

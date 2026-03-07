@@ -71,7 +71,7 @@ export function ConversationList({ searchTerm }: ConversationListProps) {
     <div className="py-0.5">
       {groups.map((group) => (
         <div key={group.label} className="mb-1">
-          <p className="px-4 py-1.5 text-[11px] font-medium text-[var(--subtle-foreground)]">
+          <p className="px-4 pb-2 mt-1 text-[12px] font-normal text-[var(--text-500)] select-none" style={{ lineHeight: '16px' }}>
             {group.label}
           </p>
           <div className="space-y-0.5">

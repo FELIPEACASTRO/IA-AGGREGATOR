@@ -56,14 +56,15 @@ export function ChatLayout({ sidebar, children }: ChatLayoutProps) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--background)]">
-      {/* Desktop sidebar - Claude exact: border-r-0.5, border-border-300, bg-bg-100 */}
+      {/* Desktop sidebar — Claude exact: 0.8px border, gradient bg, bg-bg-100 */}
       <aside
         className={cn(
-          'hidden md:flex flex-col bg-[var(--surface-sidebar)] transition-[width,border-color,background-color,box-shadow] duration-[35ms]',
+          'hidden md:flex flex-col bg-[var(--surface-sidebar)] bg-gradient-to-t from-[var(--bg-200)]/5 to-[var(--bg-200)]/30 transition-[width,border-color,background-color,box-shadow] duration-[35ms]',
           sidebarOpen
-            ? 'w-[var(--sidebar-width)] border-r border-[var(--border-strong)]'
-            : 'w-0 overflow-hidden border-r-0',
+            ? 'w-[var(--sidebar-width)]'
+            : 'w-0 overflow-hidden',
         )}
+        style={sidebarOpen ? { borderRight: '0.8px solid var(--sidebar-border-color)' } : undefined}
         aria-label="Barra lateral"
       >
         {sidebar}
@@ -77,7 +78,8 @@ export function ChatLayout({ sidebar, children }: ChatLayoutProps) {
             onClick={() => setMobileOpen(false)}
           />
           <aside
-            className="fixed inset-y-0 left-0 z-[calc(var(--z-modal)+1)] flex w-[var(--sidebar-width)] flex-col border-r border-[var(--border-strong)] bg-[var(--surface-sidebar)] shadow-lg md:hidden"
+            className="fixed inset-y-0 left-0 z-[calc(var(--z-modal)+1)] flex w-[var(--sidebar-width)] flex-col bg-[var(--surface-sidebar)] bg-gradient-to-t from-[var(--bg-200)]/5 to-[var(--bg-200)]/30 shadow-lg md:hidden"
+            style={{ borderRight: '0.8px solid var(--sidebar-border-color)' }}
             aria-label="Barra lateral"
           >
             {sidebar}

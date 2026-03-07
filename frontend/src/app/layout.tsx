@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist_Mono } from 'next/font/google';
+import { Inter, Newsreader, Geist_Mono } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import './globals.css';
 import { ToastViewport } from '@/components/ui/toast-viewport';
@@ -8,6 +8,8 @@ import { AnalyticsProvider } from '@/components/app/analytics-provider';
 import { AuthBootstrap } from '@/components/app/auth-bootstrap';
 import { defaultLocale, defaultMessages } from '@/i18n/config';
 
+const sansFont = Inter({ subsets: ['latin'], variable: '--font-sans' });
+const displayFont = Newsreader({ subsets: ['latin'], variable: '--font-display', weight: ['300', '400'] });
 const monoFont = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
@@ -36,7 +38,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={monoFont.variable}>
+      <body className={`${sansFont.variable} ${displayFont.variable} ${monoFont.variable}`}>
         <NextIntlClientProvider locale={defaultLocale} messages={defaultMessages}>
           <ThemeProvider>
             <AuthBootstrap />
