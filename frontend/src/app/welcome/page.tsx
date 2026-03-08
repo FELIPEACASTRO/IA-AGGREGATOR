@@ -131,7 +131,9 @@ function StepIndicator({ current }: { current: number }) {
 }
 
 export default function WelcomePage() {
-  const { user } = useAuthStore();
+  const user = useAuthStore((state) => state.user);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { setSelectedModel, createConversation } = useChatStore();
   const router = useRouter();
 
@@ -145,6 +147,12 @@ export default function WelcomePage() {
       router.replace('/');
     }
   }, [router]);
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [isAuthenticated, isLoading, router]);
 
   useEffect(() => {
     trackEvent('onboarding_start');

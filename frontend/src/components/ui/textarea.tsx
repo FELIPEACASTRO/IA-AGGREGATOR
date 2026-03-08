@@ -22,10 +22,10 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     );
 
     const resize = useCallback(() => {
-      const el = internalRef.current;
-      if (!el || !autoResize) return;
-      el.style.height = 'auto';
-      el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
+      const element = internalRef.current;
+      if (!element || !autoResize) return;
+      element.style.height = 'auto';
+      element.style.height = `${Math.min(element.scrollHeight, maxHeight)}px`;
     }, [autoResize, maxHeight]);
 
     useEffect(() => {
@@ -35,16 +35,15 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <textarea
         ref={setRef}
-        onChange={(e) => {
-          onChange?.(e);
+        onChange={(event) => {
+          onChange?.(event);
           resize();
         }}
         className={cn(
-          'w-full resize-none rounded-[var(--radius-md)] border border-[var(--input-border)] bg-[var(--input-bg)]',
-          'px-3 py-2.5 text-[14px] text-[var(--foreground)] placeholder:text-[var(--subtle-foreground)]',
-          'transition-colors',
-          'hover:border-[var(--border-strong)]',
-          'focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--accent)]',
+          'min-h-11 w-full resize-none rounded-[9.6px] border border-[var(--input-border)] bg-[var(--input-bg)]',
+          'px-3 py-3 text-[14px] text-[var(--foreground)] placeholder:text-[var(--subtle-foreground)]',
+          'transition-colors hover:border-[var(--border-strong)]',
+          'focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]',
           className,
         )}
         {...props}

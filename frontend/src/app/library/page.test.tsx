@@ -44,7 +44,8 @@ jest.mock('next/navigation', () => ({
 }));
 
 jest.mock('@/stores/chat-store', () => ({
-  useChatStore: () => chatState,
+  useChatStore: (selector?: (state: typeof chatState) => unknown) =>
+    selector ? selector(chatState) : chatState,
 }));
 
 jest.mock('@/stores/auth-store', () => ({
@@ -70,7 +71,7 @@ describe('LibraryPage', () => {
   it('filters conversations by search query', async () => {
     render(<LibraryPage />);
 
-    fireEvent.change(screen.getByPlaceholderText('Buscar...'), {
+    fireEvent.change(screen.getByPlaceholderText('Buscar conversas...'), {
       target: { value: 'Resumo' },
     });
 

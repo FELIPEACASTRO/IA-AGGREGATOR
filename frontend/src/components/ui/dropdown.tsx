@@ -36,7 +36,7 @@ export function Dropdown({
   const [highlighted, setHighlighted] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const selected = options.find((o) => o.value === value);
+  const selected = options.find((option) => option.value === value);
 
   const close = useCallback(() => {
     setOpen(false);
@@ -45,8 +45,8 @@ export function Dropdown({
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+    const handler = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         close();
       }
     };
@@ -54,34 +54,34 @@ export function Dropdown({
     return () => document.removeEventListener('mousedown', handler);
   }, [open, close]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (event: React.KeyboardEvent) => {
     if (!open) {
-      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
-        e.preventDefault();
+      if (event.key === 'Enter' || event.key === ' ' || event.key === 'ArrowDown') {
+        event.preventDefault();
         setOpen(true);
         setHighlighted(0);
       }
       return;
     }
 
-    switch (e.key) {
+    switch (event.key) {
       case 'ArrowDown':
-        e.preventDefault();
-        setHighlighted((i) => Math.min(i + 1, options.length - 1));
+        event.preventDefault();
+        setHighlighted((current) => Math.min(current + 1, options.length - 1));
         break;
       case 'ArrowUp':
-        e.preventDefault();
-        setHighlighted((i) => Math.max(i - 1, 0));
+        event.preventDefault();
+        setHighlighted((current) => Math.max(current - 1, 0));
         break;
       case 'Enter':
-        e.preventDefault();
+        event.preventDefault();
         if (highlighted >= 0 && options[highlighted] && !options[highlighted].disabled) {
           onChange(options[highlighted].value);
           close();
         }
         break;
       case 'Escape':
-        e.preventDefault();
+        event.preventDefault();
         close();
         break;
     }
@@ -94,16 +94,15 @@ export function Dropdown({
         onClick={() => !disabled && setOpen(!open)}
         disabled={disabled}
         className={cn(
-          'flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5',
-          'text-[13px] text-[var(--foreground)] hover:bg-[var(--surface-hover)] transition-colors',
-          'focus:outline-none focus:ring-2 focus:ring-[var(--ring)]',
-          'disabled:cursor-not-allowed disabled:opacity-50',
+          'flex h-9 items-center gap-2 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3',
+          'text-[13px] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)]',
+          'focus:outline-none focus:ring-2 focus:ring-[var(--ring)] disabled:cursor-not-allowed disabled:opacity-50',
           triggerClassName,
         )}
         aria-expanded={open}
         aria-haspopup="listbox"
       >
-        {selected?.icon && <span className="shrink-0">{selected.icon}</span>}
+        {selected?.icon ? <span className="shrink-0">{selected.icon}</span> : null}
         <span className="truncate">{selected?.label || placeholder}</span>
         <ChevronDown
           className={cn(
@@ -113,12 +112,12 @@ export function Dropdown({
         />
       </button>
 
-      {open && (
+      {open ? (
         <div
-          className="absolute left-0 top-full z-[var(--z-dropdown)] mt-1 w-full min-w-[220px] overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)]"
+          className="absolute left-0 top-full z-[var(--z-dropdown)] mt-1 w-full min-w-[240px] overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface)] shadow-[var(--shadow-dropdown)]"
           role="listbox"
         >
-          <div className="max-h-[300px] overflow-y-auto py-1">
+          <div className="max-h-[320px] overflow-y-auto p-1.5">
             {options.map((option, index) => (
               <button
                 key={option.value}
@@ -134,29 +133,29 @@ export function Dropdown({
                 onMouseEnter={() => setHighlighted(index)}
                 disabled={option.disabled}
                 className={cn(
-                  'flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] transition-colors',
+                  'flex min-h-[44px] w-full items-center gap-2 rounded-[var(--radius-md)] px-3 py-2 text-left text-[13px] transition-colors',
                   index === highlighted && 'bg-[var(--surface-hover)]',
-                  option.disabled && 'opacity-40 cursor-not-allowed',
+                  option.disabled && 'cursor-not-allowed opacity-40',
                 )}
               >
-                {option.icon && <span className="shrink-0">{option.icon}</span>}
-                <span className="flex-1 min-w-0">
+                {option.icon ? <span className="shrink-0">{option.icon}</span> : null}
+                <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">{option.label}</span>
-                  {option.description && (
+                  {option.description ? (
                     <span className="block truncate text-[11px] text-[var(--muted-foreground)]">
                       {option.description}
                     </span>
-                  )}
+                  ) : null}
                 </span>
-                {option.badge && <span className="shrink-0">{option.badge}</span>}
-                {option.value === value && (
+                {option.badge ? <span className="shrink-0">{option.badge}</span> : null}
+                {option.value === value ? (
                   <Check className="h-3.5 w-3.5 shrink-0 text-[var(--accent)]" />
-                )}
+                ) : null}
               </button>
             ))}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

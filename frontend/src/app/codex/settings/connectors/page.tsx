@@ -36,9 +36,9 @@ export default function ConnectorsSettingsPage() {
   return (
     <CodexShell title="Connectors" subtitle="GitHub, Slack e Linear com health check e reconnect.">
       <section className="grid gap-3 lg:grid-cols-3">
-        <article className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4">
+        <article className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4">
           <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">GitHub</h2>
-          <Input className="mt-3" value={githubLogin} onChange={(event) => setGithubLogin(event.target.value)} />
+          <Input className="mt-3" value={githubLogin} onChange={(event) => setGithubLogin(event.target.value)} aria-label="GitHub account login" />
           <Button
             className="mt-2"
             onClick={async () => {
@@ -60,9 +60,9 @@ export default function ConnectorsSettingsPage() {
           </ul>
         </article>
 
-        <article className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4">
+        <article className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4">
           <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Slack</h2>
-          <Input className="mt-3" value={slackTeam} onChange={(event) => setSlackTeam(event.target.value)} />
+          <Input className="mt-3" value={slackTeam} onChange={(event) => setSlackTeam(event.target.value)} aria-label="Slack team name" />
           <Button
             className="mt-2"
             onClick={async () => {
@@ -85,9 +85,9 @@ export default function ConnectorsSettingsPage() {
           </ul>
         </article>
 
-        <article className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4">
+        <article className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4">
           <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Linear</h2>
-          <Input className="mt-3" value={linearOrg} onChange={(event) => setLinearOrg(event.target.value)} />
+          <Input className="mt-3" value={linearOrg} onChange={(event) => setLinearOrg(event.target.value)} aria-label="Linear organization name" />
           <Button
             className="mt-2"
             onClick={async () => {

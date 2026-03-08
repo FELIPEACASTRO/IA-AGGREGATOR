@@ -1,9 +1,19 @@
 import { cookies } from 'next/headers';
 
-type CodexUserSession = {
+export type CodexUserSession = {
   userId: string;
   email: string;
   name: string;
+  accessToken: string;
+};
+
+type BackendUserProfile = {
+  id?: string;
+  email?: string;
+  fullName?: string;
+  avatarUrl?: string | null;
+  role?: string;
+  status?: string;
 };
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
@@ -36,6 +46,32 @@ export async function getServerSession(): Promise<CodexUserSession | null> {
     userId,
     email,
     name,
+    accessToken: token,
   };
+}
+
+export async function getBackendUserProfile(accessToken: string): Promise<BackendUserProfile | null> {
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+  try {
+    const response = await fetch(`${backendUrl}/api/v1/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = (await response.json()) as {
+      data?: BackendUserProfile;
+    };
+
+    return payload.data ?? null;
+  } catch {
+    return null;
+  }
 }
 

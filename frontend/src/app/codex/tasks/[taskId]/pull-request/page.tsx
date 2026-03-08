@@ -41,7 +41,7 @@ export default function TaskPullRequestPage() {
 
   return (
     <CodexShell title={`Task ${taskId.slice(0, 8)} • Pull Request`} subtitle="Create/update PR e comandos úteis de branch.">
-      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4">
+      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4">
         <div className="mb-3 flex items-center gap-2">
           <Link className="rounded-full border border-[var(--border)] px-3 py-1.5 text-xs" href={`/codex/tasks/${taskId}`}>
             Summary
@@ -62,9 +62,9 @@ export default function TaskPullRequestPage() {
               existingPr={task.pullRequest}
               onRefresh={load}
             />
-            <article className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-4">
+            <article className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface-hover)] p-4">
               <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Git Commands</h2>
-              <pre className="mt-3 overflow-auto rounded-[var(--radius-lg)] border border-[var(--border)] bg-black/40 p-3 text-xs text-[var(--muted-foreground)]">
+              <pre className="mt-3 overflow-auto rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-active)] p-3 text-xs text-[var(--muted-foreground)]">
 {`git fetch origin ${task.resultBranch || `codex/${task.id}`}\ngit checkout ${task.resultBranch || `codex/${task.id}`}\ngit log --oneline -n 20`}
               </pre>
             </article>

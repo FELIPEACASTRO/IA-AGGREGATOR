@@ -25,7 +25,7 @@ export default function UsageSettingsPage() {
 
   return (
     <CodexShell title="Usage Dashboard" subtitle="Consumo por período, task e repositório com saldo de créditos.">
-      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4">
+      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Usage Overview</h2>
           <Link href="/codex/settings/usage/credits" className="rounded-full border border-[var(--border)] px-3 py-1.5 text-xs">
@@ -36,15 +36,15 @@ export default function UsageSettingsPage() {
         {!usage && !error && <p className="mt-3 text-sm text-[var(--muted-foreground)]">Carregando dashboard...</p>}
         {usage && (
           <div className="mt-3 grid gap-3 lg:grid-cols-3">
-            <article className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-3">
+            <article className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-hover)] p-3">
               <p className="text-xs text-[var(--subtle-foreground)]">Included usage</p>
               <p className="text-xl font-semibold">{usage.creditBalance?.includedUsageLeft ?? 0}</p>
             </article>
-            <article className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-3">
+            <article className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-hover)] p-3">
               <p className="text-xs text-[var(--subtle-foreground)]">Credits balance</p>
               <p className="text-xl font-semibold">{usage.creditBalance?.balance ?? 0}</p>
             </article>
-            <article className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-3">
+            <article className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-hover)] p-3">
               <p className="text-xs text-[var(--subtle-foreground)]">Recent entries</p>
               <p className="text-xl font-semibold">{usage.entries.length}</p>
             </article>

@@ -21,13 +21,13 @@ export default function CodexOnboardingPage() {
 
   return (
     <CodexShell title="Onboarding Wizard" subtitle="Do zero até primeira entrega com evidência revisável.">
-      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-6">
+      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-6">
         <p className="text-xs uppercase tracking-[0.16em] text-[var(--subtle-foreground)]">
           Step {index + 1} / {flow.length}
         </p>
         <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em]">{current.title}</h2>
         <p className="mt-2 text-sm text-[var(--muted-foreground)]">{current.description}</p>
-        <div className="mt-4 h-2 w-full rounded-full bg-[rgba(255,255,255,0.08)]">
+        <div className="mt-4 h-2 w-full rounded-full bg-[var(--surface-hover)]">
           <div className="h-2 rounded-full bg-[var(--brand-gradient)]" style={{ width: `${progress}%` }} />
         </div>
         <div className="mt-5 grid gap-2 text-sm">

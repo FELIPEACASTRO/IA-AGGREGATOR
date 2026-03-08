@@ -41,10 +41,10 @@ export function Avatar({ name = 'U', src, size = 'md', className, accent }: Avat
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-full font-semibold select-none',
+        'inline-flex shrink-0 items-center justify-center rounded-full border border-[var(--border)] font-semibold select-none',
         accent
-          ? 'bg-[var(--accent)] text-white'
-          : 'bg-[var(--surface-hover)] text-[var(--muted-foreground)]',
+          ? 'bg-[var(--accent-gold-light)] text-[var(--accent-gold)]'
+          : 'bg-[var(--surface-hover)] text-[var(--foreground)]',
         sizeStyles[size],
         className,
       )}

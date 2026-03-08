@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from '@/server/codex/auth';
-import { ensureWorkspaceForUser } from '@/server/codex/seed';
+import { getResolvedSessionContext } from '@/server/codex/session-context';
 
 export async function requireCodexContext() {
-  const session = await getServerSession();
-  if (!session) {
+  const resolved = await getResolvedSessionContext();
+  if (!resolved) {
     return {
       error: NextResponse.json(
         {
@@ -16,10 +15,10 @@ export async function requireCodexContext() {
     } as const;
   }
 
-  const context = await ensureWorkspaceForUser(session);
   return {
-    session,
-    context,
+    session: resolved.session,
+    context: resolved.context,
+    sessionContext: resolved.sessionContext,
   } as const;
 }
 

@@ -2,16 +2,16 @@
 
 import { useRouter } from 'next/navigation';
 import { trackEvent } from '@/lib/analytics';
-import { cn } from '@/lib/cn';
 import { useMemo, useState } from 'react';
 import { AppLayout } from '@/components/app/app-layout';
+import { FilterPill } from '@/components/ui/filter-pill';
+import { SearchField } from '@/components/ui/search-field';
 import {
   BarChart3,
   ChevronRight,
   FileText,
   Hash,
   Mail,
-  Search,
   Target,
   WandSparkles,
 } from 'lucide-react';
@@ -102,42 +102,25 @@ export default function PromptsPage() {
         {/* Header */}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-[24px] font-semibold text-[var(--foreground)]">Templates</h1>
-            <p className="mt-1 text-[14px] text-[var(--muted-foreground)]">
+            <h1 className="font-[var(--font-serif)] text-[32px] font-medium tracking-[-0.04em] text-[var(--foreground)]">Templates</h1>
+            <p className="mt-2 text-[14px] text-[var(--muted-foreground)]">
               Prompts curados para acelerar qualquer tarefa.
             </p>
           </div>
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--muted-foreground)]" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar templates..."
-              className="h-9 w-48 rounded-[var(--radius-md)] border border-[var(--input-border)] bg-[var(--input-bg)] pl-9 pr-3 text-[13px] text-[var(--foreground)] outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--ring)]"
-            />
-          </div>
+          <SearchField value={search} onChange={setSearch} placeholder="Buscar templates..." className="w-56" />
         </div>
 
         {/* Categories */}
         <div className="flex flex-wrap items-center gap-2">
           {categories.map((cat) => (
-            <button
+            <FilterPill
               key={cat.value}
               onClick={() => setActiveCategory(cat.value)}
-              className={cn(
-                'rounded-[var(--radius-full)] border px-3 py-1.5 text-[12px] font-medium transition-colors',
-                activeCategory === cat.value
-                  ? 'border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]'
-                  : 'border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]',
-              )}
+              active={activeCategory === cat.value}
+              count={cat.value !== 'all' ? templates.filter((t) => t.category === cat.value).length : undefined}
             >
               {cat.label}
-              {cat.value !== 'all' && (
-                <span className="ml-1.5 text-[11px] opacity-60">
-                  {templates.filter((t) => t.category === cat.value).length}
-                </span>
-              )}
-            </button>
+            </FilterPill>
           ))}
           <span className="ml-auto text-[12px] text-[var(--muted-foreground)]">
             {filtered.length} template{filtered.length !== 1 ? 's' : ''}
@@ -149,7 +132,7 @@ export default function PromptsPage() {
           {filtered.map((template) => (
             <article
               key={template.title}
-              className="flex flex-col rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-5"
+              className="flex flex-col rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-xs)]"
             >
               <div className="flex items-start justify-between gap-2">
                 <template.icon className="h-5 w-5 shrink-0 text-[var(--muted-foreground)]" />
@@ -157,7 +140,7 @@ export default function PromptsPage() {
                   {template.tag}
                 </span>
               </div>
-              <h3 className="mt-3 text-[15px] font-semibold text-[var(--foreground)]">{template.title}</h3>
+              <h3 className="mt-3 font-[var(--font-serif)] text-[22px] font-medium tracking-[-0.03em] text-[var(--foreground)]">{template.title}</h3>
               <p className="mt-1 flex-1 text-[13px] leading-relaxed text-[var(--muted-foreground)]">
                 {template.description}
               </p>

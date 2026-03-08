@@ -8,7 +8,7 @@ const variantStyles: Record<BadgeVariant, string> = {
   default: 'bg-[var(--surface-hover)] text-[var(--foreground)]',
   outline: 'border border-[var(--border)] text-[var(--muted-foreground)]',
   accent: 'bg-[var(--accent-light)] text-[var(--accent)]',
-  brand: 'bg-[var(--accent-light)] text-[var(--accent)]',
+  brand: 'bg-[var(--accent-gold-light)] text-[var(--accent-gold)]',
   success: 'bg-[var(--success-light)] text-[var(--success)]',
   warning: 'bg-[var(--warning-light)] text-[var(--warning)]',
   error: 'bg-[var(--destructive-light)] text-[var(--destructive)]',
@@ -30,17 +30,20 @@ export function Badge({ variant = 'default', dot, children, className }: BadgePr
         className,
       )}
     >
-      {dot && (
+      {dot ? (
         <span
           className={cn(
             'h-1.5 w-1.5 rounded-full',
-            variant === 'success' ? 'bg-[var(--success)]' :
-            variant === 'error' ? 'bg-[var(--destructive)]' :
-            variant === 'warning' ? 'bg-[var(--warning)]' :
-            'bg-current',
+            variant === 'success'
+              ? 'bg-[var(--success)]'
+              : variant === 'error'
+                ? 'bg-[var(--destructive)]'
+                : variant === 'warning'
+                  ? 'bg-[var(--warning)]'
+                  : 'bg-current',
           )}
         />
-      )}
+      ) : null}
       {children}
     </span>
   );

@@ -51,7 +51,7 @@ export default function EnvironmentDetailsPage() {
       {error && <p className="text-sm text-[var(--destructive)]">{error}</p>}
       {environment && (
         <form
-          className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4"
+          className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4"
           onSubmit={async (event) => {
             event.preventDefault();
             setLoading(true);
@@ -82,6 +82,7 @@ export default function EnvironmentDetailsPage() {
               <Input
                 value={environment.name}
                 onChange={(event) => setEnvironment((prev) => (prev ? { ...prev, name: event.target.value } : prev))}
+                aria-label="Nome do environment"
               />
             </label>
             <label className="space-y-1">
@@ -91,6 +92,7 @@ export default function EnvironmentDetailsPage() {
                 onChange={(event) =>
                   setEnvironment((prev) => (prev ? { ...prev, defaultBranch: event.target.value } : prev))
                 }
+                aria-label="Default branch"
               />
             </label>
             <label className="space-y-1 md:col-span-2">
@@ -99,6 +101,7 @@ export default function EnvironmentDetailsPage() {
                 rows={2}
                 value={environment.description || ''}
                 onChange={(event) => setEnvironment((prev) => (prev ? { ...prev, description: event.target.value } : prev))}
+                aria-label="Descricao do environment"
               />
             </label>
             <label className="space-y-1">
@@ -106,6 +109,7 @@ export default function EnvironmentDetailsPage() {
               <Input
                 value={environment.baseImage}
                 onChange={(event) => setEnvironment((prev) => (prev ? { ...prev, baseImage: event.target.value } : prev))}
+                aria-label="Base image"
               />
             </label>
             <label className="space-y-1">
@@ -113,6 +117,7 @@ export default function EnvironmentDetailsPage() {
               <select
                 value={environment.internetMode}
                 onChange={(event) => setEnvironment((prev) => (prev ? { ...prev, internetMode: event.target.value } : prev))}
+                aria-label="Internet mode"
                 className="h-11 w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-transparent px-3 text-sm"
               >
                 <option value="OFF">OFF</option>
@@ -126,6 +131,7 @@ export default function EnvironmentDetailsPage() {
                 rows={4}
                 value={environment.setupScript || ''}
                 onChange={(event) => setEnvironment((prev) => (prev ? { ...prev, setupScript: event.target.value } : prev))}
+                aria-label="Setup script"
               />
             </label>
             <label className="space-y-1 md:col-span-2">
@@ -136,6 +142,7 @@ export default function EnvironmentDetailsPage() {
                 onChange={(event) =>
                   setEnvironment((prev) => (prev ? { ...prev, maintenanceScript: event.target.value } : prev))
                 }
+                aria-label="Maintenance script"
               />
             </label>
           </div>
@@ -175,7 +182,7 @@ export default function EnvironmentDetailsPage() {
             </Button>
           </div>
           <div className="mt-4 grid gap-3 lg:grid-cols-2">
-            <article className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-3">
+            <article className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-hover)] p-3">
               <h3 className="text-xs uppercase tracking-[0.12em] text-[var(--subtle-foreground)]">Execution history</h3>
               <ul className="mt-2 space-y-2 text-xs text-[var(--muted-foreground)]">
                 {environment.executions.map((item) => (
@@ -187,7 +194,7 @@ export default function EnvironmentDetailsPage() {
                 {environment.executions.length === 0 && <li>Sem execuções registradas.</li>}
               </ul>
             </article>
-            <article className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-3">
+            <article className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-hover)] p-3">
               <h3 className="text-xs uppercase tracking-[0.12em] text-[var(--subtle-foreground)]">Cache history</h3>
               <ul className="mt-2 space-y-2 text-xs text-[var(--muted-foreground)]">
                 {environment.caches.map((item) => (

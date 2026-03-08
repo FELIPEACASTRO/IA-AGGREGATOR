@@ -24,7 +24,7 @@ export default function AnalyticsPage() {
   return (
     <CodexShell title="Analytics" subtitle="Daily users, cloud tasks, review activity e findings por severidade.">
       <section className="grid gap-3 lg:grid-cols-3">
-        <article className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4">
+        <article className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4">
           <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Task status</h2>
           <ul className="mt-3 space-y-2 text-sm text-[var(--muted-foreground)]">
             {analytics?.taskCounts.map((item) => (
@@ -36,7 +36,7 @@ export default function AnalyticsPage() {
           </ul>
         </article>
 
-        <article className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4">
+        <article className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4">
           <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Findings severity</h2>
           <ul className="mt-3 space-y-2 text-sm text-[var(--muted-foreground)]">
             {analytics?.reviewFindings.map((item) => (
@@ -48,7 +48,7 @@ export default function AnalyticsPage() {
           </ul>
         </article>
 
-        <article className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4">
+        <article className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4">
           <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Usage metrics</h2>
           <ul className="mt-3 space-y-2 text-sm text-[var(--muted-foreground)]">
             {analytics?.usage.map((item) => (

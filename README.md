@@ -69,4 +69,5 @@ Arquivos gerados na raiz:
 - `RUNBOOK.md`
 - `TEST_PLAN.md`
 - `CHANGELOG_IMPLEMENTATION.md`
+- `docs/roadmap-baseline-matrix.md`
 

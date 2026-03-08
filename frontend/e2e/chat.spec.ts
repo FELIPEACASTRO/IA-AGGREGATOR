@@ -1,32 +1,44 @@
-import { test, expect } from '@playwright/test';
-import { createRandomUser, mockAuthApi, registerUserViaUi } from './support/auth';
+import { expect, test } from '@playwright/test';
+import { createRandomUser, mockAuthApi } from './support/auth';
 
-test('chat envia prompt e renderiza resposta do assistente', async ({ page }) => {
+test('chat suporta prefill, troca de modelo e envio de mensagem', async ({ page }) => {
   const user = createRandomUser();
-  await mockAuthApi(page, user);
-  await registerUserViaUi(page, user);
+  await mockAuthApi(page, user, { authenticated: true });
 
-  await page.route('**/api/v1/ai/chat', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        success: true,
-        data: {
-          content: 'Resposta E2E simulada com sucesso.',
-          modelUsed: 'gpt-4o-mini',
-          providerUsed: 'OpenAI',
-          fallbackUsed: false,
-          attempts: 1,
-        },
-      }),
-    });
-  });
+  await page.goto('/chat');
 
-  await page.getByPlaceholder('Digite sua mensagem... (Enter envia, Shift+Enter quebra linha)').fill('Olá, teste E2E.');
-  await page.getByRole('button', { name: /Enviar mensagem|Enviar/i }).click();
+  const composer = page.getByPlaceholder(/Como posso ajudar/i);
+  await expect(composer).toBeVisible();
 
-  await expect(page.getByText('Olá, teste E2E.').first()).toBeVisible();
-  await expect(page.getByText('Resposta E2E simulada com sucesso.').first()).toBeVisible();
-  await expect(page.getByText('OpenAI').first()).toBeVisible();
+  await page.getByRole('button', { name: /Estrategia/i }).click();
+  await expect(composer).toHaveValue(/Monte um plano de acao/i);
+
+  await page.getByRole('button', { name: /GPT-4o Mini/i }).click();
+  await page.getByRole('option', { name: /Claude 3.5 Haiku/i }).click();
+  await expect(page.getByRole('button', { name: /Claude 3.5 Haiku/i })).toBeVisible();
+
+  await composer.fill('Preciso de um plano de rollout com validacao de release.');
+  await page.getByRole('button', { name: /Enviar mensagem/i }).click();
+
+  await expect(page.getByText(/Preciso de um plano de rollout/i).first()).toBeVisible();
+  await expect(page.getByText(/Resposta simulada para:/i).first()).toBeVisible();
+  await expect(page.getByText(/Anthropic/i).first()).toBeVisible();
+});
+
+test('chat permite interromper geracao em streaming', async ({ page }) => {
+  const user = createRandomUser();
+  await mockAuthApi(page, user, { authenticated: true });
+
+  await page.goto('/chat');
+
+  const composer = page.getByPlaceholder(/Como posso ajudar/i);
+  await composer.fill('stream test para validar interrupcao');
+  await page.getByRole('button', { name: /Enviar mensagem/i }).click();
+
+  const stopButton = page.getByRole('button', { name: /Parar geracao/i });
+  await expect(stopButton).toBeVisible();
+  await stopButton.click();
+
+  await expect(page.getByRole('button', { name: /Enviar mensagem/i })).toBeVisible();
+  await expect(page.getByText(/chunk-1/i).first()).toBeVisible();
 });

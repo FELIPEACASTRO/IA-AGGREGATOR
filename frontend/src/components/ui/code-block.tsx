@@ -24,33 +24,40 @@ export function CodeBlock({ children, language, className }: CodeBlockProps) {
   };
 
   return (
-    <div className={cn('group relative my-3 overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-1)]', className)}>
-      {/* Header bar */}
-      <div className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--surface-2)] px-4 py-2">
-        <span className="text-[0.65rem] font-medium uppercase tracking-widest text-[var(--muted-foreground)]">
+    <div
+      className={cn(
+        'group relative my-3 overflow-hidden rounded-[var(--radius-lg)] border border-[var(--code-border)] bg-[var(--code-bg)]',
+        className,
+      )}
+    >
+      <div className="flex items-center justify-between border-b border-[var(--code-border)] bg-[var(--code-header-bg)] px-4 py-2">
+        <span className="text-[0.65rem] font-medium uppercase tracking-[0.1em] text-[var(--code-muted)]">
           {language || 'code'}
         </span>
         <button
           onClick={handleCopy}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] px-2 py-1',
+            'inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-md)] px-2.5',
             'text-[0.65rem] font-medium transition-colors',
             copied
               ? 'text-[var(--success)]'
-              : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)]'
+              : 'text-[var(--code-muted)] hover:bg-[var(--code-border)] hover:text-[var(--code-text)]',
           )}
-          aria-label="Copiar código"
+          aria-label="Copiar codigo"
         >
           {copied ? (
-            <><Check className="h-3 w-3" /> Copiado</>
+            <>
+              <Check className="h-3 w-3" /> Copiado
+            </>
           ) : (
-            <><Copy className="h-3 w-3" /> Copiar</>
+            <>
+              <Copy className="h-3 w-3" /> Copiar
+            </>
           )}
         </button>
       </div>
-      {/* Code content */}
-      <pre className="overflow-x-auto p-4">
-        <code className="text-[0.8rem] leading-relaxed font-mono text-[var(--foreground)]">
+      <pre className="overflow-x-auto bg-[var(--code-bg)] p-4">
+        <code className="font-[var(--font-mono-stack)] text-[14px] leading-[1.65] text-[var(--code-text)]">
           {children}
         </code>
       </pre>

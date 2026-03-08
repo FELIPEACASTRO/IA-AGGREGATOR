@@ -27,7 +27,7 @@ export function PullRequestPanel({ taskId, branch, existingPr, onRefresh }: Pull
   const [error, setError] = useState<string | null>(null);
 
   return (
-    <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4">
+    <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4">
       <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Pull Request</h2>
       <p className="mt-1 text-xs text-[var(--muted-foreground)]">Branch: {branch || `codex/${taskId}`}</p>
       {existingPr?.url && (
@@ -43,14 +43,14 @@ export function PullRequestPanel({ taskId, branch, existingPr, onRefresh }: Pull
       <div className="mt-3 space-y-3">
         <label className="space-y-1">
           <span className="text-xs uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Title</span>
-          <Input value={title} onChange={(event) => setTitle(event.target.value)} />
+          <Input value={title} onChange={(event) => setTitle(event.target.value)} aria-label="Pull request title" />
         </label>
         <label className="space-y-1">
           <span className="text-xs uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Body</span>
-          <Textarea rows={8} value={body} onChange={(event) => setBody(event.target.value)} />
+          <Textarea rows={8} value={body} onChange={(event) => setBody(event.target.value)} aria-label="Pull request body" />
         </label>
         <label className="inline-flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
-          <input type="checkbox" checked={draft} onChange={(event) => setDraft(event.target.checked)} />
+          <input type="checkbox" checked={draft} onChange={(event) => setDraft(event.target.checked)} aria-label="Pull request draft" />
           Draft
         </label>
       </div>

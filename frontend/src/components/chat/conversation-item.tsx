@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useChatStore, Conversation } from '@/stores/chat-store';
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Conversation, useChatStore } from '@/stores/chat-store';
 import { cn } from '@/lib/cn';
 import { toast } from '@/stores/toast-store';
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 
 interface ConversationItemProps {
   conversation: Conversation;
@@ -13,7 +13,9 @@ interface ConversationItemProps {
 
 export function ConversationItem({ conversation, isActive }: ConversationItemProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { setActiveConversation, renameConversation, deleteConversation } = useChatStore();
+  const setActiveConversation = useChatStore((state) => state.setActiveConversation);
+  const renameConversation = useChatStore((state) => state.renameConversation);
+  const deleteConversation = useChatStore((state) => state.deleteConversation);
 
   const handleSelect = () => {
     setActiveConversation(conversation.id);
@@ -22,9 +24,7 @@ export function ConversationItem({ conversation, isActive }: ConversationItemPro
   const handleRename = () => {
     setMenuOpen(false);
     const title = window.prompt('Renomear conversa:', conversation.title);
-    if (title?.trim()) {
-      renameConversation(conversation.id, title.trim());
-    }
+    if (title?.trim()) renameConversation(conversation.id, title.trim());
   };
 
   const handleDelete = () => {
@@ -40,70 +40,72 @@ export function ConversationItem({ conversation, isActive }: ConversationItemPro
       role="button"
       tabIndex={0}
       onClick={handleSelect}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
           handleSelect();
         }
       }}
       className={cn(
-        'group relative inline-flex items-center gap-2 h-8 py-1.5 rounded-[6px] px-4 cursor-pointer select-none transition-colors duration-75 overflow-hidden active:bg-[var(--surface-active)]',
+        'group relative flex items-center gap-2 rounded-[var(--radius-md)] px-4 py-2 transition-colors',
         isActive
-          ? 'bg-[var(--surface-hover)] text-[var(--foreground)]'
+          ? 'bg-[var(--surface-active)] text-[var(--foreground)]'
           : 'text-[var(--foreground-secondary)] hover:bg-[var(--surface-hover)]',
       )}
     >
-      <p className="flex-1 truncate text-[12px] font-normal" style={{ lineHeight: '16px' }}>{conversation.title}</p>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[13px]">{conversation.title}</p>
+        <p className="mt-0.5 truncate text-[11px] text-[var(--subtle-foreground)]">
+          {new Date(conversation.updatedAt).toLocaleDateString('pt-BR')}
+        </p>
+      </div>
 
-      {/* More menu trigger */}
       <div className="relative shrink-0">
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setMenuOpen((v) => !v);
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            setMenuOpen((value) => !value);
           }}
           className={cn(
-            'flex h-6 w-6 items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted-foreground)] transition-all',
-            'opacity-0 group-hover:opacity-100 hover:bg-[var(--surface-active)] hover:text-[var(--foreground)]',
+            'inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted-foreground)] transition-all',
+            'opacity-0 group-hover:opacity-100 hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]',
             isActive && 'opacity-100',
           )}
-          aria-label="Opcoes"
+          aria-label="Opcoes da conversa"
         >
-          <MoreHorizontal className="h-3.5 w-3.5" />
+          <MoreHorizontal className="h-4 w-4" />
         </button>
 
-        {menuOpen && (
+        {menuOpen ? (
           <>
-            <div
-              className="fixed inset-0 z-40"
-              onClick={(e) => {
-                e.stopPropagation();
-                setMenuOpen(false);
-              }}
-            />
-            <div className="absolute right-0 top-7 z-50 min-w-[140px] overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)]">
+            <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+            <div className="absolute right-0 top-8 z-50 min-w-[160px] overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface)] shadow-[var(--shadow-dropdown)]">
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
                   handleRename();
                 }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-[var(--foreground)] hover:bg-[var(--surface-hover)] transition-colors"
+                className="flex h-10 w-full items-center gap-2 px-3 text-[13px] text-[var(--foreground)] hover:bg-[var(--surface-hover)]"
               >
-                <Pencil className="h-3.5 w-3.5" /> Renomear
+                <Pencil className="h-3.5 w-3.5" />
+                Renomear
               </button>
-              <div className="h-px bg-[var(--border)]" />
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
                   handleDelete();
                 }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-[var(--destructive)] hover:bg-[var(--surface-hover)] transition-colors"
+                className="flex h-10 w-full items-center gap-2 px-3 text-[13px] text-[var(--destructive)] hover:bg-[var(--surface-hover)]"
               >
-                <Trash2 className="h-3.5 w-3.5" /> Excluir
+                <Trash2 className="h-3.5 w-3.5" />
+                Excluir
               </button>
             </div>
           </>
-        )}
+        ) : null}
       </div>
     </div>
   );

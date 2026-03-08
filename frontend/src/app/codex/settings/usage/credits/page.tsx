@@ -32,14 +32,14 @@ export default function CreditsPage() {
 
   return (
     <CodexShell title="Credits" subtitle="Saldo, ledger e compra de créditos extras.">
-      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4">
+      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4">
         <div className="grid gap-3 md:grid-cols-3">
-          <article className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-3">
+          <article className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-hover)] p-3">
             <p className="text-xs text-[var(--subtle-foreground)]">Saldo atual</p>
             <p className="text-xl font-semibold">{credits?.balance?.balance ?? 0}</p>
             <p className="mt-1 text-xs text-[var(--muted-foreground)]">Included usage: {credits?.balance?.includedUsageLeft ?? 0}</p>
           </article>
-          <Input value={amount} onChange={(event) => setAmount(event.target.value)} />
+          <Input value={amount} onChange={(event) => setAmount(event.target.value)} aria-label="Credit amount" />
           <Button
             onClick={async () => {
               await codexApi.purchaseCredits({ amount: Number(amount) || 0, currency: 'USD' });
@@ -50,7 +50,7 @@ export default function CreditsPage() {
           </Button>
         </div>
 
-        <div className="mt-4 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-3">
+        <div className="mt-4 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-hover)] p-3">
           <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Ledger</h2>
           <ul className="mt-2 space-y-2 text-xs text-[var(--muted-foreground)]">
             {credits?.ledger.map((entry) => (

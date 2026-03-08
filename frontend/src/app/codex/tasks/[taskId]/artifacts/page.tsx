@@ -30,7 +30,7 @@ export default function TaskArtifactsPage() {
 
   return (
     <CodexShell title={`Task ${taskId.slice(0, 8)} • Artifacts`} subtitle="Outputs visuais e anexos de execução.">
-      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4">
+      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4">
         <div className="mb-3 flex items-center gap-2">
           <Link className="rounded-full border border-[var(--border)] px-3 py-1.5 text-xs" href={`/codex/tasks/${taskId}`}>
             Summary
@@ -47,7 +47,7 @@ export default function TaskArtifactsPage() {
           {artifacts.map((artifact) => (
             <article
               key={artifact.id}
-              className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-3"
+              className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-hover)] p-3"
             >
               <p className="text-xs uppercase tracking-[0.12em] text-[var(--subtle-foreground)]">{artifact.artifactType}</p>
               <h3 className="mt-1 text-sm font-semibold">{artifact.title}</h3>

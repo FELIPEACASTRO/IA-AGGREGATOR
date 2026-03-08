@@ -38,7 +38,7 @@ export default function EnvironmentsListPage() {
 
   return (
     <CodexShell title="Environments" subtitle="Setup/maintenance, runtime pins, cache e policy de internet por repositório.">
-      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4">
+      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Environment Registry</h2>
           <Link href="/codex/settings/environments/new">
@@ -48,7 +48,7 @@ export default function EnvironmentsListPage() {
 
         <div className="space-y-3">
           {envs.map((env) => (
-            <article key={env.id} className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-3">
+            <article key={env.id} className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-hover)] p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h3 className="text-sm font-semibold">{env.name}</h3>

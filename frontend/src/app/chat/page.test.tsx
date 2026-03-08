@@ -1,9 +1,20 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import ChatPage from './page';
+import type { ChatMessage } from '@/stores/chat-store';
 
 const pushMock = jest.fn();
 
 let searchPrompt: string | null = null;
+
+type MockConversation = {
+  id: string;
+  title: string;
+  model: string;
+  pinned: boolean;
+  messages: ChatMessage[];
+  createdAt: number;
+  updatedAt: number;
+};
 
 const chatStoreState = {
   conversations: [
@@ -12,11 +23,11 @@ const chatStoreState = {
       title: 'Conversa de teste',
       model: 'gpt-4o-mini',
       pinned: false,
-      messages: [],
+      messages: [] as ChatMessage[],
       createdAt: Date.now(),
       updatedAt: Date.now(),
     },
-  ],
+  ] as MockConversation[],
   activeConversationId: 'conv-1',
   selectedModel: 'gpt-4o-mini',
   isSending: false,
@@ -43,17 +54,27 @@ jest.mock('next/navigation', () => ({
   }),
 }));
 
+const authState = {
+  user: { fullName: 'Docker Admin', email: 'dockeradmin@ia-aggregator.local' },
+  isAuthenticated: true,
+  isLoading: false,
+  fetchUser: jest.fn(),
+  workspaces: [],
+  currentWorkspace: null,
+  currentRole: null,
+  switchWorkspace: jest.fn(),
+  logout: jest.fn(),
+};
+
 jest.mock('@/stores/auth-store', () => ({
-  useAuthStore: () => ({
-    user: { fullName: 'Docker Admin', email: 'dockeradmin@ia-aggregator.local' },
-    isAuthenticated: true,
-    isLoading: false,
-    fetchUser: jest.fn(),
+  useAuthStore: Object.assign((selector: (state: typeof authState) => unknown) => selector(authState), {
+    getState: () => authState,
   }),
 }));
 
 jest.mock('@/stores/chat-store', () => ({
-  useChatStore: () => chatStoreState,
+  useChatStore: (selector?: (state: typeof chatStoreState) => unknown) =>
+    selector ? selector(chatStoreState) : chatStoreState,
 }));
 
 describe('ChatPage', () => {
@@ -69,12 +90,14 @@ describe('ChatPage', () => {
     chatStoreState.sendMessage = jest.fn().mockResolvedValue(undefined);
     chatStoreState.createConversation = jest.fn();
     chatStoreState.stopGenerating = jest.fn();
+    chatStoreState.conversations[0].messages = [];
+    chatStoreState.isSending = false;
   });
 
-  it('creates a new conversation when clicking Nova Conversa', () => {
+  it('creates a new conversation when clicking Nova conversa', () => {
     render(<ChatPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: /nova conversa/i }));
+    fireEvent.click(screen.getAllByRole('button', { name: /nova conversa/i })[0]);
 
     expect(chatStoreState.createConversation).toHaveBeenCalledTimes(1);
   });
@@ -82,7 +105,7 @@ describe('ChatPage', () => {
   it('sends message when pressing Enter in textarea', async () => {
     render(<ChatPage />);
 
-    const textarea = screen.getByPlaceholderText(/envie uma mensagem/i);
+    const textarea = screen.getByPlaceholderText(/como posso ajudar voce hoje/i);
     fireEvent.change(textarea, { target: { value: 'Mensagem de teste' } });
     fireEvent.keyDown(textarea, { key: 'Enter', code: 'Enter', shiftKey: false });
 
@@ -92,10 +115,13 @@ describe('ChatPage', () => {
   });
 
   it('stops generation when clicking Parar', () => {
+    chatStoreState.conversations[0].messages = [
+      { id: 'msg-1', role: 'user', content: 'Mensagem', timestamp: Date.now() },
+    ];
     chatStoreState.isSending = true;
     render(<ChatPage />);
 
-    const stopButtons = screen.getAllByRole('button', { name: /parar/i });
+    const stopButtons = screen.getAllByRole('button', { name: /parar geracao/i });
     fireEvent.click(stopButtons[0]);
 
     expect(chatStoreState.stopGenerating).toHaveBeenCalledTimes(1);
@@ -106,7 +132,7 @@ describe('ChatPage', () => {
     searchPrompt = 'Prompt vindo da biblioteca';
     render(<ChatPage />);
 
-    const textarea = screen.getByPlaceholderText(/envie uma mensagem/i) as HTMLTextAreaElement;
+    const textarea = screen.getByPlaceholderText(/como posso ajudar voce hoje/i) as HTMLTextAreaElement;
 
     await waitFor(() => {
       expect(textarea.value).toBe('Prompt vindo da biblioteca');

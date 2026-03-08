@@ -9,6 +9,8 @@ export interface ChatMessage {
   content: string;
   modelUsed?: string;
   providerUsed?: string;
+  agentUsed?: string;
+  agentVersion?: string;
   fallbackUsed?: boolean;
   attempts?: number;
   timestamp: number;
@@ -210,6 +212,8 @@ export const useChatStore = create<ChatState>()(
             content: '',
             modelUsed: data.data.modelUsed,
             providerUsed: data.data.providerUsed,
+            agentUsed: data.data.agentUsed,
+            agentVersion: data.data.agentVersion,
             fallbackUsed: data.data.fallbackUsed,
             attempts: data.data.attempts,
             timestamp: Date.now(),

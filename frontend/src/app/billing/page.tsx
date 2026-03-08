@@ -77,8 +77,8 @@ export default function BillingPage() {
     <AppLayout>
       <div className="mx-auto max-w-4xl px-6 py-8 space-y-8">
         <div>
-          <h1 className="text-[24px] font-semibold text-[var(--foreground)]">{t('billing.title')}</h1>
-          <p className="mt-1 text-[14px] text-[var(--muted-foreground)]">{t('billing.subtitle')}</p>
+          <h1 className="font-[var(--font-serif)] text-[32px] font-medium tracking-[-0.04em] text-[var(--foreground)]">{t('billing.title')}</h1>
+          <p className="mt-2 text-[14px] text-[var(--muted-foreground)]">{t('billing.subtitle')}</p>
         </div>
 
         {loading ? (
@@ -103,17 +103,17 @@ export default function BillingPage() {
           <>
             {/* Stats */}
             <div className="grid gap-3 md:grid-cols-3">
-              <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4">
+              <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-xs)]">
                 <CreditCard className="h-5 w-5 text-[var(--muted-foreground)]" />
                 <p className="mt-3 text-[20px] font-semibold text-[var(--foreground)]">{currentPlan?.name ?? '-'}</p>
                 <p className="mt-0.5 text-[12px] text-[var(--muted-foreground)]">{t('billing.currentPlan')}</p>
               </div>
-              <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4">
+              <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-xs)]">
                 <Activity className="h-5 w-5 text-[var(--muted-foreground)]" />
                 <p className="mt-3 text-[20px] font-semibold text-[var(--foreground)]">{(tokensUsed / 1000).toFixed(1)}k</p>
                 <p className="mt-0.5 text-[12px] text-[var(--muted-foreground)]">{t('billing.tokensUsed')}</p>
               </div>
-              <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4">
+              <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-xs)]">
                 <Calendar className="h-5 w-5 text-[var(--muted-foreground)]" />
                 <p className="mt-3 text-[20px] font-semibold text-[var(--foreground)]">18 dias</p>
                 <p className="mt-0.5 text-[12px] text-[var(--muted-foreground)]">{t('billing.resetIn')}</p>
@@ -136,10 +136,7 @@ export default function BillingPage() {
               </div>
               <div className="mt-4 h-2.5 w-full overflow-hidden rounded-[var(--radius-full)] bg-[var(--surface-hover)]">
                 <div
-                  className={cn(
-                    'h-full rounded-[var(--radius-full)] transition-all',
-                    pct >= 90 ? 'bg-[var(--destructive)]' : pct >= 70 ? 'bg-[var(--warning)]' : 'bg-[var(--success)]',
-                  )}
+                  className="h-full rounded-[var(--radius-full)] bg-[var(--accent-system)] transition-all"
                   style={{ width: `${Math.min(100, pct)}%` }}
                 />
               </div>
@@ -158,7 +155,7 @@ export default function BillingPage() {
                     <div key={item.day} className="flex flex-1 flex-col items-center gap-2">
                       <div className="flex h-full w-full items-end justify-center">
                         <div
-                          className="w-full max-w-[32px] rounded-t-[var(--radius-sm)] bg-[var(--accent)]"
+                          className="w-full max-w-[32px] rounded-t-[var(--radius-sm)] bg-[var(--accent-system)]"
                           style={{ height: `${Math.max(8, Math.round((item.tokens / maxTokens) * 100))}%` }}
                           title={`${item.day}: ${item.tokens.toLocaleString('pt-BR')} tokens`}
                         />

@@ -12,22 +12,22 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'h-8 px-3 text-[13px]',
-  md: 'h-9 px-4 text-[14px]',
-  lg: 'h-10 px-5 text-[14px]',
+  sm: 'h-8 px-3 text-[12px]',
+  md: 'h-9 px-4 text-[13px]',
+  lg: 'h-11 px-5 text-[14px]',
 };
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 active:opacity-80',
+    'border border-[var(--border-strong)] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-[var(--shadow-xs)] hover:-translate-y-px hover:shadow-[var(--shadow-sm)] active:translate-y-0',
   secondary:
-    'bg-[var(--surface)] text-[var(--foreground)] border border-[var(--border)] hover:bg-[var(--surface-hover)] active:bg-[var(--surface-active)]',
+    'border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--surface-hover)] active:bg-[var(--surface-active)]',
   ghost:
     'text-[var(--muted-foreground)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] active:bg-[var(--surface-active)]',
   destructive:
     'bg-[var(--destructive)] text-white hover:opacity-90 active:opacity-80',
   outline:
-    'border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--surface-hover)] active:bg-[var(--surface-active)]',
+    'border border-[var(--border-strong)] bg-transparent text-[var(--foreground)] hover:bg-[var(--surface-hover)] active:bg-[var(--surface-active)]',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(

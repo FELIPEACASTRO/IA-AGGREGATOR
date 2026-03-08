@@ -28,7 +28,7 @@ const statusTone: Record<string, 'default' | 'success' | 'warning' | 'error'> = 
 export function TaskList({ tasks, onRefresh }: TaskListProps) {
   if (tasks.length === 0) {
     return (
-      <div className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-6">
+      <div className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-6">
         <p className="text-sm text-[var(--muted-foreground)]">
           Nenhuma task encontrada para o filtro atual.
         </p>
@@ -41,7 +41,7 @@ export function TaskList({ tasks, onRefresh }: TaskListProps) {
       {tasks.map((task) => (
         <article
           key={task.id}
-          className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4 shadow-[var(--shadow-lg)]"
+          className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-lg)]"
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 flex-1">

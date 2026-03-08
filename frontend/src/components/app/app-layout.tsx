@@ -1,24 +1,30 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ReactNode, useEffect, useState } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useThemeStore } from '@/stores/theme-store';
-import { cn } from '@/lib/cn';
 import { Avatar } from '@/components/ui/avatar';
+import { WorkspaceSwitcher } from '@/components/app/workspace-switcher';
+import { SidebarNavItem } from '@/components/ui/sidebar-nav-item';
 import {
-  House,
-  MessageSquare,
+  CommandPalette,
+  consumerQuickActions,
+  openCommandPalette,
+} from '@/components/ui/command-palette';
+import { LumeLogo } from '@/components/ui/lume-logo';
+import {
   BookOpen,
-  Zap,
   CreditCard,
+  MessageSquare,
+  Monitor,
+  Moon,
+  PanelLeft,
+  Search,
   Settings,
   Sun,
-  Moon,
-  Monitor,
-  PanelLeft,
-  Sparkles,
+  TerminalSquare,
+  WandSparkles,
 } from 'lucide-react';
 
 type AppLayoutProps = {
@@ -26,18 +32,18 @@ type AppLayoutProps = {
 };
 
 const navItems = [
-  { href: '/home', label: 'Home', icon: House },
   { href: '/chat', label: 'Chat', icon: MessageSquare },
   { href: '/library', label: 'Biblioteca', icon: BookOpen },
-  { href: '/prompts', label: 'Templates', icon: Zap },
+  { href: '/prompts', label: 'Templates', icon: WandSparkles },
   { href: '/billing', label: 'Plano', icon: CreditCard },
-  { href: '/settings', label: 'Configurações', icon: Settings },
+  { href: '/settings', label: 'Configuracoes', icon: Settings },
 ];
 
 export function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
-  const { user } = useAuthStore();
-  const { theme, setTheme } = useThemeStore();
+  const user = useAuthStore((state) => state.user);
+  const theme = useThemeStore((state) => state.theme);
+  const setTheme = useThemeStore((state) => state.setTheme);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
@@ -53,45 +59,50 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const sidebarContent = (
     <>
-      <div className="flex items-center gap-3 border-b border-[var(--border)] px-4 py-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-white">
-          <Sparkles className="h-4 w-4" />
-        </div>
-        <span className="text-[15px] font-semibold text-[var(--foreground)]">Lume</span>
+      <div className="border-b border-[var(--border)] px-4 py-4">
+        <LumeLogo />
+        <WorkspaceSwitcher compact className="mt-4" />
       </div>
 
-      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-3">
-        {navItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(`${href}/`);
-          return (
-            <Link
-              key={href}
-              href={href}
-              onClick={() => setMobileOpen(false)}
-              className={cn(
-                'flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2 text-[14px] transition-colors',
-                active
-                  ? 'bg-[var(--surface-hover)] font-medium text-[var(--foreground)]'
-                  : 'text-[var(--muted-foreground)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]',
-              )}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              {label}
-            </Link>
-          );
-        })}
+      <div className="px-3 py-3">
+        <button
+          type="button"
+          onClick={() => openCommandPalette('consumer')}
+          className="flex h-11 w-full items-center gap-3 rounded-[9.6px] border border-[var(--border)] bg-[var(--surface)] px-3 text-[13px] text-[var(--muted-foreground)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--foreground)]"
+        >
+          <Search className="h-4 w-4" />
+          <span className="flex-1 text-left">Buscar ou navegar</span>
+          <span className="rounded-[var(--radius-sm)] border border-[var(--border)] px-1.5 py-0.5 text-[11px] text-[var(--subtle-foreground)]">
+            Ctrl+K
+          </span>
+        </button>
+      </div>
+
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 pb-3" aria-label="Navegacao principal">
+        {navItems.map(({ href, label, icon }) => (
+          <SidebarNavItem
+            key={href}
+            href={href}
+            label={label}
+            icon={icon}
+            active={pathname === href || pathname.startsWith(`${href}/`)}
+          />
+        ))}
       </nav>
 
       <div className="space-y-2 border-t border-[var(--border)] p-3">
-        <button
+        <SidebarNavItem
+          label={`Tema: ${themeLabel}`}
+          icon={ThemeIcon}
           onClick={cycleTheme}
-          className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2 text-[13px] text-[var(--muted-foreground)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
-        >
-          <ThemeIcon className="h-4 w-4" />
-          {themeLabel}
-        </button>
-        <div className="flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2">
-          <Avatar name={user?.fullName || 'U'} size="sm" />
+        />
+        <SidebarNavItem
+          href="/codex"
+          label="Abrir Codex"
+          icon={TerminalSquare}
+        />
+        <div className="flex items-center gap-3 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 py-3">
+          <Avatar name={user?.fullName || 'U'} size="md" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13px] font-medium text-[var(--foreground)]">{user?.fullName || 'Conta'}</p>
             <p className="truncate text-[11px] text-[var(--muted-foreground)]">{user?.email}</p>
@@ -102,33 +113,50 @@ export function AppLayout({ children }: AppLayoutProps) {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--background)]">
+    <div className="flex min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+      <CommandPalette scope="consumer" quickActions={consumerQuickActions} />
+
       <aside className="hidden w-[var(--sidebar-width)] shrink-0 flex-col border-r border-[var(--border)] bg-[var(--surface-sidebar)] md:flex">
         {sidebarContent}
       </aside>
 
-      {mobileOpen && (
+      {mobileOpen ? (
         <>
           <div
             className="fixed inset-0 z-[var(--z-modal)] bg-black/40 md:hidden"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="fixed inset-y-0 left-0 z-[calc(var(--z-modal)+1)] flex w-[280px] flex-col bg-[var(--surface-sidebar)] shadow-[var(--shadow-lg)] md:hidden">
+          <aside className="fixed inset-y-0 left-0 z-[calc(var(--z-modal)+1)] flex w-[280px] flex-col border-r border-[var(--border)] bg-[var(--surface-sidebar)] shadow-[var(--shadow-lg)] md:hidden">
             {sidebarContent}
           </aside>
         </>
-      )}
+      ) : null}
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="flex items-center border-b border-[var(--border)] px-4 py-3 md:hidden">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header
+          className="sticky top-0 z-[var(--z-sticky)] flex items-center justify-between border-b border-[var(--border)] px-4 py-3 backdrop-blur-md md:hidden"
+          style={{ backgroundColor: 'color-mix(in srgb, var(--background) 88%, transparent)' }}
+        >
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)]"
+              aria-label="Abrir menu"
+            >
+              <PanelLeft className="h-4 w-4" />
+            </button>
+            <LumeLogo compact textClassName="hidden" />
+          </div>
           <button
-            onClick={() => setMobileOpen(true)}
-            className="mr-3 rounded-[var(--radius-md)] p-1.5 text-[var(--foreground)] hover:bg-[var(--surface-hover)]"
+            type="button"
+            onClick={() => openCommandPalette('consumer')}
+            className="inline-flex h-9 items-center gap-2 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 text-[12px] text-[var(--muted-foreground)]"
           >
-            <PanelLeft className="h-5 w-5" />
+            <Search className="h-4 w-4" />
+            Buscar
           </button>
-          <span className="text-[15px] font-semibold text-[var(--foreground)]">Lume</span>
-        </div>
+        </header>
 
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>

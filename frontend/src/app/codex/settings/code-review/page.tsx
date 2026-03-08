@@ -47,7 +47,7 @@ export default function CodeReviewSettingsPage() {
 
   return (
     <CodexShell title="Code Review Policies" subtitle="Configuração de review automático/manual por repositório com prioridade e guidelines.">
-      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4">
+      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4">
         <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Nova política</h2>
         <div className="mt-3 grid gap-3 md:grid-cols-3">
           <label className="space-y-1">
@@ -55,6 +55,7 @@ export default function CodeReviewSettingsPage() {
             <select
               value={repoId}
               onChange={(event) => setRepoId(event.target.value)}
+              aria-label="Repository"
               className="h-11 w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-transparent px-3 text-sm"
             >
               {repos.map((repo) => (
@@ -69,6 +70,7 @@ export default function CodeReviewSettingsPage() {
             <select
               value={minSeverity}
               onChange={(event) => setMinSeverity(event.target.value as typeof minSeverity)}
+              aria-label="Min severity"
               className="h-11 w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-transparent px-3 text-sm"
             >
               <option value="P0">P0</option>
@@ -97,11 +99,11 @@ export default function CodeReviewSettingsPage() {
         </div>
       </section>
 
-      <section className="mt-3 rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4">
+      <section className="mt-3 rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4">
         <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Policies ativas</h2>
         <div className="mt-3 space-y-2">
           {policies.map((policy) => (
-            <article key={policy.id} className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-3">
+            <article key={policy.id} className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-hover)] p-3">
               <p className="text-sm font-semibold">{policy.repository?.fullName || policy.repositoryId}</p>
               <p className="mt-1 text-xs text-[var(--muted-foreground)]">
                 Enabled: {String(policy.enabled)} • Auto: {String(policy.automaticReviews)} • Min severity: {policy.minSeverity}

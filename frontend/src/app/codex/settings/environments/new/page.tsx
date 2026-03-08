@@ -47,7 +47,7 @@ export default function NewEnvironmentPage() {
   return (
     <CodexShell title="Novo Environment" subtitle="Configuração completa de setup, cache e internet policy.">
       <form
-        className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4"
+        className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4"
         onSubmit={async (event) => {
           event.preventDefault();
           setLoading(true);
@@ -82,13 +82,14 @@ export default function NewEnvironmentPage() {
         <div className="grid gap-3 md:grid-cols-2">
           <label className="space-y-1">
             <span className="text-xs uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Nome</span>
-            <Input value={name} onChange={(event) => setName(event.target.value)} required />
+            <Input value={name} onChange={(event) => setName(event.target.value)} aria-label="Nome do environment" required />
           </label>
           <label className="space-y-1">
             <span className="text-xs uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Repository</span>
             <select
               value={repositoryId}
               onChange={(event) => setRepositoryId(event.target.value)}
+              aria-label="Repository do environment"
               className="h-11 w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-transparent px-3 text-sm"
             >
               {repos.map((repo) => (
@@ -100,29 +101,30 @@ export default function NewEnvironmentPage() {
           </label>
           <label className="space-y-1 md:col-span-2">
             <span className="text-xs uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Descrição</span>
-            <Textarea rows={3} value={description} onChange={(event) => setDescription(event.target.value)} />
+            <Textarea rows={3} value={description} onChange={(event) => setDescription(event.target.value)} aria-label="Descricao do environment" />
           </label>
           <label className="space-y-1">
             <span className="text-xs uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Base image</span>
-            <Input value={baseImage} onChange={(event) => setBaseImage(event.target.value)} />
+            <Input value={baseImage} onChange={(event) => setBaseImage(event.target.value)} aria-label="Base image" />
           </label>
           <label className="space-y-1">
             <span className="text-xs uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Default branch</span>
-            <Input value={defaultBranch} onChange={(event) => setDefaultBranch(event.target.value)} />
+            <Input value={defaultBranch} onChange={(event) => setDefaultBranch(event.target.value)} aria-label="Default branch" />
           </label>
           <label className="space-y-1 md:col-span-2">
             <span className="text-xs uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Setup script</span>
-            <Textarea rows={4} value={setupScript} onChange={(event) => setSetupScript(event.target.value)} />
+            <Textarea rows={4} value={setupScript} onChange={(event) => setSetupScript(event.target.value)} aria-label="Setup script" />
           </label>
           <label className="space-y-1 md:col-span-2">
             <span className="text-xs uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Maintenance script</span>
-            <Textarea rows={3} value={maintenanceScript} onChange={(event) => setMaintenanceScript(event.target.value)} />
+            <Textarea rows={3} value={maintenanceScript} onChange={(event) => setMaintenanceScript(event.target.value)} aria-label="Maintenance script" />
           </label>
           <label className="space-y-1">
             <span className="text-xs uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Internet mode</span>
             <select
               value={internetMode}
               onChange={(event) => setInternetMode(event.target.value)}
+              aria-label="Internet mode"
               className="h-11 w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-transparent px-3 text-sm"
             >
               <option value="OFF">OFF</option>
@@ -132,11 +134,11 @@ export default function NewEnvironmentPage() {
           </label>
           <label className="space-y-1">
             <span className="text-xs uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Allowed methods</span>
-            <Input value={allowedMethods} onChange={(event) => setAllowedMethods(event.target.value)} />
+            <Input value={allowedMethods} onChange={(event) => setAllowedMethods(event.target.value)} aria-label="Allowed methods" />
           </label>
           <label className="space-y-1 md:col-span-2">
             <span className="text-xs uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Domain allowlist (comma-separated)</span>
-            <Input value={domainAllowlist} onChange={(event) => setDomainAllowlist(event.target.value)} />
+            <Input value={domainAllowlist} onChange={(event) => setDomainAllowlist(event.target.value)} aria-label="Domain allowlist" />
           </label>
         </div>
 

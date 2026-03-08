@@ -7,6 +7,8 @@ import { toast } from '@/stores/toast-store';
 import { trackEvent } from '@/lib/analytics';
 import { cn } from '@/lib/cn';
 import { AppLayout } from '@/components/app/app-layout';
+import { FilterPill } from '@/components/ui/filter-pill';
+import { SearchField } from '@/components/ui/search-field';
 import {
   BookOpen,
   ChevronRight,
@@ -15,7 +17,6 @@ import {
   List,
   MessageSquare,
   Pin,
-  Search,
   Trash2,
 } from 'lucide-react';
 
@@ -61,21 +62,13 @@ export default function LibraryPage() {
         {/* Header */}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-[24px] font-semibold text-[var(--foreground)]">Biblioteca</h1>
-            <p className="mt-1 text-[14px] text-[var(--muted-foreground)]">
+            <h1 className="font-[var(--font-serif)] text-[32px] font-medium tracking-[-0.04em] text-[var(--foreground)]">Biblioteca</h1>
+            <p className="mt-2 text-[14px] text-[var(--muted-foreground)]">
               {conversations.length} conversa{conversations.length !== 1 ? 's' : ''} salvas
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--muted-foreground)]" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Buscar..."
-                className="h-9 w-48 rounded-[var(--radius-md)] border border-[var(--input-border)] bg-[var(--input-bg)] pl-9 pr-3 text-[13px] text-[var(--foreground)] outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--ring)]"
-              />
-            </div>
+            <SearchField value={query} onChange={setQuery} placeholder="Buscar conversas..." className="w-56" />
             <div className="flex rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)]">
               <button
                 onClick={() => setView('list')}
@@ -101,30 +94,17 @@ export default function LibraryPage() {
 
         {/* Filters */}
         <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setFilterPinned((v) => !v)}
-            className={cn(
-              'inline-flex items-center gap-1.5 rounded-[var(--radius-full)] border px-3 py-1.5 text-[12px] font-medium transition-colors',
-              filterPinned
-                ? 'border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]'
-                : 'border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]',
-            )}
-          >
+          <FilterPill active={filterPinned} onClick={() => setFilterPinned((v) => !v)}>
             <Pin className="h-3 w-3" /> Fixadas {pinnedCount > 0 ? `(${pinnedCount})` : ''}
-          </button>
+          </FilterPill>
           {(['recent', 'name', 'size'] as SortKey[]).map((key) => (
-            <button
+            <FilterPill
               key={key}
               onClick={() => setSort(key)}
-              className={cn(
-                'rounded-[var(--radius-full)] border px-3 py-1.5 text-[12px] font-medium transition-colors',
-                sort === key
-                  ? 'border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]'
-                  : 'border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]',
-              )}
+              active={sort === key}
             >
               {key === 'recent' ? 'Recente' : key === 'name' ? 'Nome' : 'Tamanho'}
-            </button>
+            </FilterPill>
           ))}
         </div>
 
@@ -142,17 +122,14 @@ export default function LibraryPage() {
         ) : view === 'grid' ? (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {filtered.map((c) => (
-              <article
-                key={c.id}
-                className="group rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4"
-              >
+              <article key={c.id} className="group rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-xs)]">
                 <div className="flex items-start justify-between">
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface-hover)] text-[12px] font-semibold text-[var(--muted-foreground)]">
                     {c.title.slice(0, 2).toUpperCase()}
                   </span>
                   {c.pinned && <Pin className="h-3.5 w-3.5 text-[var(--warning)]" />}
                 </div>
-                <h3 className="mt-3 truncate text-[14px] font-medium text-[var(--foreground)]">{c.title}</h3>
+                <h3 className="mt-3 truncate font-[var(--font-serif)] text-[20px] font-medium tracking-[-0.03em] text-[var(--foreground)]">{c.title}</h3>
                 <p className="mt-1 text-[12px] text-[var(--muted-foreground)]">
                   {c.model} · {c.messages.length} msgs · {new Date(c.updatedAt).toLocaleDateString('pt-BR')}
                 </p>
@@ -166,6 +143,7 @@ export default function LibraryPage() {
                   <button
                     onClick={() => toggleConversationPinned(c.id)}
                     className="rounded-[var(--radius-md)] border border-[var(--border)] p-2 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                    aria-label={c.pinned ? 'Desafixar conversa' : 'Fixar conversa'}
                   >
                     <Pin className="h-3.5 w-3.5" />
                   </button>
@@ -182,10 +160,7 @@ export default function LibraryPage() {
         ) : (
           <div className="space-y-2">
             {filtered.map((c) => (
-              <article
-                key={c.id}
-                className="group flex items-center gap-4 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3"
-              >
+              <article key={c.id} className="group flex items-center gap-4 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 shadow-[var(--shadow-xs)]">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-hover)] text-[12px] font-semibold text-[var(--muted-foreground)]">
                   {c.title.slice(0, 2).toUpperCase()}
                 </span>
@@ -204,6 +179,7 @@ export default function LibraryPage() {
                   <button
                     onClick={() => toggleConversationPinned(c.id)}
                     className="rounded-[var(--radius-md)] p-2 text-[var(--muted-foreground)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
+                    aria-label={c.pinned ? 'Desafixar conversa' : 'Fixar conversa'}
                   >
                     <Pin className="h-3.5 w-3.5" />
                   </button>

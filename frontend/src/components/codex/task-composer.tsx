@@ -113,20 +113,20 @@ export function TaskComposer({
   return (
     <form
       onSubmit={submit}
-      className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4 shadow-[var(--shadow-lg)]"
+      className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-lg)]"
     >
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={() => setMode('ASK')}
-          className={`rounded-full border px-3 py-1.5 text-xs ${mode === 'ASK' ? 'border-[rgba(92,214,168,0.4)] bg-[rgba(92,214,168,0.18)] text-[var(--foreground)]' : 'border-[var(--border)] text-[var(--muted-foreground)]'}`}
+          className={`rounded-full border px-3 py-1.5 text-xs ${mode === 'ASK' ? 'border-[var(--accent-brand)] bg-[var(--surface-hover)] text-[var(--foreground)]' : 'border-[var(--border)] text-[var(--muted-foreground)]'}`}
         >
           ASK
         </button>
         <button
           type="button"
           onClick={() => setMode('CODE')}
-          className={`rounded-full border px-3 py-1.5 text-xs ${mode === 'CODE' ? 'border-[rgba(96,115,255,0.4)] bg-[rgba(96,115,255,0.2)] text-[var(--foreground)]' : 'border-[var(--border)] text-[var(--muted-foreground)]'}`}
+          className={`rounded-full border px-3 py-1.5 text-xs ${mode === 'CODE' ? 'border-[var(--border-strong)] bg-[var(--surface-active)] text-[var(--foreground)]' : 'border-[var(--border)] text-[var(--muted-foreground)]'}`}
         >
           CODE
         </button>
@@ -145,6 +145,7 @@ export function TaskComposer({
         onChange={(event) => setPrompt(event.target.value)}
         placeholder="Descreva a task cloud. Exemplo: revise o fluxo de auth e proponha patch com testes."
         rows={5}
+        aria-label="Prompt da task"
       />
 
       <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
@@ -153,7 +154,8 @@ export function TaskComposer({
           <select
             value={repoId}
             onChange={(event) => setRepoId(event.target.value)}
-            className="h-11 w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] px-3 text-sm"
+            aria-label="Repositorio"
+            className="h-11 w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-hover)] px-3 text-sm"
           >
             {repositories.map((repo) => (
               <option key={repo.id} value={repo.id}>
@@ -167,7 +169,8 @@ export function TaskComposer({
           <select
             value={environmentId}
             onChange={(event) => setEnvironmentId(event.target.value)}
-            className="h-11 w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] px-3 text-sm"
+            aria-label="Environment"
+            className="h-11 w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-hover)] px-3 text-sm"
           >
             {environments.map((env) => (
               <option key={env.id} value={env.id}>
@@ -178,14 +181,15 @@ export function TaskComposer({
         </label>
         <label className="space-y-1">
           <span className="text-xs uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Branch</span>
-          <Input value={baseBranch} onChange={(event) => setBaseBranch(event.target.value)} />
+          <Input value={baseBranch} onChange={(event) => setBaseBranch(event.target.value)} aria-label="Branch" />
         </label>
         <label className="space-y-1">
           <span className="text-xs uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Best of N</span>
           <select
             value={bestOfN}
             onChange={(event) => setBestOfN(Number(event.target.value))}
-            className="h-11 w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] px-3 text-sm"
+            aria-label="Best of N"
+            className="h-11 w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-hover)] px-3 text-sm"
           >
             {[1, 2, 3, 4, 5].map((option) => (
               <option key={option} value={option}>
@@ -200,6 +204,7 @@ export function TaskComposer({
             value={voiceTranscript}
             onChange={(event) => setVoiceTranscript(event.target.value)}
             placeholder="Transcricao opcional"
+            aria-label="Voice dictation"
           />
         </label>
       </div>
@@ -245,7 +250,7 @@ export function TaskComposer({
       </div>
 
       {(imageInputs.length > 0 || voiceTranscript.trim()) && (
-        <div className="mt-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] p-3 text-xs text-[var(--muted-foreground)]">
+        <div className="mt-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-hover)] p-3 text-xs text-[var(--muted-foreground)]">
           <div className="flex items-center gap-2 text-[var(--foreground)]">
             <Sparkles className="h-4 w-4" />
             Attachments context

@@ -14,11 +14,11 @@ const steps = [
 export default function CodexGetStartedPage() {
   return (
     <CodexShell title="Get Started" subtitle="Fluxo de onboarding completo do workspace cloud.">
-      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-6">
+      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-6">
         <h2 className="text-lg font-semibold tracking-[-0.03em]">Onboarding Checklist</h2>
         <ol className="mt-4 space-y-3">
           {steps.map((step, idx) => (
-            <li key={step} className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] px-4 py-3 text-sm">
+            <li key={step} className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-hover)] px-4 py-3 text-sm">
               <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[var(--border)] text-xs">
                 {idx + 1}
               </span>

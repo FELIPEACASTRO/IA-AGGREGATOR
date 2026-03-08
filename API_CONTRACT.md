@@ -1,5 +1,21 @@
 ﻿# API_CONTRACT
 
+## V1 Tenancy Foundation
+- GET /api/v1/session
+- GET /api/v1/workspaces
+- POST /api/v1/workspaces
+- PATCH /api/v1/workspaces/current
+- GET /api/v1/workspace/summary
+- GET /api/v1/search?q=...
+
+## V1 AI Gateway
+- POST /api/v1/ai/chat
+- GET /api/v1/providers
+- GET /api/v1/providers/:id/models
+- GET /api/v1/providers/:id/health
+- GET /api/v1/agents
+- GET /api/v1/credentials/required
+
 ## Auth
 - POST /api/auth/login
 - POST /api/auth/logout

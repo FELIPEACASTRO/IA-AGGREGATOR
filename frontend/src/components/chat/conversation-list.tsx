@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useChatStore, Conversation } from '@/stores/chat-store';
-import { ConversationItem } from './conversation-item';
+import { Conversation, useChatStore } from '@/stores/chat-store';
+import { ConversationItem } from '@/components/chat/conversation-item';
 
 interface ConversationListProps {
   searchTerm: string;
@@ -30,27 +30,32 @@ function groupByDate(conversations: Conversation[]): DateGroup[] {
     'Mais antigos': [],
   };
 
-  for (const conv of conversations) {
-    const t = conv.updatedAt;
-    if (t >= todayMs) groups['Hoje'].push(conv);
-    else if (t >= yesterdayMs) groups['Ontem'].push(conv);
-    else if (t >= weekMs) groups['Ultimos 7 dias'].push(conv);
-    else if (t >= monthMs) groups['Ultimos 30 dias'].push(conv);
-    else groups['Mais antigos'].push(conv);
+  for (const conversation of conversations) {
+    const updatedAt = conversation.updatedAt;
+    if (updatedAt >= todayMs) groups.Hoje.push(conversation);
+    else if (updatedAt >= yesterdayMs) groups.Ontem.push(conversation);
+    else if (updatedAt >= weekMs) groups['Ultimos 7 dias'].push(conversation);
+    else if (updatedAt >= monthMs) groups['Ultimos 30 dias'].push(conversation);
+    else groups['Mais antigos'].push(conversation);
   }
 
   return Object.entries(groups)
-    .filter(([, convs]) => convs.length > 0)
-    .map(([label, conversations]) => ({ label, conversations }));
+    .filter(([, entries]) => entries.length > 0)
+    .map(([label, entries]) => ({ label, conversations: entries }));
 }
 
 export function ConversationList({ searchTerm }: ConversationListProps) {
-  const { conversations, activeConversationId } = useChatStore();
+  const rawConversations = useChatStore((state) => state.conversations);
+  const activeConversationId = useChatStore((state) => state.activeConversationId);
+  const conversations = useMemo(
+    () => (Array.isArray(rawConversations) ? rawConversations : []),
+    [rawConversations],
+  );
 
   const filtered = useMemo(
     () =>
-      conversations.filter((c) =>
-        c.title.toLowerCase().includes(searchTerm.toLowerCase()),
+      conversations.filter((conversation) =>
+        conversation.title.toLowerCase().includes(searchTerm.toLowerCase()),
       ),
     [conversations, searchTerm],
   );
@@ -59,8 +64,8 @@ export function ConversationList({ searchTerm }: ConversationListProps) {
 
   if (filtered.length === 0) {
     return (
-      <div className="px-3 py-8 text-center">
-        <p className="text-[13px] text-[var(--subtle-foreground)]">
+      <div className="px-4 py-8 text-center">
+        <p className="text-[12px] text-[var(--subtle-foreground)]">
           {searchTerm ? 'Nenhuma conversa encontrada.' : 'Nenhuma conversa ainda.'}
         </p>
       </div>
@@ -68,18 +73,18 @@ export function ConversationList({ searchTerm }: ConversationListProps) {
   }
 
   return (
-    <div className="py-0.5">
+    <div className="space-y-4 pb-3">
       {groups.map((group) => (
-        <div key={group.label} className="mb-1">
-          <p className="px-4 pb-2 mt-1 text-[12px] font-normal text-[var(--text-500)] select-none" style={{ lineHeight: '16px' }}>
+        <div key={group.label}>
+          <p className="px-4 pb-2 text-[11px] uppercase tracking-[0.12em] text-[var(--subtle-foreground)]">
             {group.label}
           </p>
           <div className="space-y-0.5">
-            {group.conversations.map((conv) => (
+            {group.conversations.map((conversation) => (
               <ConversationItem
-                key={conv.id}
-                conversation={conv}
-                isActive={conv.id === activeConversationId}
+                key={conversation.id}
+                conversation={conversation}
+                isActive={conversation.id === activeConversationId}
               />
             ))}
           </div>

@@ -10,7 +10,7 @@ type PrimitiveProps = {
 
 function PrimitiveCard({ children, className }: PrimitiveProps) {
   return (
-    <div className={cn('rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4', className)}>
+    <div className={cn('rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-4', className)}>
       {children}
     </div>
   );

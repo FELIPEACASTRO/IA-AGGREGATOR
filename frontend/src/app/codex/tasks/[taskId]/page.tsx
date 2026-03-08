@@ -76,7 +76,7 @@ export default function CodexTaskDetailsPage() {
 
   return (
     <CodexShell title={task?.title || `Task ${taskId.slice(0, 8)}`} subtitle="Resumo, evidencias e follow-up contextual.">
-      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4">
+      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4">
         <div className="flex flex-wrap items-center gap-2">
           {tabs.map((tab) => (
             <Link
@@ -93,7 +93,7 @@ export default function CodexTaskDetailsPage() {
         {task && (
           <div className="mt-4 grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="space-y-3">
-              <article className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-4">
+              <article className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-hover)] p-4">
                 <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Summary</h2>
                 <p className="mt-2 text-sm text-[var(--muted-foreground)]">{task.summaryText || 'Resumo ainda nao disponivel.'}</p>
                 <div className="mt-3 grid gap-2 text-xs text-[var(--muted-foreground)] sm:grid-cols-2">
@@ -107,7 +107,7 @@ export default function CodexTaskDetailsPage() {
                 </div>
               </article>
 
-              <article className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-4">
+              <article className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-hover)] p-4">
                 <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Follow-up</h2>
                 <Textarea
                   className="mt-2"
@@ -115,11 +115,13 @@ export default function CodexTaskDetailsPage() {
                   value={followupPrompt}
                   onChange={(event) => setFollowupPrompt(event.target.value)}
                   placeholder="Continue a task com contexto da execucao mais recente..."
+                  aria-label="Prompt de follow-up"
                 />
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <select
                     value={followupMode}
                     onChange={(event) => setFollowupMode(event.target.value as TaskMode)}
+                    aria-label="Modo do follow-up"
                     className="h-10 rounded-full border border-[var(--border)] bg-transparent px-3 text-xs"
                   >
                     <option value="ASK">ASK</option>

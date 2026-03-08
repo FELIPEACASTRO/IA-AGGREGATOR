@@ -2,7 +2,7 @@
 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { CodeBlock } from './code-block';
+import { CodeBlock } from '@/components/ui/code-block';
 
 interface MessageMarkdownProps {
   content: string;

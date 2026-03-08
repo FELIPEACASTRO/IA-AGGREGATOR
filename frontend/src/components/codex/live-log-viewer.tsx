@@ -30,7 +30,7 @@ export function LiveLogViewer({ logs }: LiveLogViewerProps) {
   }, [logs, phaseFilter, search]);
 
   return (
-    <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-black/40 p-4">
+    <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface-active)] p-4">
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <h2 className="mr-auto text-sm font-semibold uppercase tracking-[0.14em] text-[var(--subtle-foreground)]">Live Logs</h2>
         <input
@@ -51,7 +51,7 @@ export function LiveLogViewer({ logs }: LiveLogViewerProps) {
           ))}
         </select>
       </div>
-      <div className="max-h-[54vh] overflow-auto rounded-[var(--radius-lg)] border border-[var(--border)] bg-black/40 p-3 font-mono text-xs">
+      <div className="max-h-[54vh] overflow-auto rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-active)] p-3 font-mono text-xs">
         {filtered.length === 0 && <p className="text-[var(--muted-foreground)]">Sem linhas de log para o filtro atual.</p>}
         {filtered.map((line) => (
           <div key={line.id} className={`grid grid-cols-3 gap-2 py-0.5 ${line.isError ? 'text-[var(--destructive)]' : 'text-[var(--muted-foreground)]'}`}>

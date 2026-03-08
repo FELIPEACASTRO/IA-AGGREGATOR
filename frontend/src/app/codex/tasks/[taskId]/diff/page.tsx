@@ -36,7 +36,7 @@ export default function TaskDiffPage() {
 
   return (
     <CodexShell title={`Task ${taskId.slice(0, 8)} • Diff`} subtitle="Revisão unificada por arquivo e hunk.">
-      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[rgba(8,17,31,0.84)] p-4">
+      <section className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-4">
         <div className="mb-3 flex items-center gap-2">
           <Link className="rounded-full border border-[var(--border)] px-3 py-1.5 text-xs" href={`/codex/tasks/${taskId}`}>
             Summary

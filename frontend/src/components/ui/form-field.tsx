@@ -84,7 +84,7 @@ export function SelectField({
           required={required}
           disabled={disabled}
           className={cn(
-            'h-10 w-full rounded-[var(--radius-md)] border border-[var(--input-border)] bg-[var(--input-bg)] px-3 text-[14px] text-[var(--foreground)] outline-none transition-colors focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--ring)] disabled:cursor-not-allowed disabled:opacity-50',
+            'h-11 w-full rounded-[9.6px] border border-[var(--input-border)] bg-[var(--input-bg)] px-3 text-[14px] text-[var(--foreground)] outline-none transition-colors focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--ring)] disabled:cursor-not-allowed disabled:opacity-50',
             icon ? 'pl-9' : '',
             error ? 'border-[var(--destructive)] focus:border-[var(--destructive)]' : '',
             fieldClassName,

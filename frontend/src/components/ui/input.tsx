@@ -17,20 +17,19 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
     return (
       <div className="relative w-full">
-        {icon && (
+        {icon ? (
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]">
             {icon}
           </span>
-        )}
+        ) : null}
         <input
           ref={ref}
           type={resolvedType}
           className={cn(
-            'w-full rounded-[var(--radius-md)] border border-[var(--input-border)] bg-[var(--input-bg)]',
-            'px-3 py-2.5 text-[14px] text-[var(--foreground)] placeholder:text-[var(--subtle-foreground)]',
-            'transition-colors',
-            'hover:border-[var(--border-strong)]',
-            'focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--accent)]',
+            'h-11 w-full rounded-[9.6px] border border-[var(--input-border)] bg-[var(--input-bg)]',
+            'px-3 text-[14px] text-[var(--foreground)] placeholder:text-[var(--subtle-foreground)]',
+            'transition-colors hover:border-[var(--border-strong)]',
+            'focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]',
             'disabled:cursor-not-allowed disabled:opacity-50',
             error && 'border-[var(--destructive)] focus:border-[var(--destructive)] focus:ring-[var(--destructive)]/20',
             icon && 'pl-10',
@@ -39,21 +38,21 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
           {...props}
         />
-        {isPassword && (
+        {isPassword ? (
           <button
             type="button"
-            onClick={() => setShowPassword((v) => !v)}
+            onClick={() => setShowPassword((value) => !value)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
             aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
           >
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
-        )}
-        {error && (
+        ) : null}
+        {error ? (
           <p className="mt-1.5 text-[12px] text-[var(--destructive)]" role="alert">
             {error}
           </p>
-        )}
+        ) : null}
       </div>
     );
   },
