@@ -1,14 +1,15 @@
 # IA-AGGREGATOR / Lume Codex Cloud
 
-Monorepo com backend Java (auth/ai/analytics) e frontend Next.js com módulo de cloud coding agents (`/codex`).
+Monorepo com backend Spring Boot para `auth`, `organizations`, `AI gateway`, `analytics` e `billing metadata`, mais frontend Next.js que atua como BFF e UI do produto.
 
 ## Stack
+- Backend: Spring Boot 3.4, Java 21, Resilience4j, Micrometer
 - Frontend: Next.js 15, React 19, TypeScript, Tailwind v4
-- Cloud task runtime: Prisma + PostgreSQL, Redis + BullMQ, SSE
-- Backend existente: Spring Boot (auth e serviços de IA)
+- Dados operacionais: Prisma, PostgreSQL, Redis, BullMQ
+- IA canonica: backend Spring Boot com adapters oficiais para OpenAI, Gemini, DeepSeek, Anthropic, xAI e Perplexity
 
-## Subir solução completa
-No PowerShell (raiz do projeto):
+## Subir a solucao completa
+Na raiz do projeto:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\start-solution.ps1
@@ -26,43 +27,12 @@ Parar:
 powershell -ExecutionPolicy Bypass -File .\scripts\stop-solution.ps1
 ```
 
-## Bootstrap do módulo Codex Cloud
-Na pasta `frontend`:
+## Configuracao de ambiente
+Copie `.env.example`, injete os valores no ambiente local, CI ou secret manager e nunca versione `.env`.
 
-```powershell
-$env:CODEX_DATABASE_URL='postgresql://ia_aggregator:ia_aggregator@localhost:5432/ia_aggregator?schema=codex'
-npm install
-npm run codex:bootstrap
-npm run dev
-```
+Variaveis obrigatorias para os providers oficiais:
 
-## Principais rotas
-- `/codex`
-- `/codex/tasks/[taskId]`
-- `/codex/settings/connectors`
-- `/codex/settings/environments`
-- `/codex/settings/code-review`
-- `/codex/settings/usage`
-- `/codex/settings/analytics`
-- `/admin/settings`
-
-## Qualidade (frontend)
-```powershell
-npm --prefix frontend run lint
-npm --prefix frontend run type-check
-npm --prefix frontend run build
-npm --prefix frontend run test -- --runInBand
-```
-
-## Integracao canônica de IA
-- Owner canônico: backend Spring Boot
-- Providers oficialmente endurecidos: OpenAI, Gemini, DeepSeek, Anthropic, xAI e Perplexity
-- O frontend Next.js atua como BFF/proxy e nao fala mais diretamente com providers externos
-
-### Variáveis de ambiente obrigatórias
-Copie `.env.example` e injete as credenciais no ambiente do sistema, CI ou secret manager. Nunca versione `.env`.
-
-| Variável | Uso |
+| Variavel | Uso |
 | --- | --- |
 | `OPENAI_API_KEY` | OpenAI |
 | `GEMINI_API_KEY` | Gemini |
@@ -72,40 +42,131 @@ Copie `.env.example` e injete as credenciais no ambiente do sistema, CI ou secre
 | `PERPLEXITY_API_KEY` | Perplexity |
 | `RUN_REAL_AI_TESTS` | Habilita smoke tests reais opcionais |
 
-### Testes
-Mockados:
+Variaveis opcionais de teste local:
+
+| Variavel | Uso |
+| --- | --- |
+| `NEXT_PUBLIC_API_URL` | URL do backend para o BFF do frontend |
+| `E2E_RELEASE_EMAIL` | Credencial real da suite release |
+| `E2E_RELEASE_PASSWORD` | Credencial real da suite release |
+| `E2E_AI_MODEL` | Modelo preferido no E2E real |
+
+## Arquitetura da integracao de IA
+- O backend Spring Boot e o owner canonico da integracao multi-provider.
+- O frontend nao chama OpenAI, Gemini, Anthropic, DeepSeek, xAI ou Perplexity diretamente.
+- O browser fala apenas com o BFF do Next.js.
+- O BFF encaminha para o backend canonico de IA.
+- Providers ausentes falham com erro explicito de configuracao; nao existe fallback mock em runtime.
+
+## Endpoints canonicos
+- `POST /api/v1/ai/chat`
+- `POST /api/v1/ai/chat/stream`
+- `GET /api/v1/ai/providers`
+- `GET /api/v1/ai/providers/health`
+- `GET /api/v1/ai/providers/{providerId}/health`
+
+## Como rodar localmente
+Backend:
+
 ```powershell
 mvn -q -f backend/pom.xml test
+```
+
+Frontend:
+
+```powershell
+npm --prefix frontend install
+npm --prefix frontend run lint
+npm --prefix frontend run type-check
+npm --prefix frontend run test -- --runInBand
+npm --prefix frontend run build
+```
+
+## Cobertura
+Backend com JaCoCo:
+
+```powershell
+mvn -q -f backend/pom.xml verify
+```
+
+Frontend com coverage:
+
+```powershell
+npm --prefix frontend run test:coverage
+```
+
+## Testes mockados
+Backend:
+
+```powershell
+mvn -q -f backend/pom.xml test
+```
+
+Frontend:
+
+```powershell
 npm --prefix frontend run test -- --runInBand
 ```
 
-Reais opcionais:
+## Smoke tests reais opcionais
+Backend:
+- Classe: `OfficialProvidersRealSmokeTest`
+- So executa com `RUN_REAL_AI_TESTS=true`
+- Cada teste faz `skip` automatico quando a env var especifica do provider estiver ausente
+
+Frontend release:
+
 ```powershell
 $env:RUN_REAL_AI_TESTS='true'
+$env:E2E_RELEASE_EMAIL='seu-usuario'
+$env:E2E_RELEASE_PASSWORD='sua-senha'
 npm --prefix frontend run test:release
 ```
 
-### Checklist de segurança
-- Nenhuma API key em código-fonte
+## Como adicionar um novo provider
+1. Criar um adapter em `backend/ia-aggregator-infrastructure/.../provider`.
+2. Implementar o contrato `AiProviderPort`.
+3. Expor `providerId`, modelos suportados, `healthCheck`, `estimateCost` e estrategia de erro.
+4. Configurar env vars e defaults no `application.yml`.
+5. Adicionar testes unitarios, testes com `MockWebServer` e smoke real opcional.
+6. Atualizar o BFF/frontend apenas no catalogo visual, nunca com chamadas diretas ao provider.
+
+## Exemplos de uso
+Chat simples via backend:
+
+```json
+POST /api/v1/ai/chat
+{
+  "prompt": "Explique o que e fallback de modelos em uma frase.",
+  "preferredModel": "gpt-4o-mini",
+  "provider": "openai",
+  "fallbackProviders": ["anthropic", "gemini"]
+}
+```
+
+Streaming via backend:
+
+```json
+POST /api/v1/ai/chat/stream
+{
+  "prompt": "Responda em uma frase curta.",
+  "preferredModel": "claude-3-5-haiku-latest",
+  "provider": "anthropic",
+  "stream": true
+}
+```
+
+## Checklist de seguranca
+- Nenhum secret hardcoded no codigo
 - `.env` ignorado no git
-- Logs sem headers `Authorization` e sem valores de segredo
-- Providers ausentes retornam `NOT_CONFIGURED`/erro claro sem expor valores
-- Smoke tests reais só rodam quando explicitamente habilitados
+- API keys lidas por variaveis de ambiente
+- Logs sem `Authorization`, tokens ou API keys
+- Payloads sensiveis sanitizados antes de aparecer em mensagens de erro
+- Providers configuraveis por env e health/status no backend
+- Smoke real somente via `RUN_REAL_AI_TESTS=true`
 
-## Documentação técnica
-Arquivos gerados na raiz:
-- `PRODUCT_SPEC.md`
-- `PARITY_MATRIX.md`
-- `ASSUMPTIONS.md`
-- `ROUTES.md`
-- `DATA_MODEL.md`
-- `API_CONTRACT.md`
-- `EVENT_MODEL.md`
-- `STATE_MACHINES.md`
-- `SECURITY.md`
-- `CONNECTORS.md`
-- `RUNBOOK.md`
-- `TEST_PLAN.md`
-- `CHANGELOG_IMPLEMENTATION.md`
-- `docs/roadmap-baseline-matrix.md`
-
+## Documentacao adicional
+- [AI provider matrix](docs/AI_PROVIDER_CONFIGURATION.md)
+- [API contract](API_CONTRACT.md)
+- [Runbook](RUNBOOK.md)
+- [Test plan](TEST_PLAN.md)
