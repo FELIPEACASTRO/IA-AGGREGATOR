@@ -100,7 +100,7 @@ class DeepSeekModelProviderMockWebServerTest {
         TechnicalException ex = assertThrows(TechnicalException.class,
                 () -> provider.generate("hello", "deepseek-chat"));
 
-        assertEquals(ErrorCode.AI_002, ex.getErrorCode());
+        assertEquals(ErrorCode.AI_009, ex.getErrorCode());
         assertEquals(0, mockWebServer.getRequestCount());
     }
 }

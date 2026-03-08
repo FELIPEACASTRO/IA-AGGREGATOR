@@ -103,7 +103,7 @@ class AnthropicModelProviderMockWebServerTest {
         TechnicalException ex = assertThrows(TechnicalException.class,
                 () -> provider.generate("hello", "claude-3-5-haiku"));
 
-        assertEquals(ErrorCode.AI_002, ex.getErrorCode());
+        assertEquals(ErrorCode.AI_009, ex.getErrorCode());
         assertEquals(0, mockWebServer.getRequestCount());
     }
 }

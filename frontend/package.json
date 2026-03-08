@@ -15,6 +15,7 @@
     "lint:tokens": "node scripts/validate-tailwind-arbitrary-values.mjs",
     "type-check": "tsc --noEmit --incremental false",
     "test": "jest",
+    "test:coverage": "jest --coverage --runInBand",
     "test:watch": "jest --watch",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed --project=chromium",

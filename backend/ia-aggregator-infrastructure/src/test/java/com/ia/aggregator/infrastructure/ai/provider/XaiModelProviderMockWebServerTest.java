@@ -100,7 +100,7 @@ class XaiModelProviderMockWebServerTest {
         TechnicalException ex = assertThrows(TechnicalException.class,
                 () -> provider.generate("hello", "grok-2-latest"));
 
-        assertEquals(ErrorCode.AI_002, ex.getErrorCode());
+        assertEquals(ErrorCode.AI_009, ex.getErrorCode());
         assertEquals(0, mockWebServer.getRequestCount());
     }
 }
