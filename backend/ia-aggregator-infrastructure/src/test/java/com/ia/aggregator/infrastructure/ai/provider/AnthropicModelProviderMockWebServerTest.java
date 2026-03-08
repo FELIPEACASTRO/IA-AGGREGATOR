@@ -38,7 +38,7 @@ class AnthropicModelProviderMockWebServerTest {
         mockWebServer.enqueue(new MockResponse().setResponseCode(503).setBody("{\"error\":\"down\"}"));
         mockWebServer.enqueue(new MockResponse().setResponseCode(200)
                 .setBody("""
-                        {"content":[{"text":"hello-from-anthropic"}]}
+                        {"content":[{"type":"text","text":"hello-from-anthropic"}],"usage":{"input_tokens":11,"output_tokens":13},"stop_reason":"end_turn"}
                         """));
 
         AnthropicModelProvider provider = new AnthropicModelProvider(

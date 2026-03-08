@@ -63,35 +63,40 @@ export async function getResolvedSessionContext() {
   if (!session) return null;
 
   const selectedWorkspaceId = await getSelectedWorkspaceIdFromCookie();
-  const [profile, resolved] = await Promise.all([
-    getBackendUserProfile(session.accessToken),
-    ensureWorkspaceForUser({
-      userId: session.userId,
-      email: session.email,
-      name: session.name,
-      selectedWorkspaceId,
-    }),
-  ]);
+  const profile = await getBackendUserProfile(session.accessToken);
+  const organizationId = profile?.organizationId ?? null;
+  const resolvedWorkspaceContext = await ensureWorkspaceForUser({
+    userId: session.userId,
+    email: session.email,
+    name: session.name,
+    selectedWorkspaceId,
+    authOrgId: organizationId,
+  });
 
-  const workspaces: WorkspaceMembershipDto[] = resolved.memberships.map((membership) => ({
+  const workspaces: WorkspaceMembershipDto[] = resolvedWorkspaceContext.memberships.map((membership) => ({
     membershipId: membership.id,
     role: membership.role,
     workspace: mapWorkspace(membership.workspace),
   }));
 
-  const currentWorkspace = mapWorkspace(resolved.workspace);
+  const currentWorkspace = mapWorkspace(resolvedWorkspaceContext.workspace);
   const sessionContext: SessionContext = {
     user: buildSessionUser(session, profile),
     workspaces,
     currentWorkspace,
-    currentRole: resolved.currentMembership.role,
+    currentRole: resolvedWorkspaceContext.currentMembership.role,
     hasWorkspace: workspaces.length > 0,
+    organizationId,
+    organizationSlug:
+      resolvedWorkspaceContext.workspace.authOrgId === organizationId
+        ? resolvedWorkspaceContext.workspace.slug
+        : null,
   };
 
   return {
     session,
     profile,
-    context: resolved,
+    context: resolvedWorkspaceContext,
     sessionContext,
   };
 }

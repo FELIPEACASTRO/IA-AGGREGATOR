@@ -210,7 +210,7 @@ class AuthControllerTest {
     void me_shouldReturn200WithUserResponse() throws Exception {
         UUID userId = UUID.randomUUID();
         var userResponse = new UserResponse(
-                userId, "user@test.com", "John Doe", null,
+                userId, UUID.randomUUID(), "user@test.com", "John Doe", null,
                 UserRole.USER, UserStatus.ACTIVE,
                 "pt-BR", "UTC", "REF123",
                 true, Instant.now(), Instant.now()
@@ -232,6 +232,7 @@ class AuthControllerTest {
             mockMvc.perform(get("/api/v1/auth/me"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.organizationId").isNotEmpty())
                     .andExpect(jsonPath("$.data.email").value("user@test.com"))
                     .andExpect(jsonPath("$.data.fullName").value("John Doe"));
         } finally {

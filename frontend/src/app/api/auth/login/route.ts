@@ -39,21 +39,25 @@ export async function POST(request: Request) {
     return fail('Backend nao retornou tokens esperados', 502);
   }
 
+  const secureCookie = process.env.NODE_ENV === 'production';
   const res = NextResponse.json({
     success: true,
-    data: payload.data,
+    data: {
+      authenticated: true,
+      expiresIn: payload?.data?.expiresIn ?? 900,
+    },
     timestamp: new Date().toISOString(),
   });
   res.cookies.set('access_token', accessToken, {
-    httpOnly: false,
-    secure: false,
+    httpOnly: true,
+    secure: secureCookie,
     sameSite: 'lax',
     path: '/',
     maxAge: payload?.data?.expiresIn ?? 900,
   });
   res.cookies.set('refresh_token', refreshToken, {
-    httpOnly: false,
-    secure: false,
+    httpOnly: true,
+    secure: secureCookie,
     sameSite: 'lax',
     path: '/',
     maxAge: 60 * 60 * 24 * 7,

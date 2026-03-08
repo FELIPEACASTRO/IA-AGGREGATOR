@@ -37,7 +37,7 @@ class OpenAiModelProviderMockWebServerTest {
         mockWebServer.enqueue(new MockResponse().setResponseCode(503).setBody("{\"error\":\"down\"}"));
         mockWebServer.enqueue(new MockResponse().setResponseCode(200)
                 .setBody("""
-                        {"choices":[{"message":{"content":"hello-from-openai"}}]}
+                        {"output_text":"hello-from-openai","usage":{"input_tokens":10,"output_tokens":12,"total_tokens":22},"status":"completed"}
                         """));
 
         OpenAiModelProvider provider = new OpenAiModelProvider(
@@ -55,6 +55,7 @@ class OpenAiModelProviderMockWebServerTest {
 
         assertEquals("hello-from-openai", response);
         assertEquals(2, mockWebServer.getRequestCount());
+        assertEquals("/v1/responses", assertDoesNotThrow(() -> mockWebServer.takeRequest()).getPath());
     }
 
     @Test

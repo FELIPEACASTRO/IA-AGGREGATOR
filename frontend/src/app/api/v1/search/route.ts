@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     mode: 'insensitive' as const,
   };
 
-  const [tasks, repositories, environments, settings] = await Promise.all([
+  const [tasks, repositories, environments, settings, conversations, prompts] = await Promise.all([
     codexDb.task.findMany({
       where: {
         workspaceId,
@@ -55,6 +55,31 @@ export async function GET(request: Request) {
       },
       take: 5,
       orderBy: { updatedAt: 'desc' },
+    }),
+    codexDb.chatConversation.findMany({
+      where: {
+        workspaceId,
+        archivedAt: null,
+        OR: [{ title: contains }, { messages: { some: { content: contains } } }],
+        participants: {
+          some: {
+            userId: resolved.session.userId,
+          },
+        },
+      },
+      take: 5,
+      orderBy: [{ pinned: 'desc' }, { updatedAt: 'desc' }],
+    }),
+    codexDb.promptTemplate.findMany({
+      where: {
+        isActive: true,
+        OR: [
+          { scope: 'SYSTEM', OR: [{ title: contains }, { description: contains }, { prompt: contains }] },
+          { scope: 'WORKSPACE', workspaceId, OR: [{ title: contains }, { description: contains }, { prompt: contains }] },
+        ],
+      },
+      take: 5,
+      orderBy: [{ scope: 'asc' }, { title: 'asc' }],
     }),
   ]);
 
@@ -102,6 +127,27 @@ export async function GET(request: Request) {
       title: setting.configKey,
       description: 'Managed config',
       href: '/codex/settings/managed-configs',
+    })),
+    ...conversations.map((conversation) => ({
+      id: conversation.id,
+      kind: 'conversation' as const,
+      title: conversation.title,
+      description: conversation.model,
+      href: `/chat?conversationId=${conversation.id}`,
+      metadata: {
+        pinned: conversation.pinned,
+      },
+    })),
+    ...prompts.map((prompt) => ({
+      id: prompt.id,
+      kind: 'prompt' as const,
+      title: prompt.title,
+      description: prompt.description,
+      href: '/prompts',
+      metadata: {
+        category: prompt.category,
+        scope: prompt.scope,
+      },
     })),
   ];
 

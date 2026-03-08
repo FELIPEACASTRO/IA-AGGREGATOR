@@ -61,7 +61,7 @@ export async function resolveBillingData(workspaceId: string) {
   const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const since = subDays(now, 45);
 
-  const [usageEntries, recentCompletedTasks, creditBalance] = await Promise.all([
+  const [usageEntries, creditBalance, currentPlanConfig] = await Promise.all([
     codexDb.usageEntry.findMany({
       where: {
         workspaceId,
@@ -69,14 +69,15 @@ export async function resolveBillingData(workspaceId: string) {
       },
       orderBy: { createdAt: 'asc' }
     }),
-    codexDb.task.count({
+    codexDb.creditBalance.findUnique({ where: { workspaceId } }),
+    codexDb.managedConfig.findUnique({
       where: {
-        workspaceId,
-        status: 'completed',
-        completedAt: { gte: subDays(now, 30) }
-      }
+        workspaceId_configKey: {
+          workspaceId,
+          configKey: 'billing.currentPlanId',
+        },
+      },
     }),
-    codexDb.creditBalance.findUnique({ where: { workspaceId } })
   ]);
 
   const monthlyTokenEntries = usageEntries.filter((entry) => entry.period === monthKey);
@@ -84,18 +85,17 @@ export async function resolveBillingData(workspaceId: string) {
     return sum + normalizeTokenAmount(entry.metric, entry.unit, entry.amount);
   }, 0);
 
-  const estimatedTokens = recentCompletedTasks * 3200;
-  const tokensUsed = Math.max(0, Math.round(tokensFromUsage || estimatedTokens));
-
-  const selectedPlanId: BillingPlan['id'] =
-    tokensUsed > 100000 || (creditBalance?.balance ?? 0) > 0 ? 'pro' : 'starter';
+  const planValue = currentPlanConfig?.configValue;
+  const selectedPlanId = (typeof planValue === 'string' ? planValue : null) as BillingPlan['id'] | null;
+  const tokensUsed = Math.max(0, Math.round(tokensFromUsage));
 
   const plans: BillingPlan[] = PLAN_DEFS.map((plan) => ({
     ...plan,
     current: plan.id === selectedPlanId
   }));
 
-  const monthlyLimit = plans.find((plan) => plan.id === selectedPlanId)?.tokens ?? 50000;
+  const selectedPlan = plans.find((plan) => plan.id === selectedPlanId) ?? null;
+  const monthlyLimit = selectedPlan?.tokens && selectedPlan.tokens > 0 ? selectedPlan.tokens : 0;
 
   const weeklyUsage: WeeklyUsagePoint[] = Array.from({ length: 7 }).map((_, index) => {
     const date = subDays(now, 6 - index);
@@ -108,11 +108,9 @@ export async function resolveBillingData(workspaceId: string) {
       .filter((entry) => entry.createdAt >= dayStart && entry.createdAt <= dayEnd)
       .reduce((sum, entry) => sum + normalizeTokenAmount(entry.metric, entry.unit, entry.amount), 0);
 
-    const fallback = Math.round(Math.max(600, estimatedTokens / 30));
-
     return {
       day: DAY_LABELS[date.getDay()],
-      tokens: Math.round(dayUsage || fallback)
+      tokens: Math.round(dayUsage)
     };
   });
 
@@ -120,10 +118,14 @@ export async function resolveBillingData(workspaceId: string) {
     plans,
     monthlyUsage: weeklyUsage,
     current: {
+      currentPlanId: selectedPlanId,
+      currentPlanName: selectedPlan?.name ?? 'Indisponivel',
       tokensUsed,
       monthlyLimit,
       pct: monthlyLimit > 0 ? Math.min(100, Math.round((tokensUsed / monthlyLimit) * 100)) : 0,
-      estimatedFromRuns: tokensFromUsage === 0
-    }
+      balance: Math.round(creditBalance?.balance ?? 0),
+      includedUsageLeft: Math.round(creditBalance?.includedUsageLeft ?? 0),
+      usageAvailable: tokensFromUsage > 0 || usageEntries.some((entry) => normalizeTokenAmount(entry.metric, entry.unit, entry.amount) > 0),
+    },
   };
 }

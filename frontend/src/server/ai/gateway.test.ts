@@ -1,41 +1,61 @@
 import { invokeChatGateway } from '@/server/ai/gateway';
 
 describe('invokeChatGateway', () => {
-  const originalEnv = process.env;
   const originalFetch = global.fetch;
 
   beforeEach(() => {
-    process.env = { ...originalEnv };
-    delete process.env.OPENAI_API_KEY;
-    delete process.env.ANTHROPIC_API_KEY;
-    delete process.env.GEMINI_API_KEY;
     global.fetch = jest.fn();
   });
 
   afterAll(() => {
-    process.env = originalEnv;
     global.fetch = originalFetch;
   });
 
-  it('returns a mock response when no live provider is configured', async () => {
-    const result = await invokeChatGateway({
-      prompt: 'Explique o que e fallback de modelos em uma frase.',
-      preferredModel: 'gpt-4o-mini',
-    });
+  it('propaga erro claro do backend canônico', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 422,
+      json: async () => ({
+        success: false,
+        message: 'Provider OpenAI nao configurado',
+      }),
+    }) as jest.Mock;
 
-    expect(result.executionMode).toBe('mock');
-    expect(result.modelUsed).toBe('gpt-4o-mini');
-    expect(result.providerUsed).toBe('OpenAI');
-    expect(result.agentVersion).toBe('v1');
-    expect(result.content.toLowerCase()).toContain('fallback de modelos');
+    await expect(
+      invokeChatGateway({
+        prompt: 'Explique o que e fallback de modelos em uma frase.',
+        preferredModel: 'gpt-4o-mini',
+      })
+    ).rejects.toThrow(/nao configurado/i);
   });
 
-  it('returns a live response when the provider is configured', async () => {
-    process.env.OPENAI_API_KEY = 'test-openai-key';
+  it('retorna resposta live do backend canônico', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        output_text: 'Fallback e a troca automatica para um modelo alternativo quando necessario.',
+        success: true,
+        data: {
+          content: 'Fallback e a troca automatica para um modelo alternativo quando necessario.',
+          modelUsed: 'gpt-4o-mini',
+          providerUsed: 'OpenAI',
+          fallbackUsed: false,
+          attempts: 1,
+          requestId: 'req-openai',
+          usage: {
+            inputTokens: 12,
+            outputTokens: 18,
+            totalTokens: 30,
+          },
+          estimatedCost: {
+            providerId: 'openai',
+            model: 'gpt-4o-mini',
+            currency: 'USD',
+            amount: 0.00011,
+            supported: true,
+          },
+          latencyMs: 88,
+          finishReason: 'completed',
+        },
       }),
     }) as jest.Mock;
 
@@ -47,20 +67,42 @@ describe('invokeChatGateway', () => {
     expect(result.executionMode).toBe('live');
     expect(result.providerUsed).toBe('OpenAI');
     expect(result.modelUsed).toBe('gpt-4o-mini');
+    expect(result.requestId).toBe('req-openai');
     expect(global.fetch).toHaveBeenCalledWith(
-      'https://api.openai.com/v1/responses',
+      expect.stringMatching(/\/api\/v1\/ai\/chat$/),
       expect.objectContaining({
         method: 'POST',
       })
     );
   });
 
-  it('falls back to another configured provider when the preferred one is unavailable', async () => {
-    process.env.OPENAI_API_KEY = 'test-openai-key';
+  it('mantem metadata de fallback retornada pelo backend', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        output_text: 'Resposta vinda do fallback configurado.',
+        success: true,
+        data: {
+          content: 'Resposta vinda do fallback configurado.',
+          modelUsed: 'gpt-4o-mini',
+          providerUsed: 'OpenAI',
+          fallbackUsed: true,
+          attempts: 2,
+          requestId: 'req-fallback',
+          usage: {
+            inputTokens: 12,
+            outputTokens: 18,
+            totalTokens: 30,
+          },
+          estimatedCost: {
+            providerId: 'openai',
+            model: 'gpt-4o-mini',
+            currency: 'USD',
+            amount: 0.00011,
+            supported: true,
+          },
+          latencyMs: 101,
+          finishReason: 'completed',
+        },
       }),
     }) as jest.Mock;
 

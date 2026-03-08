@@ -13,11 +13,9 @@ interface ChatInputProps {
 
 export function ChatInput({ className }: ChatInputProps) {
   const isSending = useChatStore((state) => state.isSending);
-  const activeConversationId = useChatStore((state) => state.activeConversationId);
   const selectedModel = useChatStore((state) => state.selectedModel);
   const sendMessage = useChatStore((state) => state.sendMessage);
   const stopGenerating = useChatStore((state) => state.stopGenerating);
-  const createConversation = useChatStore((state) => state.createConversation);
 
   const [input, setInput] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -29,8 +27,6 @@ export function ChatInput({ className }: ChatInputProps) {
 
     const timer = createPerfTimer();
     trackEvent('chat_send_start', { model: selectedModel, promptLength: trimmed.length });
-
-    if (!activeConversationId) createConversation();
 
     setInput('');
 
@@ -47,7 +43,7 @@ export function ChatInput({ className }: ChatInputProps) {
     }
 
     inputRef.current?.focus();
-  }, [activeConversationId, createConversation, input, isSending, selectedModel, sendMessage]);
+  }, [input, isSending, selectedModel, sendMessage]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {

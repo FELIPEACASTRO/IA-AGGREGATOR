@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from '@/stores/toast-store';
 import { trackEvent } from '@/lib/analytics';
 import { AppLayout } from '@/components/app/app-layout';
@@ -10,6 +10,7 @@ import { Field, SelectField } from '@/components/ui/form-field';
 import { RadioCardGroup } from '@/components/ui/radio-card-group';
 import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { useAuthStore } from '@/stores/auth-store';
+import type { NotificationPreferencesDto, UserPreferencesDto } from '@/lib/contracts/platform';
 import { ChatFontMode, Theme, useThemeStore } from '@/stores/theme-store';
 import {
   Bell,
@@ -76,8 +77,15 @@ function Section({
   );
 }
 
+type ApiEnvelope<T> = {
+  success: boolean;
+  data?: T;
+  message?: string;
+};
+
 export default function SettingsPage() {
   const user = useAuthStore((state) => state.user);
+  const fetchUser = useAuthStore((state) => state.fetchUser);
   const theme = useThemeStore((state) => state.theme);
   const setTheme = useThemeStore((state) => state.setTheme);
   const chatFontMode = useThemeStore((state) => state.chatFontMode);
@@ -85,13 +93,127 @@ export default function SettingsPage() {
 
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [locale, setLocale] = useState('pt-BR');
-  const [notifChat, setNotifChat] = useState(true);
-  const [notifUpdates, setNotifUpdates] = useState(false);
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferencesDto>({
+    emailEnabled: true,
+    pushEnabled: true,
+    billingAlerts: true,
+    usageAlerts: true,
+    securityAlerts: true,
+    productUpdates: true,
+  });
+  const [hydrating, setHydrating] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = (event: React.FormEvent) => {
+  useEffect(() => {
+    let active = true;
+
+    const loadSettings = async () => {
+      try {
+        const [preferencesResponse, notificationsResponse] = await Promise.all([
+          fetch('/api/v1/settings/preferences', { credentials: 'include', cache: 'no-store' }),
+          fetch('/api/v1/settings/notifications', { credentials: 'include', cache: 'no-store' }),
+        ]);
+
+        const preferencesPayload = (await preferencesResponse.json()) as ApiEnvelope<UserPreferencesDto>;
+        const notificationsPayload = (await notificationsResponse.json()) as ApiEnvelope<NotificationPreferencesDto>;
+
+        if (!preferencesResponse.ok || !preferencesPayload.success || !preferencesPayload.data) {
+          throw new Error(preferencesPayload.message || 'Falha ao carregar preferencias');
+        }
+
+        if (!notificationsResponse.ok || !notificationsPayload.success || !notificationsPayload.data) {
+          throw new Error(notificationsPayload.message || 'Falha ao carregar notificacoes');
+        }
+
+        if (!active) return;
+
+        setFullName(preferencesPayload.data.fullName);
+        setLocale(preferencesPayload.data.locale);
+        setTheme(preferencesPayload.data.theme);
+        setChatFontMode(preferencesPayload.data.chatFontMode);
+        setNotificationPreferences(notificationsPayload.data);
+      } catch (error) {
+        if (!active) return;
+        toast.error(
+          'Falha ao carregar configuracoes',
+          error instanceof Error ? error.message : 'Tente novamente em instantes.'
+        );
+      } finally {
+        if (active) {
+          setHydrating(false);
+        }
+      }
+    };
+
+    void loadSettings();
+
+    return () => {
+      active = false;
+    };
+  }, [setChatFontMode, setTheme]);
+
+  useEffect(() => {
+    if (!hydrating && user?.fullName && !fullName) {
+      setFullName(user.fullName);
+    }
+  }, [fullName, hydrating, user?.fullName]);
+
+  const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
-    trackEvent('settings_save_preferences', { locale, hasName: Boolean(fullName), theme, chatFontMode });
-    toast.success('Preferencias salvas', 'Aparencia e preferencias aplicadas com sucesso.');
+    setSaving(true);
+
+    try {
+      const preferencesResponse = await fetch('/api/v1/settings/preferences', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName,
+          locale,
+          theme,
+          chatFontMode,
+        } satisfies UserPreferencesDto),
+      });
+
+      const notificationsResponse = await fetch('/api/v1/settings/notifications', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(notificationPreferences),
+      });
+
+      const preferencesPayload = (await preferencesResponse.json()) as ApiEnvelope<UserPreferencesDto>;
+      const notificationsPayload = (await notificationsResponse.json()) as ApiEnvelope<NotificationPreferencesDto>;
+
+      if (!preferencesResponse.ok || !preferencesPayload.success || !preferencesPayload.data) {
+        throw new Error(preferencesPayload.message || 'Falha ao salvar preferencias');
+      }
+
+      if (!notificationsResponse.ok || !notificationsPayload.success || !notificationsPayload.data) {
+        throw new Error(notificationsPayload.message || 'Falha ao salvar notificacoes');
+      }
+
+      setFullName(preferencesPayload.data.fullName);
+      setLocale(preferencesPayload.data.locale);
+      setTheme(preferencesPayload.data.theme);
+      setChatFontMode(preferencesPayload.data.chatFontMode);
+      setNotificationPreferences(notificationsPayload.data);
+      await fetchUser();
+
+      trackEvent('settings_save_preferences', { locale, hasName: Boolean(fullName), theme, chatFontMode });
+      toast.success('Preferencias salvas', 'Configuracoes persistidas no backend e aplicadas com sucesso.');
+    } catch (error) {
+      toast.error(
+        'Falha ao salvar configuracoes',
+        error instanceof Error ? error.message : 'Tente novamente em instantes.'
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   const jumpTo = (id: string) => {
@@ -182,18 +304,34 @@ export default function SettingsPage() {
               <div className="space-y-3">
                 {[
                   {
-                    id: 'chat',
-                    label: 'Respostas do chat',
-                    desc: 'Mostra alerta quando a IA conclui uma resposta.',
-                    value: notifChat,
-                    setValue: setNotifChat,
+                    id: 'emailEnabled',
+                    label: 'Alertas por e-mail',
+                    desc: 'Habilita o canal de notificacao por e-mail.',
                   },
                   {
-                    id: 'updates',
+                    id: 'pushEnabled',
+                    label: 'Alertas in-app',
+                    desc: 'Mostra sinais visuais quando o workspace conclui acoes.',
+                  },
+                  {
+                    id: 'productUpdates',
                     label: 'Novidades da plataforma',
                     desc: 'Avisos sobre novos modelos, templates e recursos.',
-                    value: notifUpdates,
-                    setValue: setNotifUpdates,
+                  },
+                  {
+                    id: 'billingAlerts',
+                    label: 'Alertas de cobranca',
+                    desc: 'Notifica alteracoes e eventos ligados ao plano atual.',
+                  },
+                  {
+                    id: 'usageAlerts',
+                    label: 'Alertas de uso',
+                    desc: 'Avisa quando o workspace se aproxima dos limites medidos.',
+                  },
+                  {
+                    id: 'securityAlerts',
+                    label: 'Alertas de seguranca',
+                    desc: 'Mantem avisos de login, risco e acesso sensivel.',
                   },
                 ].map((item) => (
                   <div key={item.id} className="flex items-center justify-between gap-4 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--background)] px-4 py-3">
@@ -202,8 +340,13 @@ export default function SettingsPage() {
                       <p className="mt-1 text-[12px] text-[var(--muted-foreground)]">{item.desc}</p>
                     </div>
                     <ToggleSwitch
-                      checked={item.value}
-                      onCheckedChange={item.setValue}
+                      checked={notificationPreferences[item.id as keyof NotificationPreferencesDto]}
+                      onCheckedChange={(checked) => {
+                        setNotificationPreferences((current) => ({
+                          ...current,
+                          [item.id]: checked,
+                        }));
+                      }}
                       ariaLabel={item.label}
                     />
                   </div>
@@ -216,7 +359,7 @@ export default function SettingsPage() {
                 <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--background)] p-4">
                   <p className="text-[13px] font-medium text-[var(--foreground)]">Dados locais</p>
                   <p className="mt-1 text-[12px] leading-relaxed text-[var(--muted-foreground)]">
-                    Conversas, preferencia de tema e fonte do chat ficam persistidos neste navegador.
+                    Apenas preferencias visuais e historico local da interface ficam persistidos neste navegador. Conversas e templates agora vivem no backend e no banco.
                   </p>
                 </div>
                 <Button
@@ -254,12 +397,12 @@ export default function SettingsPage() {
             </Section>
 
             <div className="flex items-center gap-3">
-              <Button type="submit" variant="primary" size="lg">
+              <Button type="submit" variant="primary" size="lg" disabled={saving || hydrating}>
                 <Save className="h-4 w-4" />
-                Salvar preferencias
+                {saving ? 'Salvando...' : hydrating ? 'Carregando...' : 'Salvar preferencias'}
               </Button>
               <p className="text-[12px] text-[var(--muted-foreground)]">
-                Preferencias persistidas localmente no dispositivo atual.
+                Preferencias persistidas no backend e reidratadas por sessao.
               </p>
             </div>
           </form>

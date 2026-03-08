@@ -2,177 +2,157 @@ package com.ia.aggregator.infrastructure.ai.provider;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ia.aggregator.application.ai.port.out.AiModelProvider;
-import com.ia.aggregator.common.exception.ErrorCode;
-import com.ia.aggregator.common.exception.TechnicalException;
-import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
-import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import com.ia.aggregator.application.ai.dto.AiPromptRequest;
+import com.ia.aggregator.application.ai.dto.AiPromptResponse;
+import com.ia.aggregator.application.ai.dto.AiUsageEstimate;
+import com.ia.aggregator.application.ai.port.out.AiPricingResolver;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.List;
-import java.util.function.Supplier;
 
 @Component
-public class OpenAiModelProvider implements AiModelProvider {
-
-    private static final String PROVIDER_NAME = "openai";
-
-    private final ObjectMapper objectMapper;
-    private final HttpClient httpClient;
-    private final CircuitBreaker circuitBreaker;
-    private final String apiKey;
-    private final String baseUrl;
-    private final long timeoutMs;
-    private final int retryAttempts;
-    private final long retryBackoffMs;
-    private final List<String> supportedModels;
+public class OpenAiModelProvider extends AbstractAiProviderSupport {
 
     public OpenAiModelProvider(
             ObjectMapper objectMapper,
             CircuitBreakerRegistry circuitBreakerRegistry,
+            AiPricingResolver pricingResolver,
             @Value("${app.ai.providers.openai.api-key:}") String apiKey,
             @Value("${app.ai.providers.openai.base-url:https://api.openai.com}") String baseUrl,
-            @Value("${app.ai.providers.openai.timeout-ms:15000}") long timeoutMs,
-                @Value("${app.ai.providers.openai.retry-attempts:2}") int retryAttempts,
-                @Value("${app.ai.providers.openai.retry-backoff-ms:250}") long retryBackoffMs,
+            @Value("${app.ai.providers.openai.timeout-ms:30000}") long timeoutMs,
+            @Value("${app.ai.providers.openai.retry-attempts:2}") int retryAttempts,
+            @Value("${app.ai.providers.openai.retry-backoff-ms:250}") long retryBackoffMs,
             @Value("${app.ai.providers.openai.supported-models:gpt-4o-mini,gpt-4.1-mini}") List<String> supportedModels
     ) {
-        this.objectMapper = objectMapper;
-        this.circuitBreaker = circuitBreakerRegistry.circuitBreaker("aiProviderOpenai");
-        this.apiKey = apiKey;
-        this.baseUrl = baseUrl;
-        this.timeoutMs = timeoutMs;
-        this.retryAttempts = retryAttempts;
-        this.retryBackoffMs = retryBackoffMs;
-        this.supportedModels = supportedModels;
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofMillis(timeoutMs))
+        super(
+                objectMapper,
+                circuitBreakerRegistry,
+                pricingResolver,
+                "openai",
+                "OpenAI",
+                "aiProviderOpenai",
+                apiKey,
+                baseUrl,
+                timeoutMs,
+                retryAttempts,
+                retryBackoffMs,
+                supportedModels,
+                List.of("OPENAI_API_KEY"),
+                false
+        );
+    }
+
+    OpenAiModelProvider(
+            ObjectMapper objectMapper,
+            CircuitBreakerRegistry circuitBreakerRegistry,
+            String apiKey,
+            String baseUrl,
+            long timeoutMs,
+            int retryAttempts,
+            long retryBackoffMs,
+            List<String> supportedModels
+    ) {
+        this(objectMapper, circuitBreakerRegistry, AiPricingResolver.noop(), apiKey, baseUrl, timeoutMs, retryAttempts, retryBackoffMs, supportedModels);
+    }
+
+    @Override
+    public AiPromptResponse sendPrompt(AiPromptRequest request) {
+        return executePrompt(request, () -> doSendPrompt(request));
+    }
+
+    private AiPromptResponse doSendPrompt(AiPromptRequest request) {
+        long startedAt = System.currentTimeMillis();
+        String model = resolveModel(request);
+
+        HttpRequest httpRequest = baseJsonRequest("/v1/responses", request)
+                .header("Authorization", "Bearer " + apiKey)
+                .POST(HttpRequest.BodyPublishers.ofString(writePayload(request, model)))
                 .build();
-    }
 
-    @Override
-    public String providerName() {
-        return PROVIDER_NAME;
-    }
-
-    @Override
-    public boolean supports(String model) {
-        return apiKey != null
-                && !apiKey.isBlank()
-                && supportedModels.stream().map(String::trim).anyMatch(model::equals);
-    }
-
-    @Override
-    public String generate(String prompt, String model) {
-        if (!supports(model)) {
-            throw new TechnicalException(ErrorCode.AI_007, "OpenAI provider is not configured for model: " + model);
+        HttpResponse<String> response = send(httpRequest, request);
+        if (response.statusCode() >= 400) {
+            throw mapHttpError(request, response.statusCode(), response.body());
         }
 
-        Supplier<String> guardedCall = CircuitBreaker.decorateSupplier(circuitBreaker, () -> callOpenAi(prompt, model));
+        JsonNode root = readJson(response.body(), request, "responses");
+        String content = readOutputText(root);
+        if (content.isBlank()) {
+            throw mapHttpError(request, 502, "Resposta sem texto legivel");
+        }
 
+        JsonNode usageNode = root.path("usage");
+        AiUsageEstimate usage = new AiUsageEstimate(
+                usageNode.path("input_tokens").asLong(0),
+                usageNode.path("output_tokens").asLong(0),
+                usageNode.path("total_tokens").asLong(0)
+        );
+
+        return buildResponse(request, content, usage, startedAt, root.path("status").asText("completed"));
+    }
+
+    private String writePayload(AiPromptRequest request, String model) {
         try {
-            return executeWithRetry(guardedCall);
-        } catch (CallNotPermittedException ex) {
-            throw new TechnicalException(ErrorCode.AI_002, "OpenAI circuit breaker is open", ex);
+            return objectMapper.writeValueAsString(new OpenAiResponsesRequest(
+                    model,
+                    request.systemPrompt(),
+                    request.prompt(),
+                    request.temperature(),
+                    request.maxTokens()
+            ));
+        } catch (Exception exception) {
+            throw mapHttpError(request, 500, "Falha ao serializar payload da OpenAI");
         }
     }
 
-    private String executeWithRetry(Supplier<String> guardedCall) {
-        TechnicalException lastError = null;
-        int maxAttempts = Math.max(1, retryAttempts);
+    private String readOutputText(JsonNode root) {
+        String direct = root.path("output_text").asText("");
+        if (!direct.isBlank()) {
+            return direct.trim();
+        }
 
-        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-            try {
-                return guardedCall.get();
-            } catch (TechnicalException ex) {
-                lastError = ex;
-                if (!shouldRetry(ex) || attempt == maxAttempts) {
-                    throw ex;
+        JsonNode output = root.path("output");
+        if (output.isArray()) {
+            StringBuilder builder = new StringBuilder();
+            output.forEach(item -> item.path("content").forEach(content -> {
+                if ("output_text".equals(content.path("type").asText(""))) {
+                    builder.append(content.path("text").asText(""));
                 }
-                sleepBackoff();
-            }
+            }));
+            return builder.toString().trim();
         }
 
-        throw lastError == null
-                ? new TechnicalException(ErrorCode.AI_002, "OpenAI request failed after retries")
-                : lastError;
+        return "";
     }
 
-    private boolean shouldRetry(TechnicalException ex) {
-        return ex.getErrorCode() == ErrorCode.AI_002
-                || ex.getErrorCode() == ErrorCode.AI_003
-                || ex.getErrorCode() == ErrorCode.AI_005;
-    }
-
-    private void sleepBackoff() {
-        if (retryBackoffMs <= 0) {
-            return;
-        }
-        try {
-            Thread.sleep(retryBackoffMs);
-        } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-            throw new TechnicalException(ErrorCode.AI_002, "OpenAI retry interrupted", interruptedException);
-        }
-    }
-
-    private String callOpenAi(String prompt, String model) {
-        try {
-            String payload = objectMapper.writeValueAsString(new OpenAiRequest(model, prompt));
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "/v1/chat/completions"))
-                    .timeout(Duration.ofMillis(timeoutMs))
-                    .header("Authorization", "Bearer " + apiKey)
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(payload))
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 429) {
-                throw new TechnicalException(ErrorCode.AI_003, "OpenAI rate limit exceeded");
-            }
-            if (response.statusCode() >= 500) {
-                throw new TechnicalException(ErrorCode.AI_002, "OpenAI provider unavailable");
-            }
-            if (response.statusCode() >= 400) {
-                throw new TechnicalException(ErrorCode.AI_007, "OpenAI rejected request with status " + response.statusCode());
-            }
-
-            JsonNode root = objectMapper.readTree(response.body());
-            JsonNode content = root.path("choices").path(0).path("message").path("content");
-            if (content.isMissingNode() || content.asText().isBlank()) {
-                throw new TechnicalException(ErrorCode.AI_005, "OpenAI returned empty response content");
-            }
-
-            return content.asText();
-        } catch (TechnicalException ex) {
-            throw ex;
-        } catch (IOException ex) {
-            throw new TechnicalException(ErrorCode.AI_005, "Failed to parse OpenAI response", ex);
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            throw new TechnicalException(ErrorCode.AI_002, "OpenAI request interrupted", ex);
-        } catch (Exception ex) {
-            throw new TechnicalException(ErrorCode.AI_002, "OpenAI request failed", ex);
+    private record OpenAiResponsesRequest(
+            String model,
+            List<OpenAiInputMessage> input,
+            Double temperature,
+            Integer max_output_tokens
+    ) {
+        private OpenAiResponsesRequest(String model,
+                                       String systemPrompt,
+                                       String prompt,
+                                       Double temperature,
+                                       Integer maxOutputTokens) {
+            this(
+                    model,
+                    systemPrompt == null || systemPrompt.isBlank()
+                            ? List.of(new OpenAiInputMessage("user", prompt))
+                            : List.of(
+                                    new OpenAiInputMessage("system", systemPrompt),
+                                    new OpenAiInputMessage("user", prompt)
+                            ),
+                    temperature,
+                    maxOutputTokens
+            );
         }
     }
 
-    private record OpenAiRequest(String model, List<OpenAiMessage> messages) {
-        private OpenAiRequest(String model, String prompt) {
-            this(model, List.of(new OpenAiMessage("user", prompt)));
-        }
-    }
-
-    private record OpenAiMessage(String role, String content) {
+    private record OpenAiInputMessage(String role, String content) {
     }
 }

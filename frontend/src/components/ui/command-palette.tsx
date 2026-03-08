@@ -173,7 +173,7 @@ export function CommandPalette({ scope, quickActions }: CommandPaletteProps) {
             id: `conversation-${conversation.id}`,
             label: conversation.title,
             subtitle: `${conversation.messages.length} mensagens`,
-            href: '/chat',
+            href: `/chat?conversationId=${conversation.id}`,
             icon: <MessageSquare className="h-4 w-4" />,
             keywords: [conversation.model],
           }))
@@ -238,7 +238,7 @@ export function CommandPalette({ scope, quickActions }: CommandPaletteProps) {
       return;
     }
 
-    if (item.href && item.href !== pathname) {
+    if (item.href && (item.href.includes('?') || item.href !== pathname)) {
       router.push(item.href);
     }
   }, [pathname, persistHistory, router]);

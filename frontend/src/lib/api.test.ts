@@ -6,7 +6,7 @@ describe('getGlobalErrorToastPayload', () => {
 
     expect(payload).toEqual({
       title: 'Tempo de resposta excedido',
-      description: 'A requisição demorou além do esperado. Tente novamente.',
+      description: 'A requisicao demorou alem do esperado. Tente novamente.',
     });
   });
 
@@ -14,8 +14,8 @@ describe('getGlobalErrorToastPayload', () => {
     const payload = getGlobalErrorToastPayload({});
 
     expect(payload).toEqual({
-      title: 'Falha de conexão',
-      description: 'Não foi possível conectar ao servidor. Verifique sua rede.',
+      title: 'Falha de conexao',
+      description: 'Nao foi possivel conectar ao servidor. Verifique sua rede.',
     });
   });
 
@@ -24,7 +24,7 @@ describe('getGlobalErrorToastPayload', () => {
 
     expect(payload).toEqual({
       title: 'Erro interno do servidor',
-      description: 'O serviço está instável no momento. Tente novamente em instantes.',
+      description: 'O servico esta instavel no momento. Tente novamente em instantes.',
     });
   });
 
@@ -32,7 +32,7 @@ describe('getGlobalErrorToastPayload', () => {
     const payload = getGlobalErrorToastPayload({ response: { status: 429 } });
 
     expect(payload).toEqual({
-      title: 'Muitas requisições',
+      title: 'Muitas requisicoes',
       description: 'Aguarde alguns segundos antes de tentar novamente.',
     });
   });

@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process';
 import { TaskMode, TaskStatus } from '@prisma/client';
 import { codexDb } from '@/server/codex/db';
 import { appendTaskEvent, appendTaskLog, setTaskStatus } from '@/server/codex/events';
+import { invokeChatGateway } from '@/server/ai/gateway';
 
 type Phase = 'provisioning' | 'repo_download' | 'setup' | 'maintenance' | 'agent' | 'validation' | 'pr_push';
 
@@ -28,6 +29,7 @@ async function runCommand(input: {
   lineOffset: number;
   command: string;
   args: string[];
+  env?: Record<string, string | undefined>;
 }) {
   let line = input.lineOffset;
   await appendTaskLog({
@@ -41,7 +43,10 @@ async function runCommand(input: {
     const proc = spawn(input.command, input.args, {
       cwd: input.cwd,
       stdio: ['ignore', 'pipe', 'pipe'],
-      env: process.env,
+      env: {
+        ...process.env,
+        ...input.env,
+      },
       shell: process.platform === 'win32',
     });
 
@@ -147,9 +152,10 @@ export async function executeTask(taskId: string) {
     },
   });
 
-  const runtimeRoot = path.join(process.cwd(), '.codex-runtime', 'tasks', task.id);
+  const runtimeRoot = path.join(process.cwd(), '.codex-runtime', 'tasks', task.id, `run-${runCount + 1}`);
   const repoDir = path.join(runtimeRoot, 'repo');
   const artifactsDir = path.join(runtimeRoot, 'artifacts');
+  const resultBranch = task.resultBranch || `codex/${task.id}`;
   let lineOffset = 0;
 
   try {
@@ -172,9 +178,54 @@ export async function executeTask(taskId: string) {
     });
     await sleep(250);
 
-    await updatePhase(task.id, 'repo_download', 'Preparando repositorio');
-    let repoReady = false;
-    if (task.repository?.cloneUrl) {
+    if (task.mode === TaskMode.ASK) {
+      await updatePhase(task.id, 'agent', 'Executando modo Ask');
+    }
+    if (task.mode === TaskMode.ASK) {
+      const result = await invokeChatGateway({
+        prompt: task.prompt,
+      });
+      const answer = result.content.trim();
+      const artifactPath = path.join(artifactsDir, 'ask-summary.md');
+      await writeFile(artifactPath, answer, 'utf-8');
+      await codexDb.taskArtifact.create({
+        data: {
+          taskId: task.id,
+          artifactType: 'summary',
+          title: 'Ask Summary',
+          contentType: 'text/markdown',
+          url: artifactPath,
+          metadata: {
+            providerUsed: result.providerUsed,
+            modelUsed: result.modelUsed,
+            agentUsed: result.agentUsed,
+            agentVersion: result.agentVersion,
+            attempts: result.attempts,
+            fallbackUsed: result.fallbackUsed,
+          },
+        },
+      });
+
+      await appendTaskEvent({
+        taskId: task.id,
+        eventType: 'agent.answer.generated',
+        status: 'running_agent',
+        message: 'Resposta Ask persistida com provider real',
+        metadata: {
+          providerUsed: result.providerUsed,
+          modelUsed: result.modelUsed,
+          agentUsed: result.agentUsed,
+        },
+      });
+    } else {
+      if (!task.repository?.cloneUrl) {
+        throw new Error('Task CODE requer repositorio com cloneUrl real configurado');
+      }
+      if (!task.environment) {
+        throw new Error('Task CODE requer environment real configurado');
+      }
+
+      await updatePhase(task.id, 'repo_download', 'Clonando repositorio real');
       const clone = await runCommand({
         cwd: runtimeRoot,
         phase: 'repo_download',
@@ -184,148 +235,114 @@ export async function executeTask(taskId: string) {
         args: ['clone', '--depth', '1', '--branch', task.baseBranch || task.repository.defaultBranch || 'main', task.repository.cloneUrl, 'repo'],
       });
       lineOffset = clone.line;
-      repoReady = clone.code === 0;
-    }
-
-    if (!repoReady) {
-      await runCommand({
-        cwd: repoDir,
-        phase: 'repo_download',
-        taskId: task.id,
-        lineOffset,
-        command: 'git',
-        args: ['init'],
-      });
-      await writeFile(path.join(repoDir, 'README.md'), '# Codex Cloud Workspace\n');
-      await runCommand({
-        cwd: repoDir,
-        phase: 'repo_download',
-        taskId: task.id,
-        lineOffset,
-        command: 'git',
-        args: ['add', '.'],
-      });
-      await runCommand({
-        cwd: repoDir,
-        phase: 'repo_download',
-        taskId: task.id,
-        lineOffset,
-        command: 'git',
-        args: ['commit', '-m', 'chore: bootstrap task workspace'],
-      });
-    }
-
-    await appendTaskEvent({
-      taskId: task.id,
-      eventType: 'repository.cloned',
-      status: 'cloning_repository',
-      message: 'Repositorio pronto no sandbox',
-    });
-    await setTaskStatus(task.id, 'cloning_repository');
-    await sleep(250);
-
-    await updatePhase(task.id, 'setup', 'Executando setup do environment');
-    if (task.environment?.setupScript) {
-      const setup = await runCommand({
-        cwd: repoDir,
-        phase: 'setup',
-        taskId: task.id,
-        lineOffset,
-        command: process.platform === 'win32' ? 'powershell' : 'bash',
-        args:
-          process.platform === 'win32'
-            ? ['-NoProfile', '-Command', task.environment.setupScript]
-            : ['-lc', task.environment.setupScript],
-      });
-      lineOffset = setup.line;
-      if (setup.code !== 0) {
-        throw new Error(`Setup falhou com exit code ${setup.code}`);
+      if (clone.code !== 0) {
+        throw new Error(`Falha ao clonar repositorio com exit code ${clone.code}`);
       }
-    } else {
-      await appendTaskLog({
-        taskId: task.id,
-        phase: 'setup',
-        line: 'Sem setup script configurado, seguindo com defaults.',
-        lineNumber: ++lineOffset,
-      });
-    }
-    await appendTaskEvent({
-      taskId: task.id,
-      eventType: 'setup.completed',
-      status: 'running_setup',
-      message: 'Setup concluido',
-    });
 
-    await updatePhase(task.id, 'maintenance', 'Executando manutencao de cache');
-    if (task.environment?.maintenanceScript) {
-      const maintenance = await runCommand({
+      await runCommand({
         cwd: repoDir,
-        phase: 'maintenance',
+        phase: 'repo_download',
         taskId: task.id,
         lineOffset,
-        command: process.platform === 'win32' ? 'powershell' : 'bash',
-        args:
-          process.platform === 'win32'
-            ? ['-NoProfile', '-Command', task.environment.maintenanceScript]
-            : ['-lc', task.environment.maintenanceScript],
+        command: 'git',
+        args: ['checkout', '-B', resultBranch],
       });
-      lineOffset = maintenance.line;
-    } else {
-      await appendTaskLog({
-        taskId: task.id,
-        phase: 'maintenance',
-        line: 'Sem maintenance script configurado.',
-        lineNumber: ++lineOffset,
-      });
-    }
 
-    await updatePhase(task.id, 'agent', task.mode === TaskMode.ASK ? 'Executando modo Ask' : 'Executando modo Code');
-    if (task.mode === TaskMode.ASK) {
-      const answer = [
-        'Resposta baseada no estado atual do workspace cloud.',
-        `Prompt: ${task.prompt}`,
-        'Para alteracoes de codigo, use o modo Code ou follow-up em Code.',
-      ].join('\n');
-      await writeFile(path.join(artifactsDir, 'ask-summary.md'), answer, 'utf-8');
-      await codexDb.taskArtifact.create({
-        data: {
-          taskId: task.id,
-          artifactType: 'summary',
-          title: 'Ask Summary',
-          contentType: 'text/markdown',
-          url: path.join(artifactsDir, 'ask-summary.md'),
+      await appendTaskEvent({
+        taskId: task.id,
+        eventType: 'repository.cloned',
+        status: 'cloning_repository',
+        message: 'Repositorio real clonado com sucesso',
+        metadata: {
+          repository: task.repository.fullName,
+          branch: task.baseBranch || task.repository.defaultBranch || 'main',
+          resultBranch,
         },
       });
-    } else {
-      const outDir = path.join(repoDir, 'codex-output');
-      await mkdir(outDir, { recursive: true });
-      const fileName = `task-${task.id}.md`;
-      await writeFile(
-        path.join(outDir, fileName),
-        [
-          '# Code Task Output',
-          '',
-          `Task: ${task.title}`,
-          `Prompt: ${task.prompt}`,
-          '',
-          'Esta alteracao foi gerada no ambiente cloud para evidenciar diff e pipeline completo.',
-        ].join('\n'),
-        'utf-8'
-      );
-      await runCommand({
+      await setTaskStatus(task.id, 'cloning_repository');
+
+      await updatePhase(task.id, 'setup', 'Executando setup do environment');
+      if (task.environment.setupScript) {
+        const setup = await runCommand({
+          cwd: repoDir,
+          phase: 'setup',
+          taskId: task.id,
+          lineOffset,
+          command: process.platform === 'win32' ? 'powershell' : 'bash',
+          args:
+            process.platform === 'win32'
+              ? ['-NoProfile', '-Command', task.environment.setupScript]
+              : ['-lc', task.environment.setupScript],
+        });
+        lineOffset = setup.line;
+        if (setup.code !== 0) {
+          throw new Error(`Setup falhou com exit code ${setup.code}`);
+        }
+      } else {
+        await appendTaskLog({
+          taskId: task.id,
+          phase: 'setup',
+          line: 'Sem setup script configurado para este environment.',
+          lineNumber: ++lineOffset,
+        });
+      }
+
+      await updatePhase(task.id, 'maintenance', 'Executando manutencao de cache');
+      if (task.environment.maintenanceScript) {
+        const maintenance = await runCommand({
+          cwd: repoDir,
+          phase: 'maintenance',
+          taskId: task.id,
+          lineOffset,
+          command: process.platform === 'win32' ? 'powershell' : 'bash',
+          args:
+            process.platform === 'win32'
+              ? ['-NoProfile', '-Command', task.environment.maintenanceScript]
+              : ['-lc', task.environment.maintenanceScript],
+        });
+        lineOffset = maintenance.line;
+        if (maintenance.code !== 0) {
+          throw new Error(`Maintenance falhou com exit code ${maintenance.code}`);
+        }
+      } else {
+        await appendTaskLog({
+          taskId: task.id,
+          phase: 'maintenance',
+          line: 'Sem maintenance script configurado.',
+          lineNumber: ++lineOffset,
+        });
+      }
+
+      await updatePhase(task.id, 'agent', 'Executando modo Code');
+      const codeExecutor = process.env.CODEX_CODE_EXECUTOR;
+      if (!codeExecutor) {
+        throw new Error('Nenhum executor CODE configurado para este ambiente');
+      }
+
+      const agentRun = await runCommand({
         cwd: repoDir,
         phase: 'agent',
         taskId: task.id,
         lineOffset,
-        command: 'git',
-        args: ['add', '.'],
+        command: process.platform === 'win32' ? 'powershell' : 'bash',
+        args:
+          process.platform === 'win32'
+            ? ['-NoProfile', '-Command', codeExecutor]
+            : ['-lc', codeExecutor],
+        env: {
+          CODEX_TASK_ID: task.id,
+          CODEX_TASK_TITLE: task.title,
+          CODEX_TASK_PROMPT: task.prompt,
+          CODEX_TASK_MODE: task.mode,
+          CODEX_RESULT_BRANCH: resultBranch,
+          CODEX_REPOSITORY_FULL_NAME: task.repository.fullName,
+          CODEX_REPO_DIR: repoDir,
+        },
       });
-      await appendTaskLog({
-        taskId: task.id,
-        phase: 'agent',
-        line: `Arquivo alterado: codex-output/${fileName}`,
-        lineNumber: ++lineOffset,
-      });
+      lineOffset = agentRun.line;
+      if (agentRun.code !== 0) {
+        throw new Error(`Executor CODE falhou com exit code ${agentRun.code}`);
+      }
     }
 
     await appendTaskEvent({
@@ -336,78 +353,90 @@ export async function executeTask(taskId: string) {
     });
     await sleep(200);
 
-    await updatePhase(task.id, 'validation', 'Executando validacoes');
-    const validation = await runCommand({
-      cwd: repoDir,
-      phase: 'validation',
-      taskId: task.id,
-      lineOffset,
-      command: 'git',
-      args: ['status', '--short'],
-    });
-    lineOffset = validation.line;
-    await appendTaskEvent({
-      taskId: task.id,
-      eventType: 'validation.completed',
-      status: 'validating',
-      message: 'Validacoes concluidas',
-      metadata: {
-        exitCode: validation.code,
-      },
-    });
-
-    await setTaskStatus(task.id, 'generating_diff');
-    await appendTaskEvent({
-      taskId: task.id,
-      eventType: 'diff.ready',
-      status: 'generating_diff',
-      message: 'Gerando diff revisavel',
-    });
-
-    const diff = await runCommand({
-      cwd: repoDir,
-      phase: 'validation',
-      taskId: task.id,
-      lineOffset,
-      command: 'git',
-      args: ['diff', '--cached', '--no-color'],
-    });
-    lineOffset = diff.line;
-
-    const patch = diff.stdout || '';
-    const files = parseDiffFiles(patch);
-    const snapshot = await codexDb.diffSnapshot.upsert({
-      where: { taskId: task.id },
-      update: {
-        patch,
-        summary: files.length > 0 ? `${files.length} arquivo(s) alterado(s)` : 'Sem alteracoes detectadas',
-      },
-      create: {
+    if (task.mode === TaskMode.CODE) {
+      await updatePhase(task.id, 'validation', 'Executando validacoes');
+      const validation = await runCommand({
+        cwd: repoDir,
+        phase: 'validation',
         taskId: task.id,
-        patch,
-        summary: files.length > 0 ? `${files.length} arquivo(s) alterado(s)` : 'Sem alteracoes detectadas',
-      },
-    });
-
-    await codexDb.diffFile.deleteMany({ where: { diffSnapshotId: snapshot.id } });
-    for (const file of files) {
-      const diffFile = await codexDb.diffFile.create({
-        data: {
-          diffSnapshotId: snapshot.id,
-          path: file.path,
-          changeType: file.changeType,
-          additions: file.additions,
-          deletions: file.deletions,
+        lineOffset,
+        command: 'git',
+        args: ['status', '--short'],
+      });
+      lineOffset = validation.line;
+      await appendTaskEvent({
+        taskId: task.id,
+        eventType: 'validation.completed',
+        status: 'validating',
+        message: 'Validacoes concluidas',
+        metadata: {
+          exitCode: validation.code,
         },
       });
-      for (const hunk of file.hunks) {
-        await codexDb.diffHunk.create({
+    } else {
+      await appendTaskEvent({
+        taskId: task.id,
+        eventType: 'validation.skipped',
+        status: 'running_agent',
+        message: 'Validacoes Git nao se aplicam ao modo Ask',
+      });
+    }
+
+    let files: Array<ReturnType<typeof parseDiffFiles>[number]> = [];
+    if (task.mode === TaskMode.CODE) {
+      await setTaskStatus(task.id, 'generating_diff');
+      await appendTaskEvent({
+        taskId: task.id,
+        eventType: 'diff.ready',
+        status: 'generating_diff',
+        message: 'Gerando diff revisavel',
+      });
+
+      const diff = await runCommand({
+        cwd: repoDir,
+        phase: 'validation',
+        taskId: task.id,
+        lineOffset,
+        command: 'git',
+        args: ['diff', '--no-color', 'HEAD'],
+      });
+      lineOffset = diff.line;
+
+      const patch = diff.stdout || '';
+      files = parseDiffFiles(patch);
+      const snapshot = await codexDb.diffSnapshot.upsert({
+        where: { taskId: task.id },
+        update: {
+          patch,
+          summary: files.length > 0 ? `${files.length} arquivo(s) alterado(s)` : 'Sem alteracoes detectadas',
+        },
+        create: {
+          taskId: task.id,
+          patch,
+          summary: files.length > 0 ? `${files.length} arquivo(s) alterado(s)` : 'Sem alteracoes detectadas',
+        },
+      });
+
+      await codexDb.diffFile.deleteMany({ where: { diffSnapshotId: snapshot.id } });
+      for (const file of files) {
+        const diffFile = await codexDb.diffFile.create({
           data: {
-            diffFileId: diffFile.id,
-            header: hunk.split('\n')[0] || '@@',
-            content: hunk,
+            diffSnapshotId: snapshot.id,
+            path: file.path,
+            changeType: file.changeType,
+            additions: file.additions,
+            deletions: file.deletions,
           },
         });
+        for (const hunk of file.hunks) {
+          await codexDb.diffHunk.create({
+            data: {
+              diffFileId: diffFile.id,
+              header: hunk.split('\n')[0] || '@@',
+              content: hunk,
+            },
+          });
+        }
       }
     }
 
@@ -420,7 +449,7 @@ export async function executeTask(taskId: string) {
         `- Mode: ${task.mode}`,
         `- Status: completed`,
         `- Files changed: ${files.length}`,
-        `- Branch: ${task.resultBranch || `codex/${task.id}`}`,
+        `- Branch: ${resultBranch}`,
       ].join('\n'),
       'utf-8'
     );
@@ -435,24 +464,17 @@ export async function executeTask(taskId: string) {
       },
     });
 
-    await updatePhase(task.id, 'pr_push', 'Task pronta para PR');
-    await codexDb.pullRequest.upsert({
-      where: { taskId: task.id },
-      update: {
-        title: `feat(codex): ${task.title}`,
-        body: `Task ${task.id} pronta para criacao/atualizacao de PR.`,
-        branch: task.resultBranch || `codex/${task.id}`,
-        status: 'none',
-      },
-      create: {
+    if (task.mode === TaskMode.CODE) {
+      await appendTaskEvent({
         taskId: task.id,
-        repositoryId: task.repositoryId,
-        title: `feat(codex): ${task.title}`,
-        body: `Task ${task.id} pronta para criacao/atualizacao de PR.`,
-        branch: task.resultBranch || `codex/${task.id}`,
-        status: 'none',
-      },
-    });
+        eventType: 'pr.skipped',
+        status: 'completed',
+        message: 'Nenhum conector de pull request configurado para automacao real',
+        metadata: {
+          branch: resultBranch,
+        },
+      });
+    }
 
     await setTaskStatus(task.id, 'completed', { completedAt: new Date() });
     await appendTaskEvent({

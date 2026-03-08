@@ -34,7 +34,9 @@ const chatState = {
       updatedAt: Date.now(),
     },
   ],
+  loadConversations: jest.fn().mockResolvedValue(undefined),
   setActiveConversation: setActiveConversationMock,
+  deleteConversation: jest.fn().mockResolvedValue(undefined),
   toggleConversationPinned: toggleConversationPinnedMock,
 };
 
@@ -59,6 +61,8 @@ describe('LibraryPage', () => {
     pushMock.mockReset();
     setActiveConversationMock.mockReset();
     toggleConversationPinnedMock.mockReset();
+    chatState.loadConversations.mockReset().mockResolvedValue(undefined);
+    chatState.deleteConversation.mockReset().mockResolvedValue(undefined);
   });
 
   it('renders conversations from chat store', () => {
@@ -87,7 +91,7 @@ describe('LibraryPage', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Abrir' })[0]);
 
     expect(setActiveConversationMock).toHaveBeenCalledWith('conv-1');
-    expect(pushMock).toHaveBeenCalledWith('/chat');
+    expect(pushMock).toHaveBeenCalledWith('/chat?conversationId=conv-1');
   });
 
   it('toggles pin action from list', () => {

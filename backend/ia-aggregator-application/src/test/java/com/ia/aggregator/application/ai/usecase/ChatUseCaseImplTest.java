@@ -1,5 +1,7 @@
 package com.ia.aggregator.application.ai.usecase;
 
+import com.ia.aggregator.application.ai.dto.AiPromptResponse;
+import com.ia.aggregator.application.ai.dto.AiUsageEstimate;
 import com.ia.aggregator.application.ai.dto.ChatCommand;
 import com.ia.aggregator.application.ai.dto.ChatResponse;
 import com.ia.aggregator.application.ai.port.out.AiModelProvider;
@@ -46,10 +48,20 @@ class ChatUseCaseImplTest {
         ChatCommand command = new ChatCommand("hello", "gpt-4o-mini");
 
         when(routingPolicy.resolveOrderedModels(command)).thenReturn(List.of("gpt-4o-mini", "claude-3-5-haiku"));
-        when(primaryProvider.supports("gpt-4o-mini")).thenReturn(true);
-        when(secondaryProvider.supports("gpt-4o-mini")).thenReturn(false);
+        when(primaryProvider.supportsModel("gpt-4o-mini")).thenReturn(true);
+        when(secondaryProvider.supportsModel("gpt-4o-mini")).thenReturn(false);
         when(primaryProvider.providerName()).thenReturn("primary");
-        when(primaryProvider.generate("hello", "gpt-4o-mini")).thenReturn("primary-answer");
+        when(primaryProvider.sendPrompt(any())).thenReturn(new AiPromptResponse(
+                "primary-answer",
+                "primary",
+                "gpt-4o-mini",
+                "req-1",
+                AiUsageEstimate.of(10, 12),
+                null,
+                55,
+                "completed",
+                List.of()
+        ));
 
         ChatResponse response = useCase.execute(command);
 
@@ -69,14 +81,24 @@ class ChatUseCaseImplTest {
         ChatCommand command = new ChatCommand("hello", "gpt-4o-mini");
 
         when(routingPolicy.resolveOrderedModels(command)).thenReturn(List.of("gpt-4o-mini", "claude-3-5-haiku"));
-        when(primaryProvider.supports("gpt-4o-mini")).thenReturn(true);
-        when(secondaryProvider.supports("gpt-4o-mini")).thenReturn(true);
+        when(primaryProvider.supportsModel("gpt-4o-mini")).thenReturn(true);
+        when(secondaryProvider.supportsModel("gpt-4o-mini")).thenReturn(true);
         when(primaryProvider.providerName()).thenReturn("primary");
         when(secondaryProvider.providerName()).thenReturn("secondary");
 
-        when(primaryProvider.generate("hello", "gpt-4o-mini"))
+        when(primaryProvider.sendPrompt(any()))
                 .thenThrow(new TechnicalException(ErrorCode.AI_002, "primary unavailable"));
-        when(secondaryProvider.generate("hello", "gpt-4o-mini")).thenReturn("secondary-answer");
+        when(secondaryProvider.sendPrompt(any())).thenReturn(new AiPromptResponse(
+                "secondary-answer",
+                "secondary",
+                "gpt-4o-mini",
+                "req-2",
+                AiUsageEstimate.of(11, 14),
+                null,
+                80,
+                "completed",
+                List.of()
+        ));
 
         ChatResponse response = useCase.execute(command);
 
@@ -95,7 +117,7 @@ class ChatUseCaseImplTest {
         ChatCommand command = new ChatCommand("hello", "unknown-model");
 
         when(routingPolicy.resolveOrderedModels(command)).thenReturn(List.of("unknown-model"));
-        when(primaryProvider.supports("unknown-model")).thenReturn(false);
+        when(primaryProvider.supportsModel("unknown-model")).thenReturn(false);
 
         BusinessException ex = assertThrows(BusinessException.class, () -> useCase.execute(command));
 
@@ -123,9 +145,19 @@ class ChatUseCaseImplTest {
         ChatCommand command = new ChatCommand("hello", "gpt-4o-mini");
 
         when(routingPolicy.resolveOrderedModels(command)).thenReturn(List.of("gpt-4o-mini"));
-        when(primaryProvider.supports("gpt-4o-mini")).thenReturn(true);
+        when(primaryProvider.supportsModel("gpt-4o-mini")).thenReturn(true);
         when(primaryProvider.providerName()).thenReturn("primary");
-        when(primaryProvider.generate("hello", "gpt-4o-mini")).thenReturn("api key: SECRET123456789");
+        when(primaryProvider.sendPrompt(any())).thenReturn(new AiPromptResponse(
+                "api key: SECRET123456789",
+                "primary",
+                "gpt-4o-mini",
+                "req-3",
+                AiUsageEstimate.of(10, 10),
+                null,
+                33,
+                "completed",
+                List.of()
+        ));
         doThrow(new BusinessException(ErrorCode.GEN_002, "AI output blocked by guardrail policy"))
                 .when(outputGuardrailPort).validate("api key: SECRET123456789");
 

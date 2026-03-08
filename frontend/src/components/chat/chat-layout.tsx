@@ -115,7 +115,7 @@ export function ChatLayout({ sidebar, children }: ChatLayoutProps) {
             {!sidebarOpen ? (
               <button
                 type="button"
-                onClick={() => createConversation()}
+                onClick={() => void createConversation()}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)]"
                 aria-label="Nova conversa"
               >

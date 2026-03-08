@@ -3,15 +3,41 @@
 import { POST } from '@/app/api/v1/ai/chat/route';
 
 describe('POST /api/v1/ai/chat', () => {
-  const originalEnv = process.env;
+  const originalFetch = global.fetch;
 
   beforeEach(() => {
-    process.env = { ...originalEnv };
-    delete process.env.OPENAI_API_KEY;
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: {
+          content: 'Resposta real de teste',
+          modelUsed: 'gpt-4o-mini',
+          providerUsed: 'OpenAI',
+          fallbackUsed: false,
+          attempts: 1,
+          requestId: 'req-123',
+          usage: {
+            inputTokens: 10,
+            outputTokens: 20,
+            totalTokens: 30,
+          },
+          estimatedCost: {
+            providerId: 'openai',
+            model: 'gpt-4o-mini',
+            currency: 'USD',
+            amount: 0.00012,
+            supported: true,
+          },
+          latencyMs: 120,
+          finishReason: 'completed',
+        },
+      }),
+    }) as jest.Mock;
   });
 
   afterAll(() => {
-    process.env = originalEnv;
+    global.fetch = originalFetch;
   });
 
   it('returns success payload with gateway metadata', async () => {
@@ -33,5 +59,7 @@ describe('POST /api/v1/ai/chat', () => {
     expect(payload.success).toBe(true);
     expect(payload.data.modelUsed).toBe('gpt-4o-mini');
     expect(payload.data.agentVersion).toBe('v1');
+    expect(payload.data.executionMode).toBe('live');
+    expect(payload.data.requestId).toBe('req-123');
   });
 });

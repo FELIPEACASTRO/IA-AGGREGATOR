@@ -1,8 +1,12 @@
 package com.ia.aggregator.infrastructure.ai.telemetry;
 
 import com.ia.aggregator.application.ai.port.out.AiRoutingTelemetryPort;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class MicrometerAiRoutingTelemetryAdapter implements AiRoutingTelemetryPort {
@@ -49,5 +53,38 @@ public class MicrometerAiRoutingTelemetryAdapter implements AiRoutingTelemetryPo
                 "provider", provider,
                 "reason", reason
         ).increment();
+    }
+
+    @Override
+    public void recordLatency(String model, String provider, long latencyMs) {
+        Timer.builder("ai.routing.latency")
+                .tag("model", model)
+                .tag("provider", provider)
+                .register(meterRegistry)
+                .record(latencyMs, TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public void recordFallback(String model, String provider) {
+        meterRegistry.counter(
+                "ai.routing.fallbacks",
+                "model", model,
+                "provider", provider
+        ).increment();
+    }
+
+    @Override
+    public void recordEstimatedCost(String model, String provider, BigDecimal amount, String currency) {
+        if (amount == null) {
+            return;
+        }
+
+        meterRegistry.summary(
+                        "ai.routing.estimated.cost",
+                        "model", model,
+                        "provider", provider,
+                        "currency", currency == null || currency.isBlank() ? "USD" : currency
+                )
+                .record(amount.doubleValue());
     }
 }

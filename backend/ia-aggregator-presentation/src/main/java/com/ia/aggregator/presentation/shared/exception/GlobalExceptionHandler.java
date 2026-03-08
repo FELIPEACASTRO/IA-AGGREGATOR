@@ -1,5 +1,6 @@
 package com.ia.aggregator.presentation.shared.exception;
 
+import com.ia.aggregator.common.exception.AiGatewayException;
 import com.ia.aggregator.common.exception.BusinessException;
 import com.ia.aggregator.common.exception.TechnicalException;
 import com.ia.aggregator.presentation.shared.response.ApiErrorResponse;
@@ -41,6 +42,30 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(TechnicalException.class)
     public ResponseEntity<ApiErrorResponse> handleTechnicalException(TechnicalException ex) {
+        if (ex instanceof AiGatewayException aiGatewayException) {
+            String safeMessage = aiGatewayException.getDetail() != null
+                    ? aiGatewayException.getDetail()
+                    : aiGatewayException.getErrorCode().getDefaultMessage();
+
+            log.warn(
+                    "Erro tecnico de IA: codigo={}, provider={}, model={}, requestId={}, retryable={}, detalhe={}",
+                    aiGatewayException.getErrorCode().getCode(),
+                    aiGatewayException.getProviderId(),
+                    aiGatewayException.getModel(),
+                    aiGatewayException.getRequestId(),
+                    aiGatewayException.isRetryable(),
+                    safeMessage
+            );
+
+            HttpStatus status = HttpStatus.valueOf(aiGatewayException.getErrorCode().getHttpStatus());
+            return ResponseEntity.status(status)
+                    .body(ApiErrorResponse.of(
+                            aiGatewayException.getErrorCode().getCode(),
+                            safeMessage,
+                            aiGatewayException.getRequestId()
+                    ));
+        }
+
         log.error("Technical error: [{}] {}", ex.getErrorCode().getCode(), ex.getMessage(), ex);
 
         HttpStatus status = HttpStatus.valueOf(ex.getErrorCode().getHttpStatus());

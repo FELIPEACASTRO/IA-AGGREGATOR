@@ -12,24 +12,40 @@ import { EmptyState } from '@/components/chat/empty-state';
 
 function ChatPageContent() {
   const isLoading = useAuthStore((state) => state.isLoading);
-  const { conversations, activeConversationId, createConversation } = useChatStore();
+  const conversations = useChatStore((state) => state.conversations);
+  const activeConversationId = useChatStore((state) => state.activeConversationId);
+  const createConversation = useChatStore((state) => state.createConversation);
+  const loadConversations = useChatStore((state) => state.loadConversations);
+  const setActiveConversation = useChatStore((state) => state.setActiveConversation);
+  const isLoaded = useChatStore((state) => state.isLoaded);
   const searchParams = useSearchParams();
 
   const activeConversation = conversations.find((c) => c.id === activeConversationId);
   const hasMessages = activeConversation && activeConversation.messages.length > 0;
   const promptPrefill = searchParams.get('prompt');
+  const conversationId = searchParams.get('conversationId');
+
+  useEffect(() => {
+    void loadConversations();
+  }, [loadConversations]);
 
   // Ctrl+N for new conversation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
         e.preventDefault();
-        createConversation();
+        void createConversation();
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [createConversation]);
+
+  useEffect(() => {
+    if (!conversationId) return;
+    if (!conversations.some((conversation) => conversation.id === conversationId)) return;
+    setActiveConversation(conversationId);
+  }, [conversationId, conversations, setActiveConversation]);
 
   useEffect(() => {
     if (!promptPrefill || typeof window === 'undefined') return;
@@ -41,7 +57,7 @@ function ChatPageContent() {
     target.__chatSetInput?.(promptPrefill);
   }, [promptPrefill]);
 
-  if (isLoading) {
+  if (isLoading || !isLoaded) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--background)]">
         <div className="flex gap-1.5">

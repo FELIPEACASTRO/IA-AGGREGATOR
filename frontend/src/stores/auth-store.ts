@@ -115,11 +115,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         credentials: 'include',
       });
     } finally {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-      }
-
       set({
         ...unauthenticatedState,
         isLoading: false,

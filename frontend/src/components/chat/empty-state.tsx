@@ -23,7 +23,6 @@ export function EmptyState() {
   const isSending = useChatStore((state) => state.isSending);
   const selectedModel = useChatStore((state) => state.selectedModel);
   const sendMessage = useChatStore((state) => state.sendMessage);
-  const createConversation = useChatStore((state) => state.createConversation);
 
   const [input, setInput] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -38,7 +37,6 @@ export function EmptyState() {
     const timer = createPerfTimer();
     trackEvent('chat_send_start', { model: selectedModel, promptLength: trimmed.length });
 
-    createConversation();
     setInput('');
 
     if (inputRef.current) inputRef.current.style.height = 'auto';
@@ -52,7 +50,7 @@ export function EmptyState() {
         message: err instanceof Error ? err.message : 'unknown',
       });
     }
-  }, [createConversation, input, isSending, selectedModel, sendMessage]);
+  }, [input, isSending, selectedModel, sendMessage]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {

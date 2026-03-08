@@ -49,6 +49,7 @@ export async function createWorkspaceForUser(input: {
   email: string;
   name: string;
   workspaceName?: string;
+  authOrgId?: string | null;
 }) {
   const preferredName = input.workspaceName?.trim() || `${input.name.split(' ')[0] || 'Lume'} Workspace`;
   const baseSlug = slugifyWorkspaceName(`ws-${preferredName}`) || `ws-${input.userId}`;
@@ -56,6 +57,7 @@ export async function createWorkspaceForUser(input: {
 
   const workspace = await codexDb.workspace.create({
     data: {
+      authOrgId: input.authOrgId ?? undefined,
       slug,
       name: preferredName,
       memberships: {
@@ -92,6 +94,29 @@ export async function listWorkspacesForUser(userId: string) {
     },
     orderBy: {
       createdAt: 'asc',
+    },
+  });
+}
+
+async function ensureMembership(input: {
+  workspaceId: string;
+  userId: string;
+  role?: 'OWNER' | 'ADMIN' | 'MEMBER';
+}) {
+  return codexDb.membership.upsert({
+    where: {
+      workspaceId_userId: {
+        workspaceId: input.workspaceId,
+        userId: input.userId,
+      },
+    },
+    update: {
+      role: input.role ?? 'OWNER',
+    },
+    create: {
+      workspaceId: input.workspaceId,
+      userId: input.userId,
+      role: input.role ?? 'OWNER',
     },
   });
 }
@@ -177,15 +202,50 @@ export async function ensureWorkspaceForUser(input: {
   email: string;
   name: string;
   selectedWorkspaceId?: string | null;
+  authOrgId?: string | null;
 }) {
   const user = await syncCodexUser(input);
 
+  if (input.authOrgId) {
+    const workspaceLinkedToOrg = await codexDb.workspace.findUnique({
+      where: { authOrgId: input.authOrgId },
+    });
+
+    if (workspaceLinkedToOrg) {
+      await ensureMembership({
+        workspaceId: workspaceLinkedToOrg.id,
+        userId: user.id,
+        role: 'OWNER',
+      });
+    }
+  }
+
   let memberships = await listWorkspacesForUser(user.id);
+
+  if (
+    input.authOrgId &&
+    memberships.length > 0 &&
+    !memberships.some((membership) => membership.workspace.authOrgId === input.authOrgId)
+  ) {
+    const ownedUnlinkedWorkspace = memberships.find(
+      (membership) => membership.role === 'OWNER' && !membership.workspace.authOrgId
+    );
+
+    if (ownedUnlinkedWorkspace) {
+      await codexDb.workspace.update({
+        where: { id: ownedUnlinkedWorkspace.workspaceId },
+        data: { authOrgId: input.authOrgId },
+      });
+      memberships = await listWorkspacesForUser(user.id);
+    }
+  }
+
   if (memberships.length === 0) {
     await createWorkspaceForUser({
       userId: input.userId,
       email: input.email,
       name: input.name,
+      authOrgId: input.authOrgId,
     });
     memberships = await listWorkspacesForUser(user.id);
   }

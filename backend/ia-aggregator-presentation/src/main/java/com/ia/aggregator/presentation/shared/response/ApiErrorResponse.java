@@ -15,14 +15,16 @@ public class ApiErrorResponse {
     private final String errorCode;
     private final String message;
     private final List<FieldError> errors;
+    private final String requestId;
     private final Instant timestamp;
 
     public ApiErrorResponse(boolean success, String errorCode, String message,
-                             List<FieldError> errors, Instant timestamp) {
+                             List<FieldError> errors, String requestId, Instant timestamp) {
         this.success = success;
         this.errorCode = errorCode;
         this.message = message;
         this.errors = errors;
+        this.requestId = requestId;
         this.timestamp = timestamp;
     }
 
@@ -30,14 +32,19 @@ public class ApiErrorResponse {
     public String getErrorCode() { return errorCode; }
     public String getMessage() { return message; }
     public List<FieldError> getErrors() { return errors; }
+    public String getRequestId() { return requestId; }
     public Instant getTimestamp() { return timestamp; }
 
     public static ApiErrorResponse of(String errorCode, String message) {
-        return new ApiErrorResponse(false, errorCode, message, null, Instant.now());
+        return new ApiErrorResponse(false, errorCode, message, null, null, Instant.now());
+    }
+
+    public static ApiErrorResponse of(String errorCode, String message, String requestId) {
+        return new ApiErrorResponse(false, errorCode, message, null, requestId, Instant.now());
     }
 
     public static ApiErrorResponse validation(String message, List<FieldError> fieldErrors) {
-        return new ApiErrorResponse(false, "VALIDATION_ERROR", message, fieldErrors, Instant.now());
+        return new ApiErrorResponse(false, "VALIDATION_ERROR", message, fieldErrors, null, Instant.now());
     }
 
     public static class FieldError {

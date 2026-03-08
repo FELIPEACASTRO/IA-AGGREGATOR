@@ -9,6 +9,7 @@ export type CodexUserSession = {
 
 type BackendUserProfile = {
   id?: string;
+  organizationId?: string;
   email?: string;
   fullName?: string;
   avatarUrl?: string | null;

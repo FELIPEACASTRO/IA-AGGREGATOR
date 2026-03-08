@@ -7,84 +7,24 @@ $ErrorActionPreference = 'Stop'
 $rootPath = Resolve-Path (Join-Path $PSScriptRoot "..")
 Set-Location $rootPath
 
-function Get-AiKeysFromLocalFile {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$FilePath
+function Get-ConfiguredAiKeys {
+    $keys = @(
+        'OPENAI_API_KEY',
+        'GEMINI_API_KEY',
+        'DEEPSEEK_API_KEY',
+        'ANTHROPIC_API_KEY',
+        'XAI_API_KEY',
+        'PERPLEXITY_API_KEY'
     )
 
-    if (-not (Test-Path $FilePath)) {
-        return @{}
-    }
-
-    $rawLines = Get-Content -Path $FilePath
-    $lines = $rawLines | ForEach-Object { $_.Trim() }
-    $result = @{}
-
-    function Get-NextKeyLine {
-        param(
-            [string[]]$AllLines,
-            [int]$StartIndex,
-            [string]$Prefix
-        )
-
-        for ($j = $StartIndex + 1; $j -lt $AllLines.Count; $j++) {
-            $candidate = $AllLines[$j]
-            if ([string]::IsNullOrWhiteSpace($candidate)) {
-                continue
-            }
-            if ($candidate.StartsWith('curl ', [StringComparison]::OrdinalIgnoreCase)) {
-                continue
-            }
-            if ($candidate.StartsWith($Prefix, [StringComparison]::OrdinalIgnoreCase)) {
-                return $candidate
-            }
-            break
-        }
-        return $null
-    }
-
-    for ($i = 0; $i -lt $lines.Count; $i++) {
-        $line = $lines[$i]
-        switch -Regex ($line) {
-            '^Open IA$' {
-                $value = Get-NextKeyLine -AllLines $lines -StartIndex $i -Prefix 'sk-'
-                if ($value) { $result['OPENAI_API_KEY'] = $value }
-                continue
-            }
-            '^Gemini$' {
-                $value = Get-NextKeyLine -AllLines $lines -StartIndex $i -Prefix 'AIza'
-                if ($value) { $result['GEMINI_API_KEY'] = $value }
-                continue
-            }
-            '^DeepSeek$' {
-                $value = Get-NextKeyLine -AllLines $lines -StartIndex $i -Prefix 'sk-'
-                if ($value) { $result['DEEPSEEK_API_KEY'] = $value }
-                continue
-            }
-            '^Claude$' {
-                $value = Get-NextKeyLine -AllLines $lines -StartIndex $i -Prefix 'sk-ant-'
-                if ($value) { $result['ANTHROPIC_API_KEY'] = $value }
-                continue
-            }
-            '^Grok' {
-                $value = Get-NextKeyLine -AllLines $lines -StartIndex $i -Prefix 'xai-'
-                if ($value) { $result['XAI_API_KEY'] = $value }
-                continue
-            }
-        }
-    }
-
-    return $result
+    return $keys | Where-Object { -not [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($_)) }
 }
 
-$localKeysPath = Join-Path $rootPath "IA\local.txt"
-$aiKeys = Get-AiKeysFromLocalFile -FilePath $localKeysPath
-foreach ($entry in $aiKeys.GetEnumerator()) {
-    Set-Item -Path "Env:$($entry.Key)" -Value $entry.Value
-}
-if ($aiKeys.Count -gt 0) {
-    Write-Host ("[init] Chaves de IA carregadas de IA\\local.txt: " + (($aiKeys.Keys | Sort-Object) -join ', '))
+$configuredAiKeys = Get-ConfiguredAiKeys
+if ($configuredAiKeys.Count -gt 0) {
+    Write-Host ("[init] Providers de IA configurados por variáveis de ambiente: " + (($configuredAiKeys | Sort-Object) -join ', '))
+} else {
+    Write-Host "[init] Nenhuma API key de IA encontrada em variáveis de ambiente. Os providers subirão como NOT_CONFIGURED."
 }
 
 function Test-DockerReady {

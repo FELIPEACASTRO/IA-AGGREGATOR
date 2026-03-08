@@ -30,11 +30,13 @@ const chatStoreState = {
   ] as MockConversation[],
   activeConversationId: 'conv-1',
   selectedModel: 'gpt-4o-mini',
+  isLoaded: true,
   isSending: false,
   isStreaming: false,
   availableModels: [{ id: 'gpt-4o-mini', label: 'GPT-4o Mini', provider: 'OpenAI' }],
+  loadConversations: jest.fn().mockResolvedValue(undefined),
   setSelectedModel: jest.fn(),
-  createConversation: jest.fn(),
+  createConversation: jest.fn().mockResolvedValue('conv-2'),
   setActiveConversation: jest.fn(),
   renameConversation: jest.fn(),
   toggleConversationPinned: jest.fn(),
@@ -88,7 +90,8 @@ describe('ChatPage', () => {
     });
 
     chatStoreState.sendMessage = jest.fn().mockResolvedValue(undefined);
-    chatStoreState.createConversation = jest.fn();
+    chatStoreState.createConversation = jest.fn().mockResolvedValue('conv-2');
+    chatStoreState.loadConversations = jest.fn().mockResolvedValue(undefined);
     chatStoreState.stopGenerating = jest.fn();
     chatStoreState.conversations[0].messages = [];
     chatStoreState.isSending = false;

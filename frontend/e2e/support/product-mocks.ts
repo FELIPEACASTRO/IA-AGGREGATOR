@@ -4,6 +4,7 @@ export type E2EUser = {
   fullName: string;
   email: string;
   password: string;
+  workspaceName?: string;
 };
 
 export type MockConversation = {
@@ -182,11 +183,17 @@ const nowIso = () => new Date().toISOString();
 const jsonSuccess = (data: unknown) => JSON.stringify({ success: true, data });
 const jsonError = (message: string) => JSON.stringify({ success: false, message });
 
-const fulfillJson = async (route: Route, status: number, body: string) => {
+const fulfillJson = async (
+  route: Route,
+  status: number,
+  body: string,
+  headers?: Record<string, string>,
+) => {
   await route.fulfill({
     status,
     contentType: 'application/json',
     body,
+    headers,
   });
 };
 
@@ -447,38 +454,9 @@ export async function seedBrowserState(
     selectedModel?: string;
   },
 ) {
-  const conversations = options.conversations ?? [];
-  const selectedModel = options.selectedModel ?? 'gpt-4o-mini';
-  const activeConversationId = options.activeConversationId ?? conversations[0]?.id ?? null;
-
-  await page.addInitScript(
-    ({ authenticated, seededConversations, currentConversationId, model }) => {
-      window.localStorage.clear();
-
-      if (authenticated) {
-        window.localStorage.setItem('access_token', 'mock-access-token');
-        window.localStorage.setItem('refresh_token', 'mock-refresh-token');
-      }
-
-      window.localStorage.setItem(
-        'ia-aggregator-chat-store',
-        JSON.stringify({
-          state: {
-            conversations: seededConversations,
-            activeConversationId: currentConversationId,
-            selectedModel: model,
-          },
-          version: 0,
-        }),
-      );
-    },
-    {
-      authenticated: options.authenticated,
-      seededConversations: conversations,
-      currentConversationId: activeConversationId,
-      model: selectedModel,
-    },
-  );
+  await page.addInitScript(() => {
+    window.localStorage.clear();
+  });
 
   if (options.authenticated) {
     await page.context().addCookies([
@@ -809,16 +787,27 @@ export async function installProductMocks(
         route,
         200,
         jsonSuccess({
-          accessToken: 'mock-access-token',
-          refreshToken: 'mock-refresh-token',
+          authenticated: true,
+          expiresIn: 3600,
         }),
+        {
+          'Set-Cookie': [
+            'access_token=mock-access-token; Path=/; HttpOnly; SameSite=Lax',
+            'refresh_token=mock-refresh-token; Path=/; HttpOnly; SameSite=Lax',
+          ].join(', '),
+        },
       );
       return;
     }
 
     if (pathname === '/api/auth/logout' && method === 'POST') {
       isAuthenticated = false;
-      await fulfillJson(route, 200, jsonSuccess({ ok: true }));
+      await fulfillJson(route, 200, jsonSuccess({ ok: true }), {
+        'Set-Cookie': [
+          'access_token=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax',
+          'refresh_token=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax',
+        ].join(', '),
+      });
       return;
     }
 

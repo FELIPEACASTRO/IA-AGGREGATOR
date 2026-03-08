@@ -1,5 +1,5 @@
 import { fail, ok } from '@/server/codex/http';
-import { summarizeProvider } from '@/server/ai/runtime';
+import { fetchBackend } from '@/server/backend-proxy';
 
 export const runtime = 'nodejs';
 
@@ -8,18 +8,35 @@ export async function GET(
   { params }: { params: Promise<{ providerId: string }> }
 ) {
   const { providerId } = await params;
-  const provider = summarizeProvider(providerId);
+  const response = await fetchBackend(`/api/v1/ai/providers/${providerId}/health`);
+  if (!response.ok) {
+    return fail('Provider nao encontrado', 404);
+  }
+
+  const payload = (await response.json()) as {
+    success?: boolean;
+    data?: {
+      providerId: string;
+      providerName: string;
+      circuitState?: string;
+      configured: boolean;
+      requiredSecrets?: string[];
+      supportsStreaming?: boolean;
+      defaultModel?: string | null;
+    };
+  };
+  const provider = payload.data;
   if (!provider) {
     return fail('Provider nao encontrado', 404);
   }
 
   return ok({
-    providerId: provider.id,
-    providerName: provider.name,
-    status: provider.status,
+    providerId: provider.providerId,
+    providerName: provider.providerName,
+    status: provider.circuitState?.toLowerCase() ?? 'unknown',
     configured: provider.configured,
-    missingKeys: provider.missingKeys,
-    liveChatReady: provider.configured && provider.supportsLiveChat,
-    resolvedBaseUrl: provider.resolvedBaseUrl,
+    missingKeys: provider.requiredSecrets ?? [],
+    liveChatReady: provider.configured && Boolean(provider.supportsStreaming),
+    defaultModel: provider.defaultModel ?? null,
   });
 }

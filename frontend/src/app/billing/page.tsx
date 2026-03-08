@@ -30,10 +30,14 @@ type BillingPayload = {
   plans: BillingPlan[];
   monthlyUsage: WeeklyUsage[];
   current: {
+    currentPlanId?: string | null;
+    currentPlanName: string;
     tokensUsed: number;
     monthlyLimit: number;
     pct: number;
-    estimatedFromRuns: boolean;
+    balance: number;
+    includedUsageLeft: number;
+    usageAvailable: boolean;
   };
 };
 
@@ -47,7 +51,7 @@ export default function BillingPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/billing/usage', { cache: 'no-store' });
+      const response = await fetch('/api/v1/billing/summary', { cache: 'no-store' });
       const payload = (await response.json()) as { success: boolean; data?: BillingPayload; message?: string };
       if (!response.ok || !payload.success || !payload.data) {
         throw new Error(payload.message || t('billing.error'));
@@ -68,9 +72,10 @@ export default function BillingPage() {
   const plans = data?.plans ?? [];
   const monthlyUsage = data?.monthlyUsage ?? [];
   const tokensUsed = data?.current.tokensUsed ?? 0;
-  const monthlyLimit = data?.current.monthlyLimit ?? 50000;
+  const monthlyLimit = data?.current.monthlyLimit ?? 0;
   const pct = data?.current.pct ?? 0;
-  const currentPlan = plans.find((p) => p.current) ?? plans[0];
+  const usageAvailable = data?.current.usageAvailable ?? false;
+  const currentPlanName = data?.current.currentPlanName ?? 'Indisponivel';
   const maxTokens = Math.max(1, ...monthlyUsage.map((i) => i.tokens));
 
   return (
@@ -105,12 +110,14 @@ export default function BillingPage() {
             <div className="grid gap-3 md:grid-cols-3">
               <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-xs)]">
                 <CreditCard className="h-5 w-5 text-[var(--muted-foreground)]" />
-                <p className="mt-3 text-[20px] font-semibold text-[var(--foreground)]">{currentPlan?.name ?? '-'}</p>
+                <p className="mt-3 text-[20px] font-semibold text-[var(--foreground)]">{currentPlanName}</p>
                 <p className="mt-0.5 text-[12px] text-[var(--muted-foreground)]">{t('billing.currentPlan')}</p>
               </div>
               <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-xs)]">
                 <Activity className="h-5 w-5 text-[var(--muted-foreground)]" />
-                <p className="mt-3 text-[20px] font-semibold text-[var(--foreground)]">{(tokensUsed / 1000).toFixed(1)}k</p>
+                <p className="mt-3 text-[20px] font-semibold text-[var(--foreground)]">
+                  {usageAvailable ? `${(tokensUsed / 1000).toFixed(1)}k` : 'Indisponivel'}
+                </p>
                 <p className="mt-0.5 text-[12px] text-[var(--muted-foreground)]">{t('billing.tokensUsed')}</p>
               </div>
               <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-xs)]">
@@ -141,8 +148,8 @@ export default function BillingPage() {
                 />
               </div>
               <div className="mt-2 flex justify-between text-[12px] text-[var(--muted-foreground)]">
-                <span>{tokensUsed.toLocaleString('pt-BR')} usados</span>
-                <span>{(monthlyLimit - tokensUsed).toLocaleString('pt-BR')} restantes</span>
+                <span>{usageAvailable ? `${tokensUsed.toLocaleString('pt-BR')} usados` : 'Sem medicao real disponivel'}</span>
+                <span>{monthlyLimit > 0 ? `${Math.max(0, monthlyLimit - tokensUsed).toLocaleString('pt-BR')} restantes` : 'Limite indisponivel'}</span>
               </div>
             </div>
 

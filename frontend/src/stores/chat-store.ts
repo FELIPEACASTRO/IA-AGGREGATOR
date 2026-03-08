@@ -1,7 +1,6 @@
 import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
-import api from '@/lib/api';
 import { MODEL_CATALOG } from '@/lib/model-catalog';
+import type { ChatConversationDto, ConsumerChatMessageDto } from '@/lib/contracts/platform';
 
 export interface ChatMessage {
   id: string;
@@ -26,322 +25,344 @@ export interface Conversation {
   updatedAt: number;
 }
 
+type ConversationRecord = ChatConversationDto & {
+  messages: ConsumerChatMessageDto[];
+};
+
+type ApiEnvelope<T> = {
+  success: boolean;
+  data?: T;
+  message?: string;
+};
+
 interface ChatState {
   conversations: Conversation[];
   activeConversationId: string | null;
   selectedModel: string;
+  isLoaded: boolean;
   isSending: boolean;
   isStreaming: boolean;
   activeRequestController: AbortController | null;
   activeStreamId: string | null;
   availableModels: { id: string; label: string; provider: string; maxContextTokens: number }[];
 
+  loadConversations: () => Promise<void>;
   setSelectedModel: (model: string) => void;
-  createConversation: () => string;
+  createConversation: () => Promise<string>;
   setActiveConversation: (id: string) => void;
-  renameConversation: (id: string, title: string) => void;
-  toggleConversationPinned: (id: string) => void;
-  clearConversationMessages: (id: string) => void;
+  renameConversation: (id: string, title: string) => Promise<void>;
+  toggleConversationPinned: (id: string) => Promise<void>;
+  clearConversationMessages: (id: string) => Promise<void>;
   sendMessage: (prompt: string) => Promise<void>;
   stopGenerating: () => void;
-  deleteConversation: (id: string) => void;
+  deleteConversation: (id: string) => Promise<void>;
 }
 
 const AVAILABLE_MODELS = MODEL_CATALOG;
 
-let nextMsgId = 1;
-const uid = () => `msg-${Date.now()}-${nextMsgId++}`;
-const convUid = () => `conv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const sortConversations = (conversations: Conversation[]) =>
-  [...conversations].sort((a, b) => {
+function sortConversations(conversations: Conversation[]) {
+  return [...conversations].sort((a, b) => {
     if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
     return b.updatedAt - a.updatedAt;
   });
+}
 
-export const useChatStore = create<ChatState>()(
-  persist(
-    (set, get) => ({
-      conversations: [],
-      activeConversationId: null,
-      selectedModel: 'gpt-4o-mini',
+function mapMessage(message: ConsumerChatMessageDto): ChatMessage {
+  return {
+    id: message.id,
+    role: message.role,
+    content: message.content,
+    modelUsed: message.modelUsed ?? undefined,
+    providerUsed: message.providerUsed ?? undefined,
+    agentUsed: message.agentUsed ?? undefined,
+    agentVersion: message.agentVersion ?? undefined,
+    fallbackUsed: message.fallbackUsed ?? undefined,
+    attempts: message.attempts ?? undefined,
+    timestamp: Date.parse(message.createdAt),
+  };
+}
+
+function mapConversation(record: ConversationRecord): Conversation {
+  return {
+    id: record.id,
+    title: record.title,
+    model: record.model,
+    pinned: record.pinned,
+    messages: record.messages.map(mapMessage),
+    createdAt: Date.parse(record.createdAt),
+    updatedAt: Date.parse(record.updatedAt),
+  };
+}
+
+async function readEnvelope<T>(response: Response): Promise<T> {
+  const payload = (await response.json().catch(() => null)) as ApiEnvelope<T> | null;
+  if (!response.ok || !payload?.success || !payload.data) {
+    throw new Error(payload?.message || 'Falha ao comunicar com o servidor');
+  }
+  return payload.data;
+}
+
+async function requestJson<T>(input: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(input, {
+    credentials: 'include',
+    cache: 'no-store',
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(init?.headers ?? {}),
+    },
+  });
+  return readEnvelope<T>(response);
+}
+
+function reconcileConversations(
+  conversations: Conversation[],
+  updatedConversation: Conversation,
+  activeConversationId: string | null,
+  fallbackModel: string
+) {
+  const nextConversations = sortConversations([
+    updatedConversation,
+    ...conversations.filter((conversation) => conversation.id !== updatedConversation.id),
+  ]);
+
+  const nextActiveConversationId = activeConversationId ?? updatedConversation.id;
+  const nextActiveConversation =
+    nextConversations.find((conversation) => conversation.id === nextActiveConversationId) ??
+    nextConversations[0];
+
+  return {
+    conversations: nextConversations,
+    activeConversationId: nextActiveConversation?.id ?? null,
+    selectedModel: nextActiveConversation?.model ?? fallbackModel,
+  };
+}
+
+export const useChatStore = create<ChatState>((set, get) => ({
+  conversations: [],
+  activeConversationId: null,
+  selectedModel: 'gpt-4o-mini',
+  isLoaded: false,
+  isSending: false,
+  isStreaming: false,
+  activeRequestController: null,
+  activeStreamId: null,
+  availableModels: AVAILABLE_MODELS,
+
+  loadConversations: async () => {
+    try {
+      const data = await requestJson<{ conversations: ConversationRecord[] }>('/api/v1/chat/conversations');
+      const records = Array.isArray(data.conversations) ? data.conversations : [];
+      const conversations = sortConversations(records.map(mapConversation));
+
+      set((state) => {
+        const activeConversationId =
+          state.activeConversationId &&
+          conversations.some((conversation) => conversation.id === state.activeConversationId)
+            ? state.activeConversationId
+            : conversations[0]?.id ?? null;
+        const selectedModel =
+          conversations.find((conversation) => conversation.id === activeConversationId)?.model ??
+          state.selectedModel;
+
+        return {
+          conversations,
+          activeConversationId,
+          selectedModel,
+          isLoaded: true,
+        };
+      });
+    } catch {
+      set((state) => ({
+        conversations: [],
+        activeConversationId: null,
+        selectedModel: state.selectedModel,
+        isLoaded: true,
+      }));
+    }
+  },
+
+  setSelectedModel: (model) => {
+    set((state) => ({
+      selectedModel: model,
+      conversations: sortConversations(
+        state.conversations.map((conversation) =>
+          conversation.id === state.activeConversationId
+            ? { ...conversation, model, updatedAt: Date.now() }
+            : conversation
+        )
+      ),
+    }));
+
+    const activeConversationId = get().activeConversationId;
+    if (!activeConversationId) return;
+
+    void requestJson<{ conversation: ConversationRecord }>(`/api/v1/chat/conversations/${activeConversationId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ model }),
+    })
+      .then((data) => {
+        const updatedConversation = mapConversation(data.conversation);
+        set((state) => reconcileConversations(
+          state.conversations,
+          updatedConversation,
+          state.activeConversationId,
+          state.selectedModel
+        ));
+      })
+      .catch(() => undefined);
+  },
+
+  createConversation: async () => {
+    const model = get().selectedModel;
+    const data = await requestJson<{ conversation: ConversationRecord }>('/api/v1/chat/conversations', {
+      method: 'POST',
+      body: JSON.stringify({ model }),
+    });
+
+    const conversation = mapConversation(data.conversation);
+    set((state) => reconcileConversations(state.conversations, conversation, conversation.id, model));
+    return conversation.id;
+  },
+
+  setActiveConversation: (id) =>
+    set((state) => {
+      const conversation = state.conversations.find((item) => item.id === id);
+      return {
+        activeConversationId: id,
+        selectedModel: conversation?.model || state.selectedModel,
+      };
+    }),
+
+  renameConversation: async (id, title) => {
+    const data = await requestJson<{ conversation: ConversationRecord }>(`/api/v1/chat/conversations/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ title }),
+    });
+    const conversation = mapConversation(data.conversation);
+    set((state) => reconcileConversations(state.conversations, conversation, state.activeConversationId, state.selectedModel));
+  },
+
+  toggleConversationPinned: async (id) => {
+    const current = get().conversations.find((conversation) => conversation.id === id);
+    if (!current) return;
+
+    const data = await requestJson<{ conversation: ConversationRecord }>(`/api/v1/chat/conversations/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ pinned: !current.pinned }),
+    });
+    const conversation = mapConversation(data.conversation);
+    set((state) => reconcileConversations(state.conversations, conversation, state.activeConversationId, state.selectedModel));
+  },
+
+  clearConversationMessages: async (id) => {
+    const data = await requestJson<{ conversation: ConversationRecord }>(`/api/v1/chat/conversations/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ clearMessages: true }),
+    });
+    const conversation = mapConversation(data.conversation);
+    set((state) => reconcileConversations(state.conversations, conversation, state.activeConversationId, state.selectedModel));
+  },
+
+  sendMessage: async (prompt: string) => {
+    const trimmed = prompt.trim();
+    if (!trimmed) return;
+
+    let conversationId = get().activeConversationId;
+    if (!conversationId) {
+      conversationId = await get().createConversation();
+    }
+
+    const requestController = new AbortController();
+    const streamId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const selectedModel =
+      get().conversations.find((conversation) => conversation.id === conversationId)?.model ??
+      get().selectedModel;
+
+    set({
+      isSending: true,
+      isStreaming: true,
+      activeRequestController: requestController,
+      activeStreamId: streamId,
+    });
+
+    try {
+      const response = await fetch(`/api/v1/chat/conversations/${conversationId}/messages`, {
+        method: 'POST',
+        credentials: 'include',
+        cache: 'no-store',
+        signal: requestController.signal,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: trimmed,
+          preferredModel: selectedModel,
+        }),
+      });
+
+      const data = await readEnvelope<{ conversation: ConversationRecord }>(response);
+      const conversation = mapConversation(data.conversation);
+
+      set((state) => ({
+        ...reconcileConversations(state.conversations, conversation, conversationId, state.selectedModel),
+        isSending: false,
+        isStreaming: false,
+        activeRequestController: null,
+        activeStreamId: null,
+      }));
+    } catch (error) {
+      const isAbort =
+        (error instanceof Error && error.name === 'AbortError') ||
+        (error instanceof Error && error.name === 'CanceledError');
+
+      if (!isAbort) {
+        await get().loadConversations().catch(() => undefined);
+      }
+
+      set({
+        isSending: false,
+        isStreaming: false,
+        activeRequestController: null,
+        activeStreamId: null,
+      });
+
+      if (!isAbort) {
+        throw error;
+      }
+    }
+  },
+
+  stopGenerating: () => {
+    get().activeRequestController?.abort();
+    set({
       isSending: false,
       isStreaming: false,
       activeRequestController: null,
       activeStreamId: null,
-      availableModels: AVAILABLE_MODELS,
+    });
+  },
 
-      setSelectedModel: (model) =>
-        set((s) => ({
-          selectedModel: model,
-          conversations: sortConversations(
-            s.conversations.map((conversation) =>
-              conversation.id === s.activeConversationId
-                ? { ...conversation, model, updatedAt: Date.now() }
-                : conversation
-            )
-          ),
-        })),
+  deleteConversation: async (id) => {
+    await requestJson<{ deleted: boolean }>(`/api/v1/chat/conversations/${id}`, {
+      method: 'DELETE',
+    });
 
-      createConversation: () => {
-        const id = convUid();
-        const now = Date.now();
-        const conv: Conversation = {
-          id,
-          title: 'Nova Conversa',
-          model: get().selectedModel,
-          pinned: false,
-          messages: [],
-          createdAt: now,
-          updatedAt: now,
-        };
-        set((s) => ({
-          conversations: sortConversations([conv, ...s.conversations]),
-          activeConversationId: id,
-        }));
-        return id;
-      },
+    set((state) => {
+      const conversations = sortConversations(
+        state.conversations.filter((conversation) => conversation.id !== id)
+      );
+      const activeConversationId =
+        state.activeConversationId === id ? conversations[0]?.id ?? null : state.activeConversationId;
+      const selectedModel =
+        conversations.find((conversation) => conversation.id === activeConversationId)?.model ??
+        state.selectedModel;
 
-      setActiveConversation: (id) =>
-        set((s) => {
-          const conversation = s.conversations.find((item) => item.id === id);
-          return {
-            activeConversationId: id,
-            selectedModel: conversation?.model || s.selectedModel,
-          };
-        }),
-
-      renameConversation: (id, title) =>
-        set((s) => ({
-          conversations: sortConversations(
-            s.conversations.map((conversation) =>
-              conversation.id === id
-                ? {
-                    ...conversation,
-                    title: title.trim() || conversation.title,
-                    updatedAt: Date.now(),
-                  }
-                : conversation
-            )
-          ),
-        })),
-
-      toggleConversationPinned: (id) =>
-        set((s) => ({
-          conversations: sortConversations(
-            s.conversations.map((conversation) =>
-              conversation.id === id
-                ? {
-                    ...conversation,
-                    pinned: !conversation.pinned,
-                    updatedAt: Date.now(),
-                  }
-                : conversation
-            )
-          ),
-        })),
-
-      clearConversationMessages: (id) =>
-        set((s) => ({
-          conversations: sortConversations(
-            s.conversations.map((conversation) =>
-              conversation.id === id
-                ? {
-                    ...conversation,
-                    messages: [],
-                    title: 'Nova Conversa',
-                    updatedAt: Date.now(),
-                  }
-                : conversation
-            )
-          ),
-        })),
-
-      sendMessage: async (prompt: string) => {
-        const state = get();
-        let convId = state.activeConversationId;
-
-        const requestController = new AbortController();
-        const streamId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-
-        if (!convId) {
-          convId = get().createConversation();
-        }
-
-        const userMsg: ChatMessage = {
-          id: uid(),
-          role: 'user',
-          content: prompt,
-          timestamp: Date.now(),
-        };
-
-        set((s) => ({
-          isSending: true,
-          isStreaming: false,
-          activeRequestController: requestController,
-          activeStreamId: streamId,
-          conversations: sortConversations(
-            s.conversations.map((c) =>
-              c.id === convId
-                ? {
-                    ...c,
-                    messages: [...c.messages, userMsg],
-                    title: c.messages.length === 0 ? prompt.slice(0, 40) : c.title,
-                    updatedAt: Date.now(),
-                  }
-                : c
-            )
-          ),
-        }));
-
-        try {
-          const conv = get().conversations.find((c) => c.id === convId);
-          const model = conv?.model || state.selectedModel;
-
-          const { data } = await api.post('/ai/chat', {
-            prompt,
-            preferredModel: model,
-          }, {
-            signal: requestController.signal,
-          });
-
-          const assistantMsg: ChatMessage = {
-            id: uid(),
-            role: 'assistant',
-            content: '',
-            modelUsed: data.data.modelUsed,
-            providerUsed: data.data.providerUsed,
-            agentUsed: data.data.agentUsed,
-            agentVersion: data.data.agentVersion,
-            fallbackUsed: data.data.fallbackUsed,
-            attempts: data.data.attempts,
-            timestamp: Date.now(),
-          };
-
-          set((s) => ({
-            isStreaming: true,
-            conversations: sortConversations(
-              s.conversations.map((c) =>
-                c.id === convId
-                  ? { ...c, messages: [...c.messages, assistantMsg], updatedAt: Date.now() }
-                  : c
-              )
-            ),
-          }));
-
-          const fullContent = String(data?.data?.content || '');
-          for (let i = 0; i < fullContent.length; i += 4) {
-            const current = get();
-            if (current.activeStreamId !== streamId) break;
-
-            const chunk = fullContent.slice(i, i + 4);
-            set((s) => ({
-              conversations: sortConversations(
-                s.conversations.map((conversation) => {
-                  if (conversation.id !== convId) return conversation;
-                  return {
-                    ...conversation,
-                    updatedAt: Date.now(),
-                    messages: conversation.messages.map((message) =>
-                      message.id === assistantMsg.id
-                        ? { ...message, content: `${message.content}${chunk}` }
-                        : message
-                    ),
-                  };
-                })
-              ),
-            }));
-
-            await sleep(12);
-          }
-
-          const afterStream = get();
-          if (afterStream.activeStreamId === streamId) {
-            set({
-              isSending: false,
-              isStreaming: false,
-              activeRequestController: null,
-              activeStreamId: null,
-            });
-          }
-        } catch (err: unknown) {
-          const isAbort =
-            (err instanceof Error && err.name === 'CanceledError') ||
-            (err instanceof Error && err.name === 'AbortError');
-
-          if (isAbort) {
-            set({
-              isSending: false,
-              isStreaming: false,
-              activeRequestController: null,
-              activeStreamId: null,
-            });
-            return;
-          }
-
-          const axiosErr = err as { response?: { data?: { message?: string } } };
-          const errorContent =
-            axiosErr?.response?.data?.message ||
-            (err instanceof Error ? err.message : 'Erro ao enviar mensagem');
-
-          const errorMsg: ChatMessage = {
-            id: uid(),
-            role: 'error',
-            content: errorContent,
-            timestamp: Date.now(),
-          };
-
-          set((s) => ({
-            isSending: false,
-            isStreaming: false,
-            activeRequestController: null,
-            activeStreamId: null,
-            conversations: sortConversations(
-              s.conversations.map((c) =>
-                c.id === convId
-                  ? { ...c, messages: [...c.messages, errorMsg], updatedAt: Date.now() }
-                  : c
-              )
-            ),
-          }));
-        }
-      },
-
-      stopGenerating: () => {
-        const { activeRequestController } = get();
-        activeRequestController?.abort();
-        set({
-          isSending: false,
-          isStreaming: false,
-          activeRequestController: null,
-          activeStreamId: null,
-        });
-      },
-
-      deleteConversation: (id) =>
-        set((s) => {
-          const remaining = s.conversations.filter((c) => c.id !== id);
-          const nextActive =
-            s.activeConversationId === id ? remaining[0]?.id || null : s.activeConversationId;
-
-          return {
-            conversations: sortConversations(remaining),
-            activeConversationId: nextActive,
-            selectedModel:
-              remaining.find((conversation) => conversation.id === nextActive)?.model ||
-              s.selectedModel,
-          };
-        }),
-    }),
-    {
-      name: 'ia-aggregator-chat-store',
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        conversations: state.conversations,
-        activeConversationId: state.activeConversationId,
-        selectedModel: state.selectedModel,
-      }),
-    }
-  )
-);
+      return {
+        conversations,
+        activeConversationId,
+        selectedModel,
+      };
+    });
+  },
+}));

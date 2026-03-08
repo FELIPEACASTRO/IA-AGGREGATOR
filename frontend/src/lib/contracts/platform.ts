@@ -1,6 +1,6 @@
 export type WorkspaceRole = 'OWNER' | 'ADMIN' | 'MEMBER';
 
-export type SearchEntityKind = 'task' | 'repository' | 'environment' | 'setting' | 'workspace';
+export type SearchEntityKind = 'task' | 'repository' | 'environment' | 'setting' | 'workspace' | 'conversation' | 'prompt';
 
 export interface SessionUser {
   id: string;
@@ -31,6 +31,86 @@ export interface SessionContext {
   currentWorkspace: WorkspaceDto | null;
   currentRole: WorkspaceRole | null;
   hasWorkspace: boolean;
+  organizationId?: string | null;
+  organizationSlug?: string | null;
+}
+
+export interface ChatConversationDto {
+  id: string;
+  workspaceId: string;
+  createdById: string;
+  title: string;
+  model: string;
+  pinned: boolean;
+  archivedAt?: string | null;
+  lastMessageAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ConsumerChatMessageDto {
+  id: string;
+  conversationId: string;
+  role: 'user' | 'assistant' | 'error';
+  content: string;
+  modelUsed?: string | null;
+  providerUsed?: string | null;
+  agentUsed?: string | null;
+  agentVersion?: string | null;
+  fallbackUsed?: boolean;
+  attempts?: number | null;
+  isComplete: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatAttachmentDto {
+  id: string;
+  messageId: string;
+  title: string;
+  contentType: string;
+  url: string;
+  createdAt: string;
+}
+
+export interface PromptTemplateDto {
+  id: string;
+  workspaceId?: string | null;
+  scope: 'SYSTEM' | 'WORKSPACE';
+  category: string;
+  title: string;
+  description: string;
+  prompt: string;
+  tag?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserPreferencesDto {
+  fullName: string;
+  locale: string;
+  theme: 'light' | 'dark' | 'system';
+  chatFontMode: 'default' | 'sans' | 'system' | 'dyslexia';
+}
+
+export interface NotificationPreferencesDto {
+  emailEnabled: boolean;
+  pushEnabled: boolean;
+  billingAlerts: boolean;
+  usageAlerts: boolean;
+  securityAlerts: boolean;
+  productUpdates: boolean;
+}
+
+export interface BillingSummaryDto {
+  currentPlanId?: string | null;
+  currentPlanName: string;
+  tokensUsed: number;
+  monthlyLimit: number;
+  includedUsageLeft: number;
+  balance: number;
+  usageAvailable?: boolean;
 }
 
 export interface ProjectDto {

@@ -11,8 +11,7 @@ import { toast } from '@/stores/toast-store';
 type LoginPayload = {
   success: boolean;
   data?: {
-    accessToken?: string;
-    refreshToken?: string;
+    authenticated?: boolean;
   };
   message?: string;
 };
@@ -48,11 +47,6 @@ export default function LoginPage() {
       const payload = (await response.json()) as LoginPayload;
       if (!response.ok || !payload.success) {
         throw new Error(payload.message || 'Falha ao autenticar');
-      }
-
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('access_token', payload.data?.accessToken || '');
-        localStorage.setItem('refresh_token', payload.data?.refreshToken || '');
       }
 
       await fetchUser();

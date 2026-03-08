@@ -2,6 +2,17 @@
 
 Este documento consolida os providers suportados no backend e as variáveis de ambiente necessárias para habilitação.
 
+## Trilhas oficiais endurecidas
+
+Os providers oficialmente suportados e cobertos por contrato, testes e documentação reforçada são:
+
+- OpenAI
+- Gemini
+- DeepSeek
+- Anthropic
+- xAI
+- Perplexity
+
 ## Regras Gerais
 
 - Um provider só é considerado elegível quando sua chave está configurada e o modelo/deployment solicitado está em sua lista de suporte.
@@ -125,10 +136,18 @@ Este documento consolida os providers suportados no backend e as variáveis de a
   - `AI_OUTPUT_BLOCKED_PATTERNS`
   - `AI_OUTPUT_ACTION` (`block` ou `log-only`)
 
+## Testes reais opcionais
+
+- Flag canônica: `RUN_REAL_AI_TESTS=true`
+- Backend: smoke tests reais rodam apenas quando a flag estiver habilitada e a env var do provider existir
+- Frontend: a suíte real usa `RUN_REAL_AI_TESTS=true` + `E2E_RELEASE_EMAIL` + `E2E_RELEASE_PASSWORD`
+
 ## Checklist de Ativação
 
-1. Definir chave de API do provider desejado.
+1. Definir a API key do provider desejado por variável de ambiente.
 2. Garantir que o modelo/deployment está presente na variável `*_SUPPORTED_MODELS` (ou `AZURE_OPENAI_SUPPORTED_DEPLOYMENTS`).
 3. Verificar conectividade HTTP ao endpoint configurado.
 4. Subir aplicação e validar `GET /actuator/health`.
-5. Validar execução funcional do endpoint de chat com autenticação.
+5. Validar `GET /api/v1/ai/providers` e `GET /api/v1/ai/providers/health`.
+6. Validar execução funcional do endpoint `POST /api/v1/ai/chat`.
+7. Nunca armazenar chaves em arquivos versionados, testes, scripts ou snapshots.

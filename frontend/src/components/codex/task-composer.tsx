@@ -212,10 +212,7 @@ export function TaskComposer({
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <button
           type="button"
-          onClick={() => {
-            const demo = `/uploads/reference-${Date.now()}.png`;
-            setImageInputs((prev) => [...prev, demo]);
-          }}
+          onClick={() => setError('Upload de imagem ainda requer pipeline de arquivo real configurado no backend.')}
           className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] px-3 py-2 text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
         >
           <ImagePlus className="h-4 w-4" />
@@ -223,7 +220,7 @@ export function TaskComposer({
         </button>
         <button
           type="button"
-          onClick={() => setVoiceTranscript((prev) => `${prev} [dictation sample]`.trim())}
+          onClick={() => setError('Ditado por voz real ainda depende da integracao de captura/audio.')}
           className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] px-3 py-2 text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
         >
           <AudioLines className="h-4 w-4" />

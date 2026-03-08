@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useChatStore } from '@/stores/chat-store';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/stores/toast-store';
@@ -29,7 +29,15 @@ export default function LibraryPage() {
   const [view, setView] = useState<ViewMode>('list');
   const [filterPinned, setFilterPinned] = useState(false);
   const router = useRouter();
-  const { conversations, setActiveConversation, toggleConversationPinned, deleteConversation } = useChatStore();
+  const conversations = useChatStore((state) => state.conversations);
+  const setActiveConversation = useChatStore((state) => state.setActiveConversation);
+  const toggleConversationPinned = useChatStore((state) => state.toggleConversationPinned);
+  const deleteConversation = useChatStore((state) => state.deleteConversation);
+  const loadConversations = useChatStore((state) => state.loadConversations);
+
+  useEffect(() => {
+    void loadConversations();
+  }, [loadConversations]);
 
   const pinnedCount = useMemo(() => conversations.filter((c) => c.pinned).length, [conversations]);
 
@@ -47,12 +55,12 @@ export default function LibraryPage() {
   const openConversation = (id: string) => {
     setActiveConversation(id);
     trackEvent('library_open_conversation', { conversationId: id });
-    router.push('/chat');
+    router.push(`/chat?conversationId=${encodeURIComponent(id)}`);
   };
 
-  const removeConversation = (id: string) => {
+  const removeConversation = async (id: string) => {
     if (!window.confirm('Excluir esta conversa?')) return;
-    deleteConversation(id);
+    await deleteConversation(id);
     toast.success('Conversa excluida');
   };
 

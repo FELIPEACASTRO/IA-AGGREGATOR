@@ -35,10 +35,7 @@ type ListReportEventsParams = {
 };
 
 const getBaseEventsEndpoint = () => {
-  return process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT
-    || (process.env.NEXT_PUBLIC_API_URL
-      ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1/analytics/events`
-      : '/api/v1/analytics/events');
+  return '/api/v1/analytics/events';
 };
 
 const withSuffix = (suffix: string) => {

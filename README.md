@@ -54,6 +54,44 @@ npm --prefix frontend run build
 npm --prefix frontend run test -- --runInBand
 ```
 
+## Integracao canônica de IA
+- Owner canônico: backend Spring Boot
+- Providers oficialmente endurecidos: OpenAI, Gemini, DeepSeek, Anthropic, xAI e Perplexity
+- O frontend Next.js atua como BFF/proxy e nao fala mais diretamente com providers externos
+
+### Variáveis de ambiente obrigatórias
+Copie `.env.example` e injete as credenciais no ambiente do sistema, CI ou secret manager. Nunca versione `.env`.
+
+| Variável | Uso |
+| --- | --- |
+| `OPENAI_API_KEY` | OpenAI |
+| `GEMINI_API_KEY` | Gemini |
+| `DEEPSEEK_API_KEY` | DeepSeek |
+| `ANTHROPIC_API_KEY` | Anthropic |
+| `XAI_API_KEY` | xAI |
+| `PERPLEXITY_API_KEY` | Perplexity |
+| `RUN_REAL_AI_TESTS` | Habilita smoke tests reais opcionais |
+
+### Testes
+Mockados:
+```powershell
+mvn -q -f backend/pom.xml test
+npm --prefix frontend run test -- --runInBand
+```
+
+Reais opcionais:
+```powershell
+$env:RUN_REAL_AI_TESTS='true'
+npm --prefix frontend run test:release
+```
+
+### Checklist de segurança
+- Nenhuma API key em código-fonte
+- `.env` ignorado no git
+- Logs sem headers `Authorization` e sem valores de segredo
+- Providers ausentes retornam `NOT_CONFIGURED`/erro claro sem expor valores
+- Smoke tests reais só rodam quando explicitamente habilitados
+
 ## Documentação técnica
 Arquivos gerados na raiz:
 - `PRODUCT_SPEC.md`

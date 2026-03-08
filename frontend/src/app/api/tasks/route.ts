@@ -98,6 +98,14 @@ export async function POST(request: Request) {
   const fallbackEnvironmentId = environmentId || context.context.environment.id;
   const title = prompt.slice(0, 80);
 
+  if (mode === TaskMode.CODE && !fallbackRepositoryId) {
+    return fail('Task CODE requer repositorio real configurado', 422);
+  }
+
+  if (mode === TaskMode.CODE && !fallbackEnvironmentId) {
+    return fail('Task CODE requer environment real configurado', 422);
+  }
+
   const task = await codexDb.task.create({
     data: {
       workspaceId: context.context.workspace.id,
@@ -112,7 +120,6 @@ export async function POST(request: Request) {
       bestOfN,
       sourceRef,
       internetMode: context.context.environment.internetMode,
-      resultBranch: `codex/${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
       input: {
         create: {
           attachments,
@@ -123,19 +130,26 @@ export async function POST(request: Request) {
     },
   });
 
+  const persistedTask = await codexDb.task.update({
+    where: { id: task.id },
+    data: {
+      resultBranch: `codex/${task.id}`,
+    },
+  });
+
   await appendTaskEvent({
-    taskId: task.id,
+    taskId: persistedTask.id,
     eventType: 'task.created',
     status: 'queued',
     message: 'Task criada e pronta para execucao',
     metadata: {
-      mode: task.mode,
+      mode: persistedTask.mode,
       bestOfN,
     },
   });
 
-  await enqueueTask(task.id);
+  await enqueueTask(persistedTask.id);
 
-  return ok(task, 201);
+  return ok(persistedTask, 201);
 }
 

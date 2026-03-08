@@ -8,6 +8,11 @@ const chatSchema = z.object({
   prompt: z.string().min(1),
   preferredModel: z.string().optional(),
   agentId: z.string().optional(),
+  provider: z.string().optional(),
+  systemPrompt: z.string().optional(),
+  temperature: z.number().optional(),
+  maxTokens: z.number().int().positive().optional(),
+  fallbackProviders: z.array(z.string()).optional(),
 });
 
 export async function POST(request: Request) {
@@ -16,6 +21,13 @@ export async function POST(request: Request) {
     return fail('Payload invalido para chat', 400, parsed.error.flatten());
   }
 
-  const result = await invokeChatGateway(parsed.data);
-  return ok(result);
+  try {
+    const result = await invokeChatGateway(parsed.data);
+    return ok(result);
+  } catch (error) {
+    return fail(
+      error instanceof Error ? error.message : 'Falha ao executar gateway de chat',
+      503
+    );
+  }
 }

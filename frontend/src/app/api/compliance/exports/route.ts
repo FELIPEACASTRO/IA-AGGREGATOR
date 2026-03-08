@@ -30,14 +30,20 @@ export async function POST(request: Request) {
   const workspaceId = context.context.workspace.id;
   const exportType = parsed.data.exportType;
 
-  const job = await codexDb.complianceExportJob.create({
+  const createdJob = await codexDb.complianceExportJob.create({
     data: {
       workspaceId,
       exportType,
       status: 'completed',
       requestedBy: context.session.userId,
       finishedAt: new Date(),
-      downloadUrl: `/api/compliance/exports?mockDownload=${exportType}`,
+    },
+  });
+
+  const job = await codexDb.complianceExportJob.update({
+    where: { id: createdJob.id },
+    data: {
+      downloadUrl: `/api/compliance/exports/${createdJob.id}`,
     },
   });
 

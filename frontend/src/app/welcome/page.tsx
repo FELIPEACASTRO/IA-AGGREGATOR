@@ -134,7 +134,7 @@ export default function WelcomePage() {
   const user = useAuthStore((state) => state.user);
   const isLoading = useAuthStore((state) => state.isLoading);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const { setSelectedModel, createConversation } = useChatStore();
+  const setSelectedModel = useChatStore((state) => state.setSelectedModel);
   const router = useRouter();
 
   const [step, setStep] = useState(0);
@@ -175,7 +175,6 @@ export default function WelcomePage() {
     }
 
     if (firstPrompt.trim()) {
-      createConversation();
       router.push(`/chat?prompt=${encodeURIComponent(firstPrompt.trim())}`);
       return;
     }

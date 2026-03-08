@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { ReactNode, useEffect, useState } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
+import { useChatStore } from '@/stores/chat-store';
 import { useThemeStore } from '@/stores/theme-store';
 import { Avatar } from '@/components/ui/avatar';
 import { WorkspaceSwitcher } from '@/components/app/workspace-switcher';
@@ -42,6 +43,7 @@ const navItems = [
 export function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
   const user = useAuthStore((state) => state.user);
+  const loadConversations = useChatStore((state) => state.loadConversations);
   const theme = useThemeStore((state) => state.theme);
   const setTheme = useThemeStore((state) => state.setTheme);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -49,6 +51,11 @@ export function AppLayout({ children }: AppLayoutProps) {
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (typeof fetch !== 'function') return;
+    void loadConversations();
+  }, [loadConversations]);
 
   const cycleTheme = () => {
     setTheme(theme === 'system' ? 'light' : theme === 'light' ? 'dark' : 'system');

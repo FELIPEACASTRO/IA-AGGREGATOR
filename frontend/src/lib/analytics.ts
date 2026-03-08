@@ -37,32 +37,15 @@ interface AnalyticsReportPayload {
   events: AnalyticsEvent[];
 }
 
-const STORAGE_KEY = 'ia-aggregator-analytics-events';
-const LAST_PATH_KEY = 'ia-aggregator-last-tracked-path';
 const MAX_EVENTS = 300;
 const FLUSH_INTERVAL_MS = 30000;
 
 let isFlushing = false;
 let lifecycleInitialized = false;
+let trackedEvents: AnalyticsEvent[] = [];
+let lastTrackedPath: string | null = null;
 
 const nowIso = () => new Date().toISOString();
-
-const readEvents = (): AnalyticsEvent[] => {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as AnalyticsEvent[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-};
-
-const writeEvents = (events: AnalyticsEvent[]) => {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(events.slice(-MAX_EVENTS)));
-};
 
 const buildCounters = (events: AnalyticsEvent[]): Record<string, number> => {
   return events.reduce<Record<string, number>>((acc, item) => {
@@ -81,9 +64,7 @@ export const trackEvent = (
     metadata,
   };
 
-  const current = readEvents();
-  current.push(item);
-  writeEvents(current);
+  trackedEvents = [...trackedEvents, item].slice(-MAX_EVENTS);
 
   if (process.env.NODE_ENV !== 'production') {
     console.info('[analytics]', item);
@@ -92,14 +73,13 @@ export const trackEvent = (
   return item;
 };
 
-export const getTrackedEvents = (): AnalyticsEvent[] => readEvents();
+export const getTrackedEvents = (): AnalyticsEvent[] => [...trackedEvents];
 
 export const trackPageView = (pathname: string) => {
   if (typeof window === 'undefined') return;
   const normalized = pathname || '/';
-  const last = localStorage.getItem(LAST_PATH_KEY);
-  if (last === normalized) return;
-  localStorage.setItem(LAST_PATH_KEY, normalized);
+  if (lastTrackedPath === normalized) return;
+  lastTrackedPath = normalized;
   trackEvent('page_view', {
     pathname: normalized,
     referrer: document.referrer || null,
@@ -109,7 +89,7 @@ export const trackPageView = (pathname: string) => {
 export const flushTrackedEvents = async (source = 'frontend-web'): Promise<boolean> => {
   if (typeof window === 'undefined' || isFlushing) return false;
 
-  const events = readEvents();
+  const events = getTrackedEvents();
   if (events.length === 0) return true;
 
   isFlushing = true;
@@ -122,7 +102,7 @@ export const flushTrackedEvents = async (source = 'frontend-web'): Promise<boole
       events,
     };
     await api.post('/analytics/events', payload);
-    clearTrackedEvents();
+    trackedEvents = [];
     return true;
   } catch {
     return false;
@@ -137,6 +117,24 @@ export const initializeAnalyticsLifecycle = () => {
   lifecycleInitialized = true;
 
   const flushOnPageHide = () => {
+    if (trackedEvents.length === 0) return;
+
+    const payload: AnalyticsReportPayload = {
+      source: 'frontend-web-pagehide',
+      generatedAt: nowIso(),
+      totalEvents: trackedEvents.length,
+      counters: buildCounters(trackedEvents),
+      events: getTrackedEvents(),
+    };
+
+    if (typeof navigator.sendBeacon === 'function') {
+      const body = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+      if (navigator.sendBeacon('/api/v1/analytics/events', body)) {
+        trackedEvents = [];
+        return;
+      }
+    }
+
     void flushTrackedEvents('frontend-web-pagehide');
   };
 
@@ -150,7 +148,7 @@ export const initializeAnalyticsLifecycle = () => {
   document.addEventListener('visibilitychange', flushOnVisibilityHidden);
 
   window.setInterval(() => {
-    const queued = readEvents().length;
+    const queued = trackedEvents.length;
     if (queued >= 8) {
       void flushTrackedEvents('frontend-web-interval');
     }
@@ -158,8 +156,8 @@ export const initializeAnalyticsLifecycle = () => {
 };
 
 export const clearTrackedEvents = () => {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem(STORAGE_KEY);
+  trackedEvents = [];
+  lastTrackedPath = null;
 };
 
 export const createPerfTimer = () => {

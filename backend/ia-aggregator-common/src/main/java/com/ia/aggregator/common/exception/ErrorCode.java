@@ -33,7 +33,7 @@ public enum ErrorCode {
     CHAT_003("CHAT_003", "Invalid model for plan", 403),
     CHAT_004("CHAT_004", "Conversation archived", 410),
 
-    // AI GATEWAY (001-007)
+    // AI GATEWAY (001-010)
     AI_001("AI_001", "No suitable model found", 404),
     AI_002("AI_002", "Provider unavailable", 503),
     AI_003("AI_003", "Model rate limit exceeded", 429),
@@ -41,6 +41,9 @@ public enum ErrorCode {
     AI_005("AI_005", "Streaming connection failed", 502),
     AI_006("AI_006", "Model deprecated", 410),
     AI_007("AI_007", "Invalid model configuration", 422),
+    AI_008("AI_008", "Provider not configured", 422),
+    AI_009("AI_009", "Circuit breaker is open", 503),
+    AI_010("AI_010", "Streaming not supported", 422),
 
     // PARTNERS (001-007)
     PART_001("PART_001", "Partner not found", 404),

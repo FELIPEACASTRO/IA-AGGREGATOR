@@ -1,15 +1,18 @@
 import { expect, test } from '@playwright/test';
-import { createRandomUser, loginUserViaUi, mockAuthApi } from './support/auth';
+import { loginUserViaUi } from './support/auth';
 
-const runRealAi = process.env.E2E_REAL_AI === 'true';
+const runRealAi = process.env.RUN_REAL_AI_TESTS === 'true';
 const model = process.env.E2E_AI_MODEL || 'gpt-4o-mini';
+const email = process.env.E2E_RELEASE_EMAIL;
+const password = process.env.E2E_RELEASE_PASSWORD;
 
-test.skip(!runRealAi, 'Defina E2E_REAL_AI=true e credenciais dos providers para executar integracao real de IA.');
+test.skip(
+  !runRealAi || !email || !password,
+  'Defina RUN_REAL_AI_TESTS=true, E2E_RELEASE_EMAIL e E2E_RELEASE_PASSWORD para executar integracao real de IA.'
+);
 
 test('integracao real de IA retorna resposta no chat', async ({ page }) => {
-  const user = createRandomUser();
-  await mockAuthApi(page, user, { authenticated: false });
-  await loginUserViaUi(page, user);
+  await loginUserViaUi(page, { email: email!, password: password!, fullName: 'Release User', workspaceName: 'Release Workspace' });
 
   await page.goto('/chat');
   await page.getByRole('button', { name: /GPT-4o Mini/i }).click();
