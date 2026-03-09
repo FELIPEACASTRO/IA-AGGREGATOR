@@ -1,29 +1,38 @@
 package com.ia.aggregator.infrastructure.gateway;
 
 import com.ia.aggregator.application.gateway.port.out.ProviderMetricsPort;
+import com.ia.aggregator.infrastructure.ai.persistence.entity.AiModelJpaEntity;
+import com.ia.aggregator.infrastructure.ai.persistence.entity.ProviderMetricJpaEntity;
+import com.ia.aggregator.infrastructure.ai.persistence.repository.AiModelJpaRepository;
+import com.ia.aggregator.infrastructure.ai.persistence.repository.ProviderMetricJpaRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-import java.util.concurrent.ConcurrentHashMap;
+import java.time.YearMonth;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Micrometer-backed provider metrics for routing decisions.
+ * DB + Micrometer-backed provider metrics for routing decisions.
  *
- * <p>Tracks latency, cost, and error rates per provider/model.
+ * <p>Cost and quality data comes from the database (ai_gateway.models and ai_gateway.provider_metrics).
+ * Latency data uses Micrometer timers for real-time accuracy.
  */
 @Component
 public class MicrometerProviderMetricsAdapter implements ProviderMetricsPort {
 
     private final MeterRegistry registry;
-    private final ConcurrentHashMap<String, Double> costCache = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, Double> qualityScores = new ConcurrentHashMap<>();
+    private final AiModelJpaRepository modelRepository;
+    private final ProviderMetricJpaRepository metricRepository;
 
-    public MicrometerProviderMetricsAdapter(MeterRegistry registry) {
+    public MicrometerProviderMetricsAdapter(MeterRegistry registry,
+                                             AiModelJpaRepository modelRepository,
+                                             ProviderMetricJpaRepository metricRepository) {
         this.registry = registry;
+        this.modelRepository = modelRepository;
+        this.metricRepository = metricRepository;
     }
 
     @Override
@@ -45,7 +54,15 @@ public class MicrometerProviderMetricsAdapter implements ProviderMetricsPort {
 
     @Override
     public double getCostPer1kTokens(String providerName, String model) {
-        return costCache.getOrDefault(providerName + ":" + model, -1.0);
+        return modelRepository.findByModelId(model)
+                .map(m -> {
+                    Double input = m.getInputCostPer1k();
+                    Double output = m.getOutputCostPer1k();
+                    double inputCost = input != null ? input : 0.0;
+                    double outputCost = output != null ? output : 0.0;
+                    return (inputCost + outputCost) / 2.0;
+                })
+                .orElse(-1.0);
     }
 
     @Override
@@ -68,7 +85,15 @@ public class MicrometerProviderMetricsAdapter implements ProviderMetricsPort {
 
     @Override
     public double getQualityScore(String model) {
-        return qualityScores.getOrDefault(model, 0.5);
+        return modelRepository.findByModelId(model)
+                .map(m -> {
+                    String period = YearMonth.now().toString();
+                    return metricRepository.findByProviderIdAndModelIdAndPeriod(
+                                    m.getProviderId(), m.getModelId(), period)
+                            .map(ProviderMetricJpaEntity::getQualityScore)
+                            .orElseGet(() -> resolveDefaultQuality(m));
+                })
+                .orElse(0.5);
     }
 
     @Override
@@ -87,6 +112,16 @@ public class MicrometerProviderMetricsAdapter implements ProviderMetricsPort {
     public void recordCost(String providerName, String model, double costUsd) {
         registry.counter("ai.provider.cost.usd",
                 "provider", providerName, "model", model).increment(costUsd);
-        costCache.put(providerName + ":" + model, costUsd);
+    }
+
+    private double resolveDefaultQuality(AiModelJpaEntity model) {
+        String tier = model.getTier();
+        if (tier == null) return 0.5;
+        return switch (tier.toLowerCase()) {
+            case "powerful" -> 0.9;
+            case "balanced" -> 0.7;
+            case "fast" -> 0.5;
+            default -> 0.5;
+        };
     }
 }

@@ -2,6 +2,7 @@ package com.ia.aggregator.application.artifact.usecase;
 
 import com.ia.aggregator.application.artifact.port.in.ArtifactUseCase;
 import com.ia.aggregator.application.artifact.port.out.ArtifactRepository;
+import com.ia.aggregator.application.artifact.port.out.PdfExportPort;
 import com.ia.aggregator.domain.artifact.Artifact;
 import com.ia.aggregator.domain.artifact.ArtifactVersion;
 import org.slf4j.Logger;
@@ -19,9 +20,11 @@ public class ArtifactUseCaseImpl implements ArtifactUseCase {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final ArtifactRepository artifactRepository;
+    private final PdfExportPort pdfExportPort;
 
-    public ArtifactUseCaseImpl(ArtifactRepository artifactRepository) {
+    public ArtifactUseCaseImpl(ArtifactRepository artifactRepository, PdfExportPort pdfExportPort) {
         this.artifactRepository = artifactRepository;
+        this.pdfExportPort = pdfExportPort;
     }
 
     @Override
@@ -141,7 +144,7 @@ public class ArtifactUseCaseImpl implements ArtifactUseCase {
         return switch (format) {
             case TXT, MARKDOWN -> artifact.content().getBytes();
             case HTML -> wrapHtml(artifact.title(), artifact.content()).getBytes();
-            case PDF -> ("PDF export placeholder for: " + artifact.title()).getBytes();
+            case PDF -> pdfExportPort.generate(artifact.title(), artifact.content());
         };
     }
 

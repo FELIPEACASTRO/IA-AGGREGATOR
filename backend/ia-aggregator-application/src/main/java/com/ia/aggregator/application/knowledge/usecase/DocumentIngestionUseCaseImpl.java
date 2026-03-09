@@ -3,6 +3,7 @@ package com.ia.aggregator.application.knowledge.usecase;
 import com.ia.aggregator.application.knowledge.port.in.DocumentIngestionUseCase;
 import com.ia.aggregator.application.knowledge.port.out.DocumentChunkerPort;
 import com.ia.aggregator.application.knowledge.port.out.EmbeddingPort;
+import com.ia.aggregator.application.knowledge.port.out.KnowledgeDocumentRepository;
 import com.ia.aggregator.application.knowledge.port.out.VectorStorePort;
 import com.ia.aggregator.domain.knowledge.*;
 import org.slf4j.Logger;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Document ingestion pipeline: parse → chunk → embed → store.
@@ -25,7 +25,7 @@ public class DocumentIngestionUseCaseImpl implements DocumentIngestionUseCase {
     private final DocumentChunkerPort chunker;
     private final EmbeddingPort embeddingPort;
     private final VectorStorePort vectorStore;
-    private final ConcurrentHashMap<UUID, KnowledgeDocument> documents = new ConcurrentHashMap<>();
+    private final KnowledgeDocumentRepository documentRepository;
 
     @Value("${app.knowledge.embedding-model:text-embedding-3-small}")
     private String defaultEmbeddingModel;
@@ -36,10 +36,12 @@ public class DocumentIngestionUseCaseImpl implements DocumentIngestionUseCase {
 
     public DocumentIngestionUseCaseImpl(DocumentChunkerPort chunker,
                                          EmbeddingPort embeddingPort,
-                                         VectorStorePort vectorStore) {
+                                         VectorStorePort vectorStore,
+                                         KnowledgeDocumentRepository documentRepository) {
         this.chunker = chunker;
         this.embeddingPort = embeddingPort;
         this.vectorStore = vectorStore;
+        this.documentRepository = documentRepository;
     }
 
     @Override
@@ -47,7 +49,7 @@ public class DocumentIngestionUseCaseImpl implements DocumentIngestionUseCase {
                                      String content, String mimeType, ChunkingStrategy strategy) {
         KnowledgeDocument doc = KnowledgeDocument.create(orgId, collectionId, title, mimeType,
                 content.length(), strategy);
-        documents.put(doc.id(), doc);
+        documentRepository.save(doc);
 
         try {
             // Step 1: Chunk
@@ -75,7 +77,7 @@ public class DocumentIngestionUseCaseImpl implements DocumentIngestionUseCase {
                     doc.sourceUrl(), mimeType, doc.sizeBytes(), DocumentStatus.INDEXED,
                     chunks.size(), strategy, defaultEmbeddingModel, doc.metadata(),
                     doc.createdAt(), java.time.Instant.now(), null);
-            documents.put(doc.id(), indexed);
+            documentRepository.save(indexed);
             log.info("Document indexed: {} ({} chunks)", title, chunks.size());
             return indexed;
 
@@ -85,20 +87,21 @@ public class DocumentIngestionUseCaseImpl implements DocumentIngestionUseCase {
                     doc.sourceUrl(), mimeType, doc.sizeBytes(), DocumentStatus.FAILED,
                     0, strategy, null, doc.metadata(),
                     doc.createdAt(), java.time.Instant.now(), e.getMessage());
-            documents.put(doc.id(), failed);
+            documentRepository.save(failed);
             return failed;
         }
     }
 
     @Override
     public KnowledgeDocument getStatus(UUID documentId) {
-        return documents.get(documentId);
+        return documentRepository.findById(documentId).orElse(null);
     }
 
     @Override
     public void delete(UUID documentId) {
-        KnowledgeDocument doc = documents.remove(documentId);
+        KnowledgeDocument doc = documentRepository.findById(documentId).orElse(null);
         if (doc != null) {
+            documentRepository.delete(documentId);
             vectorStore.deleteByDocument(documentId);
         }
     }

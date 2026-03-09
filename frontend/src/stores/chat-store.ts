@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import api from '@/lib/api';
-import { MODEL_CATALOG } from '@/lib/model-catalog';
+import { MODEL_CATALOG, fetchModelCatalog } from '@/lib/model-catalog';
+import { streamChat } from '@/lib/streaming';
 
 export interface ChatMessage {
   id: string;
@@ -45,12 +45,24 @@ interface ChatState {
   deleteConversation: (id: string) => void;
 }
 
-const AVAILABLE_MODELS = MODEL_CATALOG;
+let AVAILABLE_MODELS = MODEL_CATALOG;
+
+// Dynamically load models from backend on first use
+fetchModelCatalog().then((models) => {
+  AVAILABLE_MODELS = models;
+  useChatStore.setState({
+    availableModels: models.map((m) => ({
+      id: m.id,
+      label: m.label,
+      provider: m.provider,
+      maxContextTokens: m.maxContextTokens,
+    })),
+  });
+}).catch(() => { /* fallback already set */ });
 
 let nextMsgId = 1;
 const uid = () => `msg-${Date.now()}-${nextMsgId++}`;
 const convUid = () => `conv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const sortConversations = (conversations: Conversation[]) =>
   [...conversations].sort((a, b) => {
@@ -197,21 +209,10 @@ export const useChatStore = create<ChatState>()(
           const conv = get().conversations.find((c) => c.id === convId);
           const model = conv?.model || state.selectedModel;
 
-          const { data } = await api.post('/ai/chat', {
-            prompt,
-            preferredModel: model,
-          }, {
-            signal: requestController.signal,
-          });
-
           const assistantMsg: ChatMessage = {
             id: uid(),
             role: 'assistant',
             content: '',
-            modelUsed: data.data.modelUsed,
-            providerUsed: data.data.providerUsed,
-            fallbackUsed: data.data.fallbackUsed,
-            attempts: data.data.attempts,
             timestamp: Date.now(),
           };
 
@@ -226,12 +227,10 @@ export const useChatStore = create<ChatState>()(
             ),
           }));
 
-          const fullContent = String(data?.data?.content || '');
-          for (let i = 0; i < fullContent.length; i += 4) {
+          const appendToken = (token: string) => {
             const current = get();
-            if (current.activeStreamId !== streamId) break;
+            if (current.activeStreamId !== streamId) return;
 
-            const chunk = fullContent.slice(i, i + 4);
             set((s) => ({
               conversations: sortConversations(
                 s.conversations.map((conversation) => {
@@ -241,26 +240,67 @@ export const useChatStore = create<ChatState>()(
                     updatedAt: Date.now(),
                     messages: conversation.messages.map((message) =>
                       message.id === assistantMsg.id
-                        ? { ...message, content: `${message.content}${chunk}` }
+                        ? { ...message, content: `${message.content}${token}` }
                         : message
                     ),
                   };
                 })
               ),
             }));
+          };
 
-            await sleep(12);
-          }
-
-          const afterStream = get();
-          if (afterStream.activeStreamId === streamId) {
-            set({
-              isSending: false,
-              isStreaming: false,
-              activeRequestController: null,
-              activeStreamId: null,
-            });
-          }
+          await streamChat(prompt, model, requestController.signal, {
+            onToken: appendToken,
+            onModelInfo: (info) => {
+              set((s) => ({
+                conversations: sortConversations(
+                  s.conversations.map((conversation) => {
+                    if (conversation.id !== convId) return conversation;
+                    return {
+                      ...conversation,
+                      messages: conversation.messages.map((message) =>
+                        message.id === assistantMsg.id
+                          ? { ...message, modelUsed: info.modelUsed, providerUsed: info.providerUsed }
+                          : message
+                      ),
+                    };
+                  })
+                ),
+              }));
+            },
+            onDone: () => {
+              const afterStream = get();
+              if (afterStream.activeStreamId === streamId) {
+                set({
+                  isSending: false,
+                  isStreaming: false,
+                  activeRequestController: null,
+                  activeStreamId: null,
+                });
+              }
+            },
+            onError: (error) => {
+              const errorMsg: ChatMessage = {
+                id: uid(),
+                role: 'error',
+                content: error,
+                timestamp: Date.now(),
+              };
+              set((s) => ({
+                isSending: false,
+                isStreaming: false,
+                activeRequestController: null,
+                activeStreamId: null,
+                conversations: sortConversations(
+                  s.conversations.map((c) =>
+                    c.id === convId
+                      ? { ...c, messages: [...c.messages, errorMsg], updatedAt: Date.now() }
+                      : c
+                  )
+                ),
+              }));
+            },
+          });
         } catch (err: unknown) {
           const isAbort =
             (err instanceof Error && err.name === 'CanceledError') ||
@@ -276,10 +316,8 @@ export const useChatStore = create<ChatState>()(
             return;
           }
 
-          const axiosErr = err as { response?: { data?: { message?: string } } };
           const errorContent =
-            axiosErr?.response?.data?.message ||
-            (err instanceof Error ? err.message : 'Erro ao enviar mensagem');
+            err instanceof Error ? err.message : 'Erro ao enviar mensagem';
 
           const errorMsg: ChatMessage = {
             id: uid(),

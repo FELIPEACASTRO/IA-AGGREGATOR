@@ -1,6 +1,7 @@
 package com.ia.aggregator.application.billing.usecase;
 
 import com.ia.aggregator.application.billing.port.in.BudgetUseCase;
+import com.ia.aggregator.application.billing.port.out.BudgetRepository;
 import com.ia.aggregator.application.billing.port.out.UsageRepository;
 import com.ia.aggregator.domain.billing.BudgetAlert;
 import org.slf4j.Logger;
@@ -11,8 +12,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
 public class BudgetUseCaseImpl implements BudgetUseCase {
@@ -20,17 +19,18 @@ public class BudgetUseCaseImpl implements BudgetUseCase {
     private static final Logger log = LoggerFactory.getLogger(BudgetUseCaseImpl.class);
 
     private final UsageRepository usageRepository;
-    private final ConcurrentHashMap<UUID, CopyOnWriteArrayList<BudgetAlert>> budgets = new ConcurrentHashMap<>();
+    private final BudgetRepository budgetRepository;
 
-    public BudgetUseCaseImpl(UsageRepository usageRepository) {
+    public BudgetUseCaseImpl(UsageRepository usageRepository, BudgetRepository budgetRepository) {
         this.usageRepository = usageRepository;
+        this.budgetRepository = budgetRepository;
     }
 
     @Override
     public BudgetAlert createBudget(UUID orgId, String name, double budgetUsd, double threshold,
                                      BudgetAlert.BudgetAction action) {
         BudgetAlert alert = new BudgetAlert(UUID.randomUUID(), orgId, name, budgetUsd, threshold, action, true);
-        budgets.computeIfAbsent(orgId, k -> new CopyOnWriteArrayList<>()).add(alert);
+        budgetRepository.save(alert);
         log.info("Budget created: org={}, name={}, budget=${}, threshold={}%, action={}",
                 orgId, name, budgetUsd, threshold * 100, action);
         return alert;
@@ -38,31 +38,25 @@ public class BudgetUseCaseImpl implements BudgetUseCase {
 
     @Override
     public List<BudgetAlert> getBudgets(UUID orgId) {
-        return budgets.getOrDefault(orgId, new CopyOnWriteArrayList<>());
+        return budgetRepository.findByOrg(orgId);
     }
 
     @Override
     public void updateBudget(UUID budgetId, double budgetUsd, double threshold,
                               BudgetAlert.BudgetAction action, boolean enabled) {
-        budgets.values().forEach(list -> {
-            for (int i = 0; i < list.size(); i++) {
-                BudgetAlert existing = list.get(i);
-                if (existing.id().equals(budgetId)) {
-                    list.set(i, new BudgetAlert(
-                            existing.id(), existing.orgId(), existing.name(),
-                            budgetUsd, threshold, action, enabled
-                    ));
-                    log.info("Budget updated: id={}, budget=${}, threshold={}%", budgetId, budgetUsd, threshold * 100);
-                    return;
-                }
-            }
+        budgetRepository.findById(budgetId).ifPresent(existing -> {
+            BudgetAlert updated = new BudgetAlert(
+                    existing.id(), existing.orgId(), existing.name(),
+                    budgetUsd, threshold, action, enabled
+            );
+            budgetRepository.update(updated);
+            log.info("Budget updated: id={}, budget=${}, threshold={}%", budgetId, budgetUsd, threshold * 100);
         });
     }
 
     @Override
     public void deleteBudget(UUID budgetId) {
-        budgets.values().forEach(list ->
-                list.removeIf(alert -> alert.id().equals(budgetId)));
+        budgetRepository.delete(budgetId);
         log.info("Budget deleted: id={}", budgetId);
     }
 

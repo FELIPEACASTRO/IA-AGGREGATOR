@@ -1,5 +1,6 @@
 package com.ia.aggregator.application.chat.usecase;
 
+import com.ia.aggregator.application.ai.port.out.AiModelProvider;
 import com.ia.aggregator.application.chat.port.in.CompareModeUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import java.util.concurrent.Executors;
 
 /**
  * Compare mode: sends the same prompt to multiple models in parallel.
+ * Calls real AI providers via the injected AiModelProvider list.
  */
 @Service
 public class CompareModeUseCaseImpl implements CompareModeUseCase {
@@ -20,7 +22,12 @@ public class CompareModeUseCaseImpl implements CompareModeUseCase {
     private static final Logger log = LoggerFactory.getLogger(CompareModeUseCaseImpl.class);
     private static final int MAX_MODELS = 4;
 
+    private final List<AiModelProvider> providers;
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+
+    public CompareModeUseCaseImpl(List<AiModelProvider> providers) {
+        this.providers = providers;
+    }
 
     @Override
     public List<CompareResult> compare(UUID orgId, UUID userId, String prompt,
@@ -58,27 +65,37 @@ public class CompareModeUseCaseImpl implements CompareModeUseCase {
                                            Integer maxTokens) {
         long start = System.currentTimeMillis();
         try {
-            // In a full implementation, this would use CapabilityRouter to resolve
-            // the provider for the model and make the actual AI call.
-            // For now, returns a placeholder that the infrastructure layer will wire.
+            List<AiModelProvider> matchingProviders = providers.stream()
+                    .filter(provider -> provider.supports(model))
+                    .toList();
+
+            if (matchingProviders.isEmpty()) {
+                long latency = System.currentTimeMillis() - start;
+                return new CompareResult(model, "none",
+                        "Error: no provider found for model " + model,
+                        latency, 0.0, 0, 0);
+            }
+
+            for (AiModelProvider provider : matchingProviders) {
+                try {
+                    String content = provider.generate(prompt, model);
+                    long latency = System.currentTimeMillis() - start;
+                    return new CompareResult(model, provider.providerName(),
+                            content, latency, 0.0, 0, 0);
+                } catch (Exception providerEx) {
+                    log.warn("Compare mode: provider {} failed for model {}: {}",
+                            provider.providerName(), model, providerEx.getMessage());
+                }
+            }
+
             long latency = System.currentTimeMillis() - start;
-            return new CompareResult(model, resolveProvider(model),
-                    "Response placeholder for model: " + model,
+            return new CompareResult(model, "none",
+                    "Error: all providers failed for model " + model,
                     latency, 0.0, 0, 0);
         } catch (Exception e) {
             long latency = System.currentTimeMillis() - start;
-            return new CompareResult(model, resolveProvider(model),
+            return new CompareResult(model, "unknown",
                     "Error: " + e.getMessage(), latency, 0, 0, 0);
         }
-    }
-
-    private String resolveProvider(String model) {
-        if (model.startsWith("gpt-") || model.startsWith("o1") || model.startsWith("o3") || model.startsWith("o4")) return "openai";
-        if (model.startsWith("claude-")) return "anthropic";
-        if (model.startsWith("gemini-")) return "gemini";
-        if (model.startsWith("command-")) return "cohere";
-        if (model.startsWith("llama-") || model.startsWith("mixtral")) return "groq";
-        if (model.startsWith("deepseek-")) return "deepseek";
-        return "unknown";
     }
 }

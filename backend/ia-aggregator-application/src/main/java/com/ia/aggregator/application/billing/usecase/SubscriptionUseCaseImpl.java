@@ -2,6 +2,7 @@ package com.ia.aggregator.application.billing.usecase;
 
 import com.ia.aggregator.application.billing.port.in.SubscriptionUseCase;
 import com.ia.aggregator.application.billing.port.out.PaymentGatewayPort;
+import com.ia.aggregator.application.billing.port.out.SubscriptionRepository;
 import com.ia.aggregator.domain.billing.PlanTier;
 import com.ia.aggregator.domain.billing.SubscriptionStatus;
 import org.slf4j.Logger;
@@ -13,7 +14,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class SubscriptionUseCaseImpl implements SubscriptionUseCase {
@@ -21,7 +21,7 @@ public class SubscriptionUseCaseImpl implements SubscriptionUseCase {
     private static final Logger log = LoggerFactory.getLogger(SubscriptionUseCaseImpl.class);
 
     private final PaymentGatewayPort paymentGateway;
-    private final ConcurrentHashMap<UUID, SubscriptionInfo> subscriptions = new ConcurrentHashMap<>();
+    private final SubscriptionRepository subscriptionRepository;
 
     @Value("${app.billing.stripe.prices.starter:}")
     private String starterPriceId;
@@ -32,16 +32,19 @@ public class SubscriptionUseCaseImpl implements SubscriptionUseCase {
     @Value("${app.billing.stripe.prices.enterprise:}")
     private String enterprisePriceId;
 
-    public SubscriptionUseCaseImpl(PaymentGatewayPort paymentGateway) {
+    public SubscriptionUseCaseImpl(PaymentGatewayPort paymentGateway,
+                                    SubscriptionRepository subscriptionRepository) {
         this.paymentGateway = paymentGateway;
+        this.subscriptionRepository = subscriptionRepository;
     }
 
     @Override
     public SubscriptionInfo getSubscription(UUID orgId) {
-        return subscriptions.getOrDefault(orgId, new SubscriptionInfo(
-                orgId, PlanTier.FREE, SubscriptionStatus.ACTIVE,
-                null, null, Instant.now(), Instant.now().plus(30, ChronoUnit.DAYS)
-        ));
+        return subscriptionRepository.findActiveByOrg(orgId)
+                .orElse(new SubscriptionInfo(
+                        orgId, PlanTier.FREE, SubscriptionStatus.ACTIVE,
+                        null, null, Instant.now(), Instant.now().plus(30, ChronoUnit.DAYS)
+                ));
     }
 
     @Override
@@ -62,7 +65,7 @@ public class SubscriptionUseCaseImpl implements SubscriptionUseCase {
                 orgId, tier, SubscriptionStatus.ACTIVE,
                 subscriptionId, customerId, now, now.plus(30, ChronoUnit.DAYS)
         );
-        subscriptions.put(orgId, info);
+        subscriptionRepository.save(info);
         log.info("Subscription created: org={}, tier={}, stripeSubId={}", orgId, tier, subscriptionId);
         return info;
     }
@@ -82,7 +85,7 @@ public class SubscriptionUseCaseImpl implements SubscriptionUseCase {
                 current.stripeSubscriptionId(), current.stripeCustomerId(),
                 current.currentPeriodStart(), current.currentPeriodEnd()
         );
-        subscriptions.put(orgId, updated);
+        subscriptionRepository.save(updated);
         log.info("Plan changed: org={}, newTier={}", orgId, newTier);
         return updated;
     }
@@ -101,7 +104,7 @@ public class SubscriptionUseCaseImpl implements SubscriptionUseCase {
                 current.stripeSubscriptionId(), current.stripeCustomerId(),
                 current.currentPeriodStart(), current.currentPeriodEnd()
         );
-        subscriptions.put(orgId, canceled);
+        subscriptionRepository.save(canceled);
         log.info("Subscription canceled: org={}", orgId);
     }
 

@@ -1,5 +1,6 @@
 package com.ia.aggregator.presentation.billing;
 
+import com.ia.aggregator.application.billing.port.in.BillingPlanUseCase;
 import com.ia.aggregator.application.billing.port.in.BudgetUseCase;
 import com.ia.aggregator.application.billing.port.in.SubscriptionUseCase;
 import com.ia.aggregator.application.billing.port.in.UsageMeteringUseCase;
@@ -27,13 +28,21 @@ public class BillingController {
     private final SubscriptionUseCase subscriptionUseCase;
     private final UsageMeteringUseCase usageUseCase;
     private final BudgetUseCase budgetUseCase;
+    private final BillingPlanUseCase billingPlanUseCase;
 
     public BillingController(SubscriptionUseCase subscriptionUseCase,
                               UsageMeteringUseCase usageUseCase,
-                              BudgetUseCase budgetUseCase) {
+                              BudgetUseCase budgetUseCase,
+                              BillingPlanUseCase billingPlanUseCase) {
         this.subscriptionUseCase = subscriptionUseCase;
         this.usageUseCase = usageUseCase;
         this.budgetUseCase = budgetUseCase;
+        this.billingPlanUseCase = billingPlanUseCase;
+    }
+
+    @GetMapping("/plans")
+    public ResponseEntity<List<BillingPlanUseCase.PlanDto>> getPlans() {
+        return ResponseEntity.ok(billingPlanUseCase.getActivePlans());
     }
 
     @GetMapping("/subscription")

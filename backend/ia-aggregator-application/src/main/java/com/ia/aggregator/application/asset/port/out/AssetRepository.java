@@ -23,4 +23,16 @@ public interface AssetRepository {
     void delete(UUID id);
 
     void incrementUsage(UUID id);
+
+    /**
+     * Returns aggregated cost for an asset across all usages.
+     * Returns 0.0 if no cost data is available.
+     */
+    double getTotalCost(UUID id);
+
+    /**
+     * Returns the success rate (0.0 to 1.0) for an asset's executions.
+     * Returns 1.0 if no execution data is available (no failures recorded).
+     */
+    double getSuccessRate(UUID id);
 }

@@ -45,6 +45,7 @@ type BillingPayload = {
     monthlyLimit: number;
     pct: number;
     estimatedFromRuns: boolean;
+    daysUntilReset: number;
   };
 };
 
@@ -135,7 +136,7 @@ export default function BillingPage() {
                   <div className="mt-5 grid gap-4 sm:grid-cols-3">
                     <UsageStat label={t('billing.currentPlan')} value={currentPlan?.name ?? '-'} sub={currentPlan?.desc ?? '-'} icon={CreditCard} iconClass="text-[var(--brand-primary)]" />
                     <UsageStat label={t('billing.tokensUsed')} value={`${(tokensUsed / 1000).toFixed(1)}k`} sub={`de ${(monthlyLimit / 1000).toFixed(0)}k disponíveis`} icon={Activity} iconClass="text-[var(--warning)]" />
-                    <UsageStat label={t('billing.resetIn')} value="18 dias" sub="ciclo mensal em andamento" icon={Calendar} iconClass="text-[var(--success)]" />
+                    <UsageStat label={t('billing.resetIn')} value={`${data?.current.daysUntilReset ?? '-'} dias`} sub="ciclo mensal em andamento" icon={Calendar} iconClass="text-[var(--success)]" />
                   </div>
                 </div>
 

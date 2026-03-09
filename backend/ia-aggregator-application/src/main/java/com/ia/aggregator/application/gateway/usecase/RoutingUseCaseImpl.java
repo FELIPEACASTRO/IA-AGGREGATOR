@@ -10,6 +10,7 @@ import com.ia.aggregator.domain.gateway.RoutingDecision.ProviderCandidate;
 import com.ia.aggregator.domain.gateway.RoutingRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -28,11 +29,17 @@ public class RoutingUseCaseImpl implements RoutingUseCase {
 
     private final RoutingRuleRepository ruleRepository;
     private final ProviderMetricsPort metricsPort;
+    private final String defaultModel;
+    private final List<String> fallbackModels;
 
     public RoutingUseCaseImpl(RoutingRuleRepository ruleRepository,
-                               ProviderMetricsPort metricsPort) {
+                               ProviderMetricsPort metricsPort,
+                               @Value("${app.ai.routing.default-model:gpt-4o-mini}") String defaultModel,
+                               @Value("${app.ai.routing.fallback-models:claude-3-5-haiku,gemini-1.5-flash}") List<String> fallbackModels) {
         this.ruleRepository = ruleRepository;
         this.metricsPort = metricsPort;
+        this.defaultModel = defaultModel;
+        this.fallbackModels = fallbackModels;
     }
 
     @Override
@@ -137,9 +144,25 @@ public class RoutingUseCaseImpl implements RoutingUseCase {
             }
         }
 
-        return candidates.isEmpty()
-                ? List.of(new ProviderCandidate("default", "default", 100, 0.01, 1000))
-                : candidates;
+        if (!candidates.isEmpty()) {
+            return candidates;
+        }
+
+        // Build fallback candidates from configured default + fallback models
+        List<ProviderCandidate> fallbacks = new ArrayList<>();
+        fallbacks.add(new ProviderCandidate(
+                "default", defaultModel, 100,
+                metricsPort.getCostPer1kTokens("default", defaultModel),
+                metricsPort.getP50LatencyMs("default", defaultModel)
+        ));
+        for (String fbModel : fallbackModels) {
+            fallbacks.add(new ProviderCandidate(
+                    "fallback", fbModel, 50,
+                    metricsPort.getCostPer1kTokens("fallback", fbModel),
+                    metricsPort.getP50LatencyMs("fallback", fbModel)
+            ));
+        }
+        return fallbacks;
     }
 
     private List<ProviderCandidate> rankByStrategy(List<ProviderCandidate> candidates, RoutingStrategy strategy) {

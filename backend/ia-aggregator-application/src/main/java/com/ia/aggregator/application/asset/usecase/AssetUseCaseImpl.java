@@ -109,7 +109,9 @@ public class AssetUseCaseImpl implements AssetUseCase {
     @Override
     public AssetMetrics getMetrics(UUID assetId) {
         Asset asset = getById(assetId);
-        return new AssetMetrics(asset.usageCount(), asset.averageRating(), 0.0, 0.0);
+        double totalCost = assetRepository.getTotalCost(assetId);
+        double successRate = assetRepository.getSuccessRate(assetId);
+        return new AssetMetrics(asset.usageCount(), asset.averageRating(), totalCost, successRate);
     }
 
     @Override

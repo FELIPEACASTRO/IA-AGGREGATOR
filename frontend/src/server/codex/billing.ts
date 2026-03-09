@@ -1,5 +1,6 @@
 ﻿import { subDays } from 'date-fns';
 import { codexDb } from '@/server/codex/db';
+import { backendFetch } from '@/server/backend-proxy';
 
 type BillingPlan = {
   id: string;
@@ -18,36 +19,43 @@ type WeeklyUsagePoint = {
   tokens: number;
 };
 
-const PLAN_DEFS: Omit<BillingPlan, 'current'>[] = [
-  {
-    id: 'starter',
-    name: 'Starter',
-    price: 'Grátis',
-    desc: 'Ideal para explorar e validar',
-    tokens: 50000,
-    models: 5,
-    features: ['5 modelos disponíveis', '50k tokens/mês', 'Histórico 30 dias', 'Suporte por e-mail']
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    price: 'R$ 49/mês',
-    desc: 'Para profissionais e equipes',
-    tokens: 500000,
-    models: 13,
-    features: ['13+ modelos disponíveis', '500k tokens/mês', 'Histórico ilimitado', 'Canvas Mode', 'Suporte prioritário', 'API access'],
-    gradient: 'var(--brand-gradient)'
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: 'Personalizado',
-    desc: 'Escala e segurança corporativa',
-    tokens: -1,
-    models: 13,
-    features: ['Tokens ilimitados', 'SSO / SAML', 'SLA dedicado', 'Integrações customizadas', 'Contato comercial']
+type BackendPlan = {
+  id: string;
+  slug: string;
+  name: string;
+  tier: string;
+  priceDisplay: string;
+  priceCents: number;
+  description: string;
+  tokenLimit: number;
+  modelCount: number;
+  features: string[];
+  gradient: string | null;
+  sortOrder: number;
+};
+
+async function fetchPlansFromBackend(): Promise<Omit<BillingPlan, 'current'>[]> {
+  try {
+    const plans = await backendFetch<BackendPlan[]>('/api/v1/billing/plans');
+    return plans.map((plan) => ({
+      id: plan.slug,
+      name: plan.name,
+      price: plan.priceDisplay,
+      desc: plan.description,
+      tokens: plan.tokenLimit,
+      models: plan.modelCount,
+      features: plan.features,
+      gradient: plan.gradient ?? undefined,
+    }));
+  } catch {
+    // Fallback if backend is unavailable
+    return [
+      { id: 'starter', name: 'Starter', price: 'Grátis', desc: 'Ideal para explorar e validar', tokens: 50000, models: 5, features: ['5 modelos disponíveis', '50k tokens/mês'] },
+      { id: 'pro', name: 'Pro', price: 'R$ 49/mês', desc: 'Para profissionais e equipes', tokens: 500000, models: 13, features: ['13+ modelos disponíveis', '500k tokens/mês'], gradient: 'var(--brand-gradient)' },
+      { id: 'enterprise', name: 'Enterprise', price: 'Personalizado', desc: 'Escala e segurança corporativa', tokens: -1, models: 13, features: ['Tokens ilimitados', 'SSO / SAML', 'SLA dedicado'] },
+    ];
   }
-];
+}
 
 const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -90,7 +98,8 @@ export async function resolveBillingData(workspaceId: string) {
   const selectedPlanId: BillingPlan['id'] =
     tokensUsed > 100000 || (creditBalance?.balance ?? 0) > 0 ? 'pro' : 'starter';
 
-  const plans: BillingPlan[] = PLAN_DEFS.map((plan) => ({
+  const planDefs = await fetchPlansFromBackend();
+  const plans: BillingPlan[] = planDefs.map((plan) => ({
     ...plan,
     current: plan.id === selectedPlanId
   }));
@@ -116,6 +125,10 @@ export async function resolveBillingData(workspaceId: string) {
     };
   });
 
+  // Calculate days until billing cycle reset (1st of next month)
+  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const daysUntilReset = Math.ceil((nextMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
   return {
     plans,
     monthlyUsage: weeklyUsage,
@@ -123,7 +136,8 @@ export async function resolveBillingData(workspaceId: string) {
       tokensUsed,
       monthlyLimit,
       pct: monthlyLimit > 0 ? Math.min(100, Math.round((tokensUsed / monthlyLimit) * 100)) : 0,
-      estimatedFromRuns: tokensFromUsage === 0
+      estimatedFromRuns: tokensFromUsage === 0,
+      daysUntilReset
     }
   };
 }

@@ -25,6 +25,7 @@ import { cn } from '@/lib/cn';
 import { trackEvent } from '@/lib/analytics';
 import { useAuthStore } from '@/stores/auth-store';
 import { useChatStore } from '@/stores/chat-store';
+import type { ModelCapability } from '@/lib/model-catalog';
 
 type Goal = 'analysis' | 'writing' | 'planning' | 'general';
 type Tier = 'fast' | 'balanced' | 'powerful';
@@ -105,14 +106,33 @@ const goals: GoalCard[] = [
   },
 ];
 
-const models: ModelCard[] = [
-  { id: 'gpt-4o-mini', label: 'GPT-4o mini', provider: 'OpenAI', tier: 'fast', color: '#4ed9a7' },
-  { id: 'gpt-4.1-mini', label: 'GPT-4.1 mini', provider: 'OpenAI', tier: 'balanced', color: '#6073ff' },
-  { id: 'claude-3-5-haiku', label: 'Claude Haiku', provider: 'Anthropic', tier: 'fast', color: '#f25d9c' },
-  { id: 'gemini-1.5-flash', label: 'Gemini Flash', provider: 'Google', tier: 'fast', color: '#77b8ff' },
-  { id: 'deepseek-chat', label: 'DeepSeek Chat', provider: 'DeepSeek', tier: 'balanced', color: '#8b6cff' },
-  { id: 'command-r-plus', label: 'Command R+', provider: 'Cohere', tier: 'powerful', color: '#ffbf66' },
-];
+const PROVIDER_COLORS: Record<string, string> = {
+  OpenAI: '#4ed9a7',
+  Anthropic: '#f25d9c',
+  Google: '#77b8ff',
+  DeepSeek: '#8b6cff',
+  Groq: '#ff8f5e',
+  Mistral: '#ff6b6b',
+  Cohere: '#ffbf66',
+  Perplexity: '#6ee7b7',
+};
+
+function deriveTier(model: ModelCapability): Tier {
+  const ctx = model.maxContextTokens;
+  if (ctx >= 200000) return 'powerful';
+  if (ctx >= 100000) return 'balanced';
+  return 'fast';
+}
+
+function toModelCards(models: ModelCapability[]): ModelCard[] {
+  return models.map((m) => ({
+    id: m.id,
+    label: m.label,
+    provider: m.provider,
+    tier: deriveTier(m),
+    color: PROVIDER_COLORS[m.provider] ?? '#6073ff',
+  }));
+}
 
 const tierMeta: Record<Tier, { label: string; icon: React.ElementType; tone: string }> = {
   fast: { label: 'Rápido', icon: Zap, tone: 'text-[var(--success)]' },
@@ -136,13 +156,15 @@ function StepIndicator({ current }: { current: number }) {
 
 export default function WelcomePage() {
   const { isAuthenticated, isLoading, user } = useAuthStore();
-  const { setSelectedModel, createConversation } = useChatStore();
+  const { setSelectedModel, createConversation, availableModels } = useChatStore();
   const router = useRouter();
 
   const [step, setStep] = useState(0);
   const [goal, setGoal] = useState<Goal | null>(null);
   const [modelId, setModelId] = useState<string | null>(null);
   const [firstPrompt, setFirstPrompt] = useState('');
+
+  const models = useMemo(() => toModelCards(availableModels), [availableModels]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login');
