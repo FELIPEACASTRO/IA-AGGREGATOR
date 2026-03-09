@@ -26,9 +26,9 @@ import { trackEvent } from '@/lib/analytics';
 import { useAuthStore } from '@/stores/auth-store';
 import { useChatStore } from '@/stores/chat-store';
 import type { ModelCapability } from '@/lib/model-catalog';
+import { type Tier, PROVIDER_COLORS, deriveTier } from '@/lib/model-utils';
 
 type Goal = 'analysis' | 'writing' | 'planning' | 'general';
-type Tier = 'fast' | 'balanced' | 'powerful';
 
 type GoalCard = {
   id: Goal;
@@ -105,24 +105,6 @@ const goals: GoalCard[] = [
     ],
   },
 ];
-
-const PROVIDER_COLORS: Record<string, string> = {
-  OpenAI: '#4ed9a7',
-  Anthropic: '#f25d9c',
-  Google: '#77b8ff',
-  DeepSeek: '#8b6cff',
-  Groq: '#ff8f5e',
-  Mistral: '#ff6b6b',
-  Cohere: '#ffbf66',
-  Perplexity: '#6ee7b7',
-};
-
-function deriveTier(model: ModelCapability): Tier {
-  const ctx = model.maxContextTokens;
-  if (ctx >= 200000) return 'powerful';
-  if (ctx >= 100000) return 'balanced';
-  return 'fast';
-}
 
 function toModelCards(models: ModelCapability[]): ModelCard[] {
   return models.map((m) => ({

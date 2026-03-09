@@ -2,7 +2,7 @@
 -- V8: Content Module Tables
 -- ============================================================================
 
-SET search_path TO content, public;
+SET search_path TO content, auth, public;
 
 -- Artifacts
 CREATE TABLE content.artifacts (

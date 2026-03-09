@@ -27,11 +27,11 @@ public class AiProviderJpaEntity {
     @Column(name = "base_url")
     private String baseUrl;
 
-    @Column(columnDefinition = "text")
-    private String capabilities;
+    @Column(columnDefinition = "text[]")
+    private String[] capabilities;
 
-    @Column(name = "supported_models", columnDefinition = "text")
-    private String supportedModels;
+    @Column(name = "supported_models", columnDefinition = "text[]")
+    private String[] supportedModels;
 
     @Column(name = "auth_type")
     private String authType;
@@ -70,8 +70,8 @@ public class AiProviderJpaEntity {
     public String getDisplayName() { return displayName; }
     public String getStatus() { return status; }
     public String getBaseUrl() { return baseUrl; }
-    public String getCapabilities() { return capabilities; }
-    public String getSupportedModels() { return supportedModels; }
+    public String[] getCapabilities() { return capabilities; }
+    public String[] getSupportedModels() { return supportedModels; }
     public String getAuthType() { return authType; }
     public Integer getRateLimitRpm() { return rateLimitRpm; }
     public Long getRateLimitTpm() { return rateLimitTpm; }
@@ -88,8 +88,8 @@ public class AiProviderJpaEntity {
     public void setDisplayName(String displayName) { this.displayName = displayName; }
     public void setStatus(String status) { this.status = status; }
     public void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl; }
-    public void setCapabilities(String capabilities) { this.capabilities = capabilities; }
-    public void setSupportedModels(String supportedModels) { this.supportedModels = supportedModels; }
+    public void setCapabilities(String[] capabilities) { this.capabilities = capabilities; }
+    public void setSupportedModels(String[] supportedModels) { this.supportedModels = supportedModels; }
     public void setAuthType(String authType) { this.authType = authType; }
     public void setRateLimitRpm(Integer rateLimitRpm) { this.rateLimitRpm = rateLimitRpm; }
     public void setRateLimitTpm(Long rateLimitTpm) { this.rateLimitTpm = rateLimitTpm; }

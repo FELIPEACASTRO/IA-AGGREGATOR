@@ -26,7 +26,7 @@ BEGIN
     END IF;
 END $$;
 
-SET search_path TO analytics, public;
+SET search_path TO analytics, auth, public;
 
 CREATE TABLE IF NOT EXISTS analytics.event_reports (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),

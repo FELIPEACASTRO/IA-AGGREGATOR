@@ -1,6 +1,7 @@
 package com.ia.aggregator.presentation.platform;
 
 import com.ia.aggregator.presentation.shared.response.ApiResponse;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,7 +21,7 @@ public class ApiMetaController {
 
     private final RequestMappingHandlerMapping handlerMapping;
 
-    public ApiMetaController(RequestMappingHandlerMapping handlerMapping) {
+    public ApiMetaController(@Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping) {
         this.handlerMapping = handlerMapping;
     }
 
@@ -37,11 +38,11 @@ public class ApiMetaController {
                 })
                 .flatMap(entry -> {
                     RequestMappingInfo info = entry.getKey();
-                    String methods = info.getMethodsCondition().getMethods().stream()
+                    String raw = info.getMethodsCondition().getMethods().stream()
                             .map(Enum::name)
                             .sorted()
                             .collect(Collectors.joining("/"));
-                    if (methods.isEmpty()) methods = "GET";
+                    final String methods = raw.isEmpty() ? "GET" : raw;
 
                     return info.getPatternValues().stream()
                             .map(pattern -> new EndpointDto(methods, pattern));

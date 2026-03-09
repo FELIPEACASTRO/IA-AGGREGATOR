@@ -5,7 +5,7 @@ import com.ia.aggregator.domain.auth.repository.UserRepository;
 import com.ia.aggregator.infrastructure.auth.persistence.entity.UserJpaEntity;
 import com.ia.aggregator.infrastructure.auth.persistence.mapper.UserPersistenceMapper;
 import com.ia.aggregator.infrastructure.auth.persistence.repository.UserJpaRepository;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -14,7 +14,7 @@ import java.util.UUID;
 /**
  * Implements the domain UserRepository port using JPA.
  */
-@Component
+@Repository
 public class UserRepositoryImpl implements UserRepository {
 
     private final UserJpaRepository jpaRepository;

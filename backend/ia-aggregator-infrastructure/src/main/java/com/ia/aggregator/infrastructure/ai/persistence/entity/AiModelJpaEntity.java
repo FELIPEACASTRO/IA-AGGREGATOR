@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -34,10 +35,10 @@ public class AiModelJpaEntity {
     private Integer maxOutputTokens;
 
     @Column(name = "input_cost_per_1k")
-    private Double inputCostPer1k;
+    private BigDecimal inputCostPer1k;
 
     @Column(name = "output_cost_per_1k")
-    private Double outputCostPer1k;
+    private BigDecimal outputCostPer1k;
 
     @Column(name = "supports_streaming", nullable = false)
     private boolean supportsStreaming;
@@ -78,8 +79,8 @@ public class AiModelJpaEntity {
     public String getCategory() { return category; }
     public Integer getContextWindow() { return contextWindow; }
     public Integer getMaxOutputTokens() { return maxOutputTokens; }
-    public Double getInputCostPer1k() { return inputCostPer1k; }
-    public Double getOutputCostPer1k() { return outputCostPer1k; }
+    public BigDecimal getInputCostPer1k() { return inputCostPer1k; }
+    public BigDecimal getOutputCostPer1k() { return outputCostPer1k; }
     public boolean isSupportsStreaming() { return supportsStreaming; }
     public boolean isSupportsFunctionCalling() { return supportsFunctionCalling; }
     public boolean isSupportsVision() { return supportsVision; }
@@ -98,8 +99,8 @@ public class AiModelJpaEntity {
     public void setCategory(String category) { this.category = category; }
     public void setContextWindow(Integer contextWindow) { this.contextWindow = contextWindow; }
     public void setMaxOutputTokens(Integer maxOutputTokens) { this.maxOutputTokens = maxOutputTokens; }
-    public void setInputCostPer1k(Double inputCostPer1k) { this.inputCostPer1k = inputCostPer1k; }
-    public void setOutputCostPer1k(Double outputCostPer1k) { this.outputCostPer1k = outputCostPer1k; }
+    public void setInputCostPer1k(BigDecimal inputCostPer1k) { this.inputCostPer1k = inputCostPer1k; }
+    public void setOutputCostPer1k(BigDecimal outputCostPer1k) { this.outputCostPer1k = outputCostPer1k; }
     public void setSupportsStreaming(boolean supportsStreaming) { this.supportsStreaming = supportsStreaming; }
     public void setSupportsFunctionCalling(boolean supportsFunctionCalling) { this.supportsFunctionCalling = supportsFunctionCalling; }
     public void setSupportsVision(boolean supportsVision) { this.supportsVision = supportsVision; }

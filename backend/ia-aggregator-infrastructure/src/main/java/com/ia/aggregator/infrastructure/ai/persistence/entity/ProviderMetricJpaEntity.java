@@ -3,6 +3,7 @@ package com.ia.aggregator.infrastructure.ai.persistence.entity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -36,7 +37,7 @@ public class ProviderMetricJpaEntity {
     private long totalTokens;
 
     @Column(name = "total_cost_usd", nullable = false)
-    private double totalCostUsd;
+    private BigDecimal totalCostUsd;
 
     @Column(name = "avg_latency_ms", nullable = false)
     private int avgLatencyMs;
@@ -51,7 +52,7 @@ public class ProviderMetricJpaEntity {
     private int p99LatencyMs;
 
     @Column(name = "quality_score", nullable = false)
-    private double qualityScore;
+    private BigDecimal qualityScore;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -68,12 +69,12 @@ public class ProviderMetricJpaEntity {
     public long getSuccessCount() { return successCount; }
     public long getErrorCount() { return errorCount; }
     public long getTotalTokens() { return totalTokens; }
-    public double getTotalCostUsd() { return totalCostUsd; }
+    public BigDecimal getTotalCostUsd() { return totalCostUsd; }
     public int getAvgLatencyMs() { return avgLatencyMs; }
     public int getP50LatencyMs() { return p50LatencyMs; }
     public int getP95LatencyMs() { return p95LatencyMs; }
     public int getP99LatencyMs() { return p99LatencyMs; }
-    public double getQualityScore() { return qualityScore; }
+    public BigDecimal getQualityScore() { return qualityScore; }
     public Instant getCreatedAt() { return createdAt; }
 
     // Setters
@@ -85,11 +86,11 @@ public class ProviderMetricJpaEntity {
     public void setSuccessCount(long successCount) { this.successCount = successCount; }
     public void setErrorCount(long errorCount) { this.errorCount = errorCount; }
     public void setTotalTokens(long totalTokens) { this.totalTokens = totalTokens; }
-    public void setTotalCostUsd(double totalCostUsd) { this.totalCostUsd = totalCostUsd; }
+    public void setTotalCostUsd(BigDecimal totalCostUsd) { this.totalCostUsd = totalCostUsd; }
     public void setAvgLatencyMs(int avgLatencyMs) { this.avgLatencyMs = avgLatencyMs; }
     public void setP50LatencyMs(int p50LatencyMs) { this.p50LatencyMs = p50LatencyMs; }
     public void setP95LatencyMs(int p95LatencyMs) { this.p95LatencyMs = p95LatencyMs; }
     public void setP99LatencyMs(int p99LatencyMs) { this.p99LatencyMs = p99LatencyMs; }
-    public void setQualityScore(double qualityScore) { this.qualityScore = qualityScore; }
+    public void setQualityScore(BigDecimal qualityScore) { this.qualityScore = qualityScore; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

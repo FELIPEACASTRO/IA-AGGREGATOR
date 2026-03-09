@@ -47,7 +47,8 @@ public class ModelCatalogRepositoryImpl implements ModelCatalogRepository {
                 entity.getDisplayName() != null ? entity.getDisplayName() : entity.getModelId(),
                 providerNames.getOrDefault(entity.getProviderId(), "unknown"),
                 entity.getCategory(), entity.getContextWindow(), entity.getMaxOutputTokens(),
-                entity.getInputCostPer1k(), entity.getOutputCostPer1k(),
+                entity.getInputCostPer1k() != null ? entity.getInputCostPer1k().doubleValue() : null,
+                entity.getOutputCostPer1k() != null ? entity.getOutputCostPer1k().doubleValue() : null,
                 entity.isSupportsStreaming(), entity.isSupportsFunctionCalling(),
                 entity.isSupportsVision(), entity.isDefault(), entity.getTier()
         );

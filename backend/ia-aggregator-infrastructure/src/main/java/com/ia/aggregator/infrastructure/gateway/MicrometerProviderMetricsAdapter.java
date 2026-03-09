@@ -56,10 +56,10 @@ public class MicrometerProviderMetricsAdapter implements ProviderMetricsPort {
     public double getCostPer1kTokens(String providerName, String model) {
         return modelRepository.findByModelId(model)
                 .map(m -> {
-                    Double input = m.getInputCostPer1k();
-                    Double output = m.getOutputCostPer1k();
-                    double inputCost = input != null ? input : 0.0;
-                    double outputCost = output != null ? output : 0.0;
+                    java.math.BigDecimal input = m.getInputCostPer1k();
+                    java.math.BigDecimal output = m.getOutputCostPer1k();
+                    double inputCost = input != null ? input.doubleValue() : 0.0;
+                    double outputCost = output != null ? output.doubleValue() : 0.0;
                     return (inputCost + outputCost) / 2.0;
                 })
                 .orElse(-1.0);
@@ -90,7 +90,7 @@ public class MicrometerProviderMetricsAdapter implements ProviderMetricsPort {
                     String period = YearMonth.now().toString();
                     return metricRepository.findByProviderIdAndModelIdAndPeriod(
                                     m.getProviderId(), m.getModelId(), period)
-                            .map(ProviderMetricJpaEntity::getQualityScore)
+                            .map(pm -> pm.getQualityScore().doubleValue())
                             .orElseGet(() -> resolveDefaultQuality(m));
                 })
                 .orElse(0.5);

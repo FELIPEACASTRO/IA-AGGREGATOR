@@ -2,7 +2,7 @@
 -- V5: Billing Module Tables
 -- ============================================================================
 
-SET search_path TO billing, public;
+SET search_path TO billing, auth, public;
 
 -- Plans
 CREATE TABLE billing.plans (

@@ -58,13 +58,30 @@ public class RedisAuditAdapter implements AuditPort {
 
     @Override
     public List<AuditEvent> findByActor(UUID actorId, Instant from, Instant to, int limit) {
-        // For actor-based queries, scan org events (simplified; production would use secondary index)
-        return Collections.emptyList();
+        return scanAllEvents(from, to, limit,
+                event -> actorId.toString().equals(event.actorId()));
     }
 
     @Override
     public List<AuditEvent> findByAction(String action, Instant from, Instant to, int limit) {
-        return Collections.emptyList();
+        return scanAllEvents(from, to, limit,
+                event -> action.equals(event.action()));
+    }
+
+    private List<AuditEvent> scanAllEvents(Instant from, Instant to, int limit,
+                                            java.util.function.Predicate<AuditEvent> filter) {
+        try {
+            var keys = redisTemplate.keys(AUDIT_KEY_PREFIX + "*");
+            if (keys == null || keys.isEmpty()) return Collections.emptyList();
+            return keys.stream()
+                    .flatMap(key -> queryEvents(key, from, to, Integer.MAX_VALUE).stream())
+                    .filter(filter)
+                    .limit(limit)
+                    .toList();
+        } catch (Exception e) {
+            log.warn("Failed to scan audit events: {}", e.getMessage());
+            return Collections.emptyList();
+        }
     }
 
     private List<AuditEvent> queryEvents(String key, Instant from, Instant to, int limit) {

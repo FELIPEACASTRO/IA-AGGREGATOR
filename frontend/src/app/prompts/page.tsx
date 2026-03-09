@@ -1,17 +1,16 @@
-﻿'use client';
+'use client';
 
 import { AppShell } from '@/components/app/app-shell';
 import { useRouter } from 'next/navigation';
 import { trackEvent } from '@/lib/analytics';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/cn';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PageSection, PageStack } from '@/components/app/page-blueprint';
 import {
   BarChart3,
   ChevronRight,
   FileText,
-  Hash,
   Mail,
   Search,
   Sparkles,
@@ -20,83 +19,68 @@ import {
   WandSparkles,
   Workflow,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 type Category = 'all' | 'analysis' | 'writing' | 'planning';
 
-const templates = [
-  {
-    category: 'analysis' as Category,
-    icon: BarChart3,
-    iconColor: 'text-[var(--brand-primary)]',
-    iconBg: 'bg-[var(--brand-primary)]/10',
-    title: 'Resumo Executivo',
-    description: 'Condensa informações em topicos estrategicos para lideranca.',
-    tag: 'Analise',
-    prompt: 'Crie um resumo executivo estruturado em até 7 bullets com foco em insights e decisões estratégicas sobre o seguinte tema:',
-    uses: 847,
-  },
-  {
-    category: 'planning' as Category,
-    icon: Target,
-    iconColor: 'text-[var(--success)]',
-    iconBg: 'bg-[var(--success)]/10',
-    title: 'Plano de Acao',
-    description: 'Transforma objetivos em plano estruturado com etapas, donos e riscos.',
-    tag: 'Planejamento',
-    prompt: 'Crie um plano de ação detalhado com: etapas claras, responsáveis, prazos estimados, dependências e principais riscos para:',
-    uses: 652,
-  },
-  {
-    category: 'writing' as Category,
-    icon: Mail,
-    iconColor: 'text-[var(--brand-secondary)]',
-    iconBg: 'bg-[var(--brand-secondary)]/10',
-    title: 'E-mail Profissional',
-    description: 'Rascunho claro, objetivo e com tom apropriado para comúnicações formais.',
-    tag: 'Escrita',
-    prompt: 'Escreva um e-mail profissional com tom cordial, objetivo e estrutura clara (assunto, abertura, corpo, encerramento) sobre:',
-    uses: 1203,
-  },
-  {
-    category: 'analysis' as Category,
-    icon: BarChart3,
-    iconColor: 'text-[var(--warning)]',
-    iconBg: 'bg-[var(--warning)]/10',
-    title: 'Analise Comparativa',
-    description: 'Compara duas ou mais alternativas com criterios objetivos e recomendacao final.',
-    tag: 'Analise',
-    prompt: 'Compare as alternativas abaixo em uma tabela com critérios objetivos (custo, tempo, risco, benefícios) e conclua com uma recomendação justificada:',
-    uses: 489,
-  },
-  {
-    category: 'writing' as Category,
-    icon: FileText,
-    iconColor: 'text-[var(--muted-foreground)]',
-    iconBg: 'bg-[var(--surface-3)]',
-    title: 'Documento Tecnico',
-    description: 'Estrutura clara para documentação tecnica, RFCs ou especificações.',
-    tag: 'Escrita',
-    prompt: 'Escreva um documento técnico com seções: Objetivo, Contexto, Solução proposta, Requisitos, Considerações e Plano de implementação para:',
-    uses: 312,
-  },
-  {
-    category: 'planning' as Category,
-    icon: Hash,
-    iconColor: 'text-[var(--brand-primary)]',
-    iconBg: 'bg-[var(--brand-primary)]/10',
-    title: 'OKRs e Metas',
-    description: 'Define Objectives & Key Results claros e mensuraveis para equipes.',
-    tag: 'Planejamento',
-    prompt: 'Defina 3 Objectives e 3 Key Results cada para o seguinte contexto de equipe ou área. Seja específico, mensurável e com prazo trimestral:',
-    uses: 278,
-  },
-];
+type Template = {
+  category: Category;
+  icon: LucideIcon;
+  iconColor: string;
+  iconBg: string;
+  title: string;
+  description: string;
+  tag: string;
+  prompt: string;
+  uses: number;
+};
 
-const categories: { value: Category; label: string }[] = [
+const CATEGORY_STYLE: Record<string, { icon: LucideIcon; color: string; bg: string; tag: string }> = {
+  analysis:  { icon: BarChart3, color: 'text-[var(--brand-primary)]', bg: 'bg-[var(--brand-primary)]/10', tag: 'Analise' },
+  planning:  { icon: Target, color: 'text-[var(--success)]', bg: 'bg-[var(--success)]/10', tag: 'Planejamento' },
+  writing:   { icon: Mail, color: 'text-[var(--brand-secondary)]', bg: 'bg-[var(--brand-secondary)]/10', tag: 'Escrita' },
+  custom:    { icon: FileText, color: 'text-[var(--muted-foreground)]', bg: 'bg-[var(--surface-3)]', tag: 'Custom' },
+};
+
+const FILTER_TABS: { value: Category; label: string }[] = [
   { value: 'all', label: 'Todos' },
   { value: 'analysis', label: 'Analise' },
   { value: 'planning', label: 'Planejamento' },
   { value: 'writing', label: 'Escrita' },
+];
+
+function mapCategoryFromBackend(cat?: string): Category {
+  if (!cat) return 'writing';
+  const lower = cat.toLowerCase();
+  if (lower.includes('analy') || lower === 'analysis') return 'analysis';
+  if (lower.includes('plan') || lower === 'planning') return 'planning';
+  return 'writing';
+}
+
+function mapBackendAsset(asset: {
+  name: string;
+  description?: string;
+  content: string;
+  usageCount?: number;
+  metadata?: Record<string, string>;
+}): Template {
+  const cat = mapCategoryFromBackend(asset.metadata?.category);
+  const style = CATEGORY_STYLE[cat] ?? CATEGORY_STYLE.custom;
+  return {
+    category: cat,
+    icon: style.icon,
+    iconColor: style.color,
+    iconBg: style.bg,
+    title: asset.name,
+    description: asset.description ?? '',
+    tag: style.tag,
+    prompt: asset.content,
+    uses: asset.usageCount ?? 0,
+  };
+}
+
+const FALLBACK_TEMPLATES: Template[] = [
+  { category: 'analysis', icon: BarChart3, iconColor: 'text-[var(--brand-primary)]', iconBg: 'bg-[var(--brand-primary)]/10', title: 'Resumo Executivo', description: 'Condensa informações em topicos estrategicos para lideranca.', tag: 'Analise', prompt: 'Crie um resumo executivo estruturado em até 7 bullets com foco em insights e decisões estratégicas sobre o seguinte tema:', uses: 0 },
 ];
 
 function TopMetric({ label, value, helper }: { label: string; value: string; helper: string }) {
@@ -113,6 +97,21 @@ export default function PromptsPage() {
   const router = useRouter();
   const [activeCategory, setActiveCategory] = useState<Category>('all');
   const [search, setSearch] = useState('');
+  const [templates, setTemplates] = useState<Template[]>(FALLBACK_TEMPLATES);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
+    fetch(`${API_BASE}/api/v1/library/assets?type=PROMPT_TEMPLATE&size=50`, { cache: 'no-store' })
+      .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then((data: unknown) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setTemplates(data.map((a) => mapBackendAsset(a as Parameters<typeof mapBackendAsset>[0])));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   const filtered = useMemo(
     () => templates.filter((template) => {
@@ -120,7 +119,7 @@ export default function PromptsPage() {
       const content = `${template.title} ${template.description}`.toLowerCase();
       return matchCategory && content.includes(search.toLowerCase());
     }),
-    [activeCategory, search],
+    [activeCategory, search, templates],
   );
 
   const topTemplate = filtered[0] ?? templates[0];
@@ -155,8 +154,8 @@ export default function PromptsPage() {
                 O objetivo aqui e operacional: descoberta clara, contexto rapido e execucao em um clique com CTA recorrente.
               </p>
               <div className="mt-5 grid gap-4 sm:grid-cols-3">
-                <TopMetric label="Catalogo" value={String(templates.length)} helper="templates ativos no workspace" />
-                <TopMetric label="Categorias" value={String(categories.length - 1)} helper="analise, planejamento e escrita" />
+                <TopMetric label="Catalogo" value={loading ? '...' : String(templates.length)} helper="templates ativos no workspace" />
+                <TopMetric label="Categorias" value={String(FILTER_TABS.length - 1)} helper="analise, planejamento e escrita" />
                 <TopMetric label="Mais usado" value={topTemplate.title} helper={`${topTemplate.uses.toLocaleString('pt-BR')} usos acumulados`} />
               </div>
             </div>
@@ -190,7 +189,7 @@ export default function PromptsPage() {
         </PageSection>
 
         <section className="flex flex-wrap items-center gap-2">
-          {categories.map((category) => (
+          {FILTER_TABS.map((category) => (
             <button
               key={category.value}
               onClick={() => setActiveCategory(category.value)}
@@ -260,4 +259,3 @@ export default function PromptsPage() {
     </AppShell>
   );
 }
-

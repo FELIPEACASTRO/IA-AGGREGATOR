@@ -45,7 +45,7 @@ public class MessageJpaEntity {
     private Integer outputTokens;
 
     @Column(name = "cost_usd", precision = 12, scale = 8)
-    private Double costUsd;
+    private java.math.BigDecimal costUsd;
 
     @Column(name = "latency_ms")
     private Integer latencyMs;
@@ -74,7 +74,7 @@ public class MessageJpaEntity {
     public int getAttempts() { return attempts; }
     public Integer getInputTokens() { return inputTokens; }
     public Integer getOutputTokens() { return outputTokens; }
-    public Double getCostUsd() { return costUsd; }
+    public java.math.BigDecimal getCostUsd() { return costUsd; }
     public Integer getLatencyMs() { return latencyMs; }
     public UUID getParentId() { return parentId; }
     public String getMetadata() { return metadata; }
@@ -92,7 +92,7 @@ public class MessageJpaEntity {
     public void setAttempts(int attempts) { this.attempts = attempts; }
     public void setInputTokens(Integer inputTokens) { this.inputTokens = inputTokens; }
     public void setOutputTokens(Integer outputTokens) { this.outputTokens = outputTokens; }
-    public void setCostUsd(Double costUsd) { this.costUsd = costUsd; }
+    public void setCostUsd(java.math.BigDecimal costUsd) { this.costUsd = costUsd; }
     public void setLatencyMs(Integer latencyMs) { this.latencyMs = latencyMs; }
     public void setParentId(UUID parentId) { this.parentId = parentId; }
     public void setMetadata(String metadata) { this.metadata = metadata; }

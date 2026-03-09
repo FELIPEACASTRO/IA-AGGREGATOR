@@ -2,7 +2,7 @@
 -- V10: Audit Module Tables
 -- ============================================================================
 
-SET search_path TO audit, public;
+SET search_path TO audit, auth, public;
 
 -- Audit Logs
 CREATE TABLE audit.logs (

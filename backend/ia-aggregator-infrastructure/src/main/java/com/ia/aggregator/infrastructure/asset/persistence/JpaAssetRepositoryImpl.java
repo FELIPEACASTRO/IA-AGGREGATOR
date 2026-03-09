@@ -42,7 +42,7 @@ public class JpaAssetRepositoryImpl implements AssetRepository {
         entity.setVariables(toJson(asset.variables()));
         entity.setMetadata(toJson(asset.metadata()));
         entity.setUsageCount(asset.usageCount());
-        entity.setAverageRating(asset.averageRating());
+        entity.setAverageRating(java.math.BigDecimal.valueOf(asset.averageRating()));
         entity.setPublished(asset.published());
         jpa.save(entity);
     }
@@ -83,7 +83,7 @@ public class JpaAssetRepositoryImpl implements AssetRepository {
 
     @Override
     public double getTotalCost(UUID id) {
-        return jpa.findById(id).map(AssetJpaEntity::getTotalCostUsd).orElse(0.0);
+        return jpa.findById(id).map(e -> e.getTotalCostUsd().doubleValue()).orElse(0.0);
     }
 
     @Override
@@ -104,7 +104,7 @@ public class JpaAssetRepositoryImpl implements AssetRepository {
                 entity.getContent(),
                 fromJson(entity.getVariables()),
                 fromJson(entity.getMetadata()),
-                entity.getUsageCount(), entity.getAverageRating(),
+                entity.getUsageCount(), entity.getAverageRating().doubleValue(),
                 entity.isPublished(), entity.getCreatedAt(), entity.getUpdatedAt()
         );
     }

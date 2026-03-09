@@ -2,7 +2,7 @@
 -- V7: AI Gateway Module Tables
 -- ============================================================================
 
-SET search_path TO ai_gateway, public;
+SET search_path TO ai_gateway, auth, public;
 
 -- Providers
 CREATE TABLE ai_gateway.providers (

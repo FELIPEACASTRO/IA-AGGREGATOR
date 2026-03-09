@@ -2,7 +2,7 @@
 -- V9: Teams Module Tables
 -- ============================================================================
 
-SET search_path TO teams, public;
+SET search_path TO teams, auth, public;
 
 -- Workspaces
 CREATE TABLE teams.workspaces (

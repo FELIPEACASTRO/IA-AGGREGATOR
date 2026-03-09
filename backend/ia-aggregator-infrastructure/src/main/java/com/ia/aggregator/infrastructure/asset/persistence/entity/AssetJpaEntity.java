@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -46,10 +47,10 @@ public class AssetJpaEntity {
     private long usageCount;
 
     @Column(name = "average_rating", nullable = false)
-    private double averageRating;
+    private BigDecimal averageRating;
 
     @Column(name = "total_cost_usd", nullable = false)
-    private double totalCostUsd;
+    private BigDecimal totalCostUsd;
 
     @Column(name = "success_count", nullable = false)
     private long successCount;
@@ -82,8 +83,8 @@ public class AssetJpaEntity {
     public String getVariables() { return variables; }
     public String getMetadata() { return metadata; }
     public long getUsageCount() { return usageCount; }
-    public double getAverageRating() { return averageRating; }
-    public double getTotalCostUsd() { return totalCostUsd; }
+    public BigDecimal getAverageRating() { return averageRating; }
+    public BigDecimal getTotalCostUsd() { return totalCostUsd; }
     public long getSuccessCount() { return successCount; }
     public long getFailureCount() { return failureCount; }
     public boolean isPublished() { return published; }
@@ -102,8 +103,8 @@ public class AssetJpaEntity {
     public void setVariables(String variables) { this.variables = variables; }
     public void setMetadata(String metadata) { this.metadata = metadata; }
     public void setUsageCount(long usageCount) { this.usageCount = usageCount; }
-    public void setAverageRating(double averageRating) { this.averageRating = averageRating; }
-    public void setTotalCostUsd(double totalCostUsd) { this.totalCostUsd = totalCostUsd; }
+    public void setAverageRating(BigDecimal averageRating) { this.averageRating = averageRating; }
+    public void setTotalCostUsd(BigDecimal totalCostUsd) { this.totalCostUsd = totalCostUsd; }
     public void setSuccessCount(long successCount) { this.successCount = successCount; }
     public void setFailureCount(long failureCount) { this.failureCount = failureCount; }
     public void setPublished(boolean published) { this.published = published; }

@@ -21,24 +21,7 @@ import {
   Pin, Trash2, Pencil, MoreHorizontal,
   Zap, Brain, Scale, Search,
 } from 'lucide-react';
-
-type Tier = 'fast' | 'balanced' | 'powerful';
-
-const MODEL_META: Record<string, { tier: Tier; color: string }> = {
-  'gpt-4o-mini':             { tier: 'fast',      color: '#10a37f' },
-  'gpt-4.1-mini':            { tier: 'fast',      color: '#10a37f' },
-  'claude-3-5-haiku':        { tier: 'fast',      color: '#d4763b' },
-  'gemini-1.5-flash':        { tier: 'fast',      color: '#4285F4' },
-  'deepseek-chat':           { tier: 'balanced',  color: '#6366f1' },
-  'deepseek-reasoner':       { tier: 'powerful',  color: '#6366f1' },
-  'llama-3.1-8b-instant':    { tier: 'fast',      color: '#0667d0' },
-  'llama-3.1-70b-versatile': { tier: 'balanced',  color: '#0667d0' },
-  'mistral-small-latest':    { tier: 'fast',      color: '#fe5b35' },
-  'mistral-large-latest':    { tier: 'balanced',  color: '#fe5b35' },
-  'command-r':               { tier: 'balanced',  color: '#39d353' },
-  'command-r-plus':          { tier: 'powerful',  color: '#39d353' },
-  'sonar':                   { tier: 'powerful',  color: '#20b2aa' },
-};
+import { type Tier, getModelMeta } from '@/lib/model-utils';
 
 const TIER_CONFIG: Record<Tier, { icon: React.ElementType; label: string; color: string }> = {
   fast:     { icon: Zap,   label: 'Rápido',      color: 'text-[var(--success)]'       },
@@ -69,8 +52,7 @@ const ChatCanvasBoard = dynamic(
   }
 );
 
-function StreamingIndicator({ model }: { model?: string }) {
-  const color = model ? MODEL_META[model]?.color : undefined;
+function StreamingIndicator({ color }: { color?: string }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -267,8 +249,8 @@ function ChatPageContent() {
 
   const modelOptions: DropdownOption[] = useMemo(
     () => availableModels.map((m) => {
-      const meta = MODEL_META[m.id];
-      const tier = meta?.tier ?? 'balanced';
+      const meta = getModelMeta(m.id, availableModels);
+      const tier = meta.tier;
       const TierIcon = TIER_CONFIG[tier].icon;
       return {
         value: m.id, label: m.label, description: m.provider,
@@ -493,8 +475,8 @@ function ChatPageContent() {
                 <p className="mt-2 text-[var(--text-sm)] text-[var(--muted-foreground)]">Selecione um modelo abaixo ou envie sua mensagem.</p>
                 <div className="mt-6 grid w-full max-w-2xl gap-2 sm:grid-cols-2 md:grid-cols-3">
                   {featuredModels.map((model) => {
-                    const meta = MODEL_META[model.id];
-                    const tier = meta?.tier ?? 'balanced';
+                    const meta = getModelMeta(model.id, availableModels);
+                    const tier = meta.tier;
                     const TierIcon = TIER_CONFIG[tier].icon;
                     return (
                       <motion.button key={model.id} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
@@ -541,7 +523,7 @@ function ChatPageContent() {
                 <AnimatePresence>
                   {isSending && (
                     <div className="flex justify-start">
-                      <StreamingIndicator model={currentModel} />
+                      <StreamingIndicator color={getModelMeta(currentModel, availableModels).color} />
                     </div>
                   )}
                 </AnimatePresence>

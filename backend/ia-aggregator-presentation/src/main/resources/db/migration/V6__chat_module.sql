@@ -2,7 +2,7 @@
 -- V6: Chat Module Tables
 -- ============================================================================
 
-SET search_path TO chat, public;
+SET search_path TO chat, auth, public;
 
 -- Conversations
 CREATE TABLE chat.conversations (
