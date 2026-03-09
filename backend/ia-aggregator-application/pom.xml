@@ -41,6 +41,12 @@
             <artifactId>jakarta.validation-api</artifactId>
         </dependency>
 
+        <!-- Reactor (for streaming Flux in use case ports) -->
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

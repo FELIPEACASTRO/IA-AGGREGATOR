@@ -2,9 +2,13 @@ package com.ia.aggregator.infrastructure.ai.provider;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ia.aggregator.application.ai.port.out.AiModelProvider;
+import com.ia.aggregator.application.ai.dto.*;
+import com.ia.aggregator.application.ai.port.out.MultiCapabilityProvider;
+import com.ia.aggregator.application.ai.port.out.capability.ChatCapable;
+import com.ia.aggregator.application.ai.port.out.capability.EmbeddingCapable;
 import com.ia.aggregator.common.exception.ErrorCode;
 import com.ia.aggregator.common.exception.TechnicalException;
+import com.ia.aggregator.domain.ai.Capability;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
@@ -17,13 +21,16 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 
 @Component
-public class MistralModelProvider implements AiModelProvider {
+public class MistralModelProvider implements MultiCapabilityProvider,
+        ChatCapable, EmbeddingCapable {
 
     private static final String PROVIDER_NAME = "mistral";
+    private static final Set<Capability> SUPPORTED_CAPABILITIES =
+            EnumSet.of(Capability.CHAT, Capability.EMBEDDINGS);
 
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
@@ -58,10 +65,8 @@ public class MistralModelProvider implements AiModelProvider {
                 .build();
     }
 
-    @Override
-    public String providerName() {
-        return PROVIDER_NAME;
-    }
+    @Override public String providerName() { return PROVIDER_NAME; }
+    @Override public Set<Capability> capabilities() { return SUPPORTED_CAPABILITIES; }
 
     @Override
     public boolean supports(String model) {
@@ -72,12 +77,14 @@ public class MistralModelProvider implements AiModelProvider {
 
     @Override
     public String generate(String prompt, String model) {
-        if (!supports(model)) {
-            throw new TechnicalException(ErrorCode.AI_007, "Mistral provider is not configured for model: " + model);
-        }
+        return chat(new ChatRequest(prompt, model)).content();
+    }
 
-        Supplier<String> guardedCall = CircuitBreaker.decorateSupplier(circuitBreaker, () -> callMistral(prompt, model));
-
+    @Override
+    public ChatResult chat(ChatRequest request) {
+        String model = request.model() != null ? request.model() : supportedModels.get(0);
+        Supplier<ChatResult> guardedCall = CircuitBreaker.decorateSupplier(
+                circuitBreaker, () -> callChat(request, model));
         try {
             return executeWithRetry(guardedCall);
         } catch (CallNotPermittedException ex) {
@@ -85,76 +92,104 @@ public class MistralModelProvider implements AiModelProvider {
         }
     }
 
-    private String executeWithRetry(Supplier<String> guardedCall) {
-        TechnicalException lastError = null;
-        int maxAttempts = Math.max(1, retryAttempts);
+    @Override
+    public EmbeddingResult embed(EmbeddingRequest request) {
+        String model = request.model() != null ? request.model() : "mistral-embed";
+        Supplier<EmbeddingResult> guardedCall = CircuitBreaker.decorateSupplier(
+                circuitBreaker, () -> callEmbed(request, model));
+        try {
+            return executeWithRetry(guardedCall);
+        } catch (CallNotPermittedException ex) {
+            throw new TechnicalException(ErrorCode.AI_002, "Mistral circuit breaker is open", ex);
+        }
+    }
 
-        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-            try {
-                return guardedCall.get();
-            } catch (TechnicalException ex) {
-                lastError = ex;
-                if (!shouldRetry(ex) || attempt == maxAttempts) {
-                    throw ex;
-                }
-                sleepBackoff();
+    // ─── Chat ─────────────────────────────────────────────
+
+    private ChatResult callChat(ChatRequest request, String model) {
+        try {
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("model", model);
+            List<Map<String, String>> messages = new ArrayList<>();
+            if (request.systemPrompt() != null) {
+                messages.add(Map.of("role", "system", "content", request.systemPrompt()));
             }
-        }
+            messages.add(Map.of("role", "user", "content", request.prompt()));
+            body.put("messages", messages);
+            if (request.temperature() != null) body.put("temperature", request.temperature());
+            if (request.maxTokens() != null) body.put("max_tokens", request.maxTokens());
 
-        throw lastError == null
-                ? new TechnicalException(ErrorCode.AI_002, "Mistral request failed after retries")
-                : lastError;
+            JsonNode root = sendJsonPost(baseUrl + "/v1/chat/completions", body);
+
+            String content = root.path("choices").path(0).path("message").path("content").asText(null);
+            if (content == null || content.isBlank()) {
+                throw new TechnicalException(ErrorCode.AI_005, "Mistral returned empty response content");
+            }
+            Integer promptTokens = root.path("usage").has("prompt_tokens")
+                    ? root.path("usage").path("prompt_tokens").asInt() : null;
+            Integer completionTokens = root.path("usage").has("completion_tokens")
+                    ? root.path("usage").path("completion_tokens").asInt() : null;
+            String finishReason = root.path("choices").path(0).path("finish_reason").asText(null);
+
+            return new ChatResult(content, model, PROVIDER_NAME, false, 1,
+                    promptTokens, completionTokens, finishReason);
+        } catch (TechnicalException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new TechnicalException(ErrorCode.AI_002, "Mistral chat request failed", ex);
+        }
     }
 
-    private boolean shouldRetry(TechnicalException ex) {
-        return ex.getErrorCode() == ErrorCode.AI_002
-                || ex.getErrorCode() == ErrorCode.AI_003
-                || ex.getErrorCode() == ErrorCode.AI_005;
-    }
+    // ─── Embeddings ───────────────────────────────────────
 
-    private void sleepBackoff() {
-        if (retryBackoffMs <= 0) {
-            return;
-        }
+    private EmbeddingResult callEmbed(EmbeddingRequest request, String model) {
         try {
-            Thread.sleep(retryBackoffMs);
-        } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-            throw new TechnicalException(ErrorCode.AI_002, "Mistral retry interrupted", interruptedException);
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("model", model);
+            body.put("input", request.input());
+
+            JsonNode root = sendJsonPost(baseUrl + "/v1/embeddings", body);
+
+            List<float[]> embeddings = new ArrayList<>();
+            JsonNode data = root.path("data");
+            int dimensions = 0;
+            if (data.isArray()) {
+                for (JsonNode item : data) {
+                    JsonNode embedding = item.path("embedding");
+                    float[] vector = new float[embedding.size()];
+                    for (int i = 0; i < embedding.size(); i++) {
+                        vector[i] = (float) embedding.get(i).asDouble();
+                    }
+                    embeddings.add(vector);
+                    if (dimensions == 0) dimensions = vector.length;
+                }
+            }
+            Integer totalTokens = root.path("usage").has("total_tokens")
+                    ? root.path("usage").path("total_tokens").asInt() : null;
+
+            return new EmbeddingResult(embeddings, model, PROVIDER_NAME, dimensions, totalTokens);
+        } catch (TechnicalException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new TechnicalException(ErrorCode.AI_002, "Mistral embedding request failed", ex);
         }
     }
 
-    private String callMistral(String prompt, String model) {
-        try {
-            String payload = objectMapper.writeValueAsString(new MistralRequest(model, prompt));
+    // ─── HTTP infrastructure ──────────────────────────────
 
+    private JsonNode sendJsonPost(String endpoint, Map<String, Object> body) {
+        try {
+            String payload = objectMapper.writeValueAsString(body);
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "/v1/chat/completions"))
+                    .uri(URI.create(endpoint))
                     .timeout(Duration.ofMillis(timeoutMs))
                     .header("Authorization", "Bearer " + apiKey)
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(payload))
                     .build();
-
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 429) {
-                throw new TechnicalException(ErrorCode.AI_003, "Mistral rate limit exceeded");
-            }
-            if (response.statusCode() >= 500) {
-                throw new TechnicalException(ErrorCode.AI_002, "Mistral provider unavailable");
-            }
-            if (response.statusCode() >= 400) {
-                throw new TechnicalException(ErrorCode.AI_007, "Mistral rejected request with status " + response.statusCode());
-            }
-
-            JsonNode root = objectMapper.readTree(response.body());
-            JsonNode content = root.path("choices").path(0).path("message").path("content");
-            if (content.isMissingNode() || content.asText().isBlank()) {
-                throw new TechnicalException(ErrorCode.AI_005, "Mistral returned empty response content");
-            }
-
-            return content.asText();
+            handleHttpErrors(response);
+            return objectMapper.readTree(response.body());
         } catch (TechnicalException ex) {
             throw ex;
         } catch (IOException ex) {
@@ -167,12 +202,44 @@ public class MistralModelProvider implements AiModelProvider {
         }
     }
 
-    private record MistralRequest(String model, List<MistralMessage> messages) {
-        private MistralRequest(String model, String prompt) {
-            this(model, List.of(new MistralMessage("user", prompt)));
-        }
+    private void handleHttpErrors(HttpResponse<String> response) {
+        if (response.statusCode() == 429)
+            throw new TechnicalException(ErrorCode.AI_003, "Mistral rate limit exceeded");
+        if (response.statusCode() >= 500)
+            throw new TechnicalException(ErrorCode.AI_002, "Mistral provider unavailable");
+        if (response.statusCode() >= 400)
+            throw new TechnicalException(ErrorCode.AI_007, "Mistral rejected request: " + response.statusCode());
     }
 
-    private record MistralMessage(String role, String content) {
+    private <T> T executeWithRetry(Supplier<T> guardedCall) {
+        TechnicalException lastError = null;
+        int maxAttempts = Math.max(1, retryAttempts);
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                return guardedCall.get();
+            } catch (TechnicalException ex) {
+                lastError = ex;
+                if (!shouldRetry(ex) || attempt == maxAttempts) throw ex;
+                sleepBackoff();
+            }
+        }
+        throw lastError == null
+                ? new TechnicalException(ErrorCode.AI_002, "Mistral request failed after retries")
+                : lastError;
+    }
+
+    private boolean shouldRetry(TechnicalException ex) {
+        return ex.getErrorCode() == ErrorCode.AI_002
+                || ex.getErrorCode() == ErrorCode.AI_003
+                || ex.getErrorCode() == ErrorCode.AI_005;
+    }
+
+    private void sleepBackoff() {
+        if (retryBackoffMs <= 0) return;
+        try { Thread.sleep(retryBackoffMs); }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new TechnicalException(ErrorCode.AI_002, "Mistral retry interrupted", e);
+        }
     }
 }

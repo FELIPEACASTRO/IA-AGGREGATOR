@@ -2,9 +2,14 @@ package com.ia.aggregator.infrastructure.ai.provider;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ia.aggregator.application.ai.port.out.AiModelProvider;
+import com.ia.aggregator.application.ai.dto.*;
+import com.ia.aggregator.application.ai.port.out.MultiCapabilityProvider;
+import com.ia.aggregator.application.ai.port.out.capability.ChatCapable;
+import com.ia.aggregator.application.ai.port.out.capability.EmbeddingCapable;
+import com.ia.aggregator.application.ai.port.out.capability.WebGroundedChatCapable;
 import com.ia.aggregator.common.exception.ErrorCode;
 import com.ia.aggregator.common.exception.TechnicalException;
+import com.ia.aggregator.domain.ai.Capability;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
@@ -19,13 +24,16 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 
 @Component
-public class GeminiModelProvider implements AiModelProvider {
+public class GeminiModelProvider implements MultiCapabilityProvider,
+        ChatCapable, EmbeddingCapable, WebGroundedChatCapable {
 
     private static final String PROVIDER_NAME = "gemini";
+    private static final Set<Capability> SUPPORTED_CAPABILITIES =
+            EnumSet.of(Capability.CHAT, Capability.EMBEDDINGS, Capability.WEB_GROUNDED_CHAT);
 
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
@@ -43,8 +51,8 @@ public class GeminiModelProvider implements AiModelProvider {
             @Value("${app.ai.providers.gemini.api-key:}") String apiKey,
             @Value("${app.ai.providers.gemini.base-url:https://generativelanguage.googleapis.com}") String baseUrl,
             @Value("${app.ai.providers.gemini.timeout-ms:15000}") long timeoutMs,
-                @Value("${app.ai.providers.gemini.retry-attempts:2}") int retryAttempts,
-                @Value("${app.ai.providers.gemini.retry-backoff-ms:250}") long retryBackoffMs,
+            @Value("${app.ai.providers.gemini.retry-attempts:2}") int retryAttempts,
+            @Value("${app.ai.providers.gemini.retry-backoff-ms:250}") long retryBackoffMs,
             @Value("${app.ai.providers.gemini.supported-models:gemini-1.5-flash}") List<String> supportedModels
     ) {
         this.objectMapper = objectMapper;
@@ -60,10 +68,8 @@ public class GeminiModelProvider implements AiModelProvider {
                 .build();
     }
 
-    @Override
-    public String providerName() {
-        return PROVIDER_NAME;
-    }
+    @Override public String providerName() { return PROVIDER_NAME; }
+    @Override public Set<Capability> capabilities() { return SUPPORTED_CAPABILITIES; }
 
     @Override
     public boolean supports(String model) {
@@ -74,12 +80,14 @@ public class GeminiModelProvider implements AiModelProvider {
 
     @Override
     public String generate(String prompt, String model) {
-        if (!supports(model)) {
-            throw new TechnicalException(ErrorCode.AI_007, "Gemini provider is not configured for model: " + model);
-        }
+        return chat(new ChatRequest(prompt, model)).content();
+    }
 
-        Supplier<String> guardedCall = CircuitBreaker.decorateSupplier(circuitBreaker, () -> callGemini(prompt, model));
-
+    @Override
+    public ChatResult chat(ChatRequest request) {
+        String model = request.model() != null ? request.model() : supportedModels.get(0);
+        Supplier<ChatResult> guardedCall = CircuitBreaker.decorateSupplier(
+                circuitBreaker, () -> callChat(request, model));
         try {
             return executeWithRetry(guardedCall);
         } catch (CallNotPermittedException ex) {
@@ -87,77 +95,180 @@ public class GeminiModelProvider implements AiModelProvider {
         }
     }
 
-    private String executeWithRetry(Supplier<String> guardedCall) {
-        TechnicalException lastError = null;
-        int maxAttempts = Math.max(1, retryAttempts);
+    @Override
+    public EmbeddingResult embed(EmbeddingRequest request) {
+        String model = request.model() != null ? request.model() : "text-embedding-004";
+        Supplier<EmbeddingResult> guardedCall = CircuitBreaker.decorateSupplier(
+                circuitBreaker, () -> callEmbed(request, model));
+        try {
+            return executeWithRetry(guardedCall);
+        } catch (CallNotPermittedException ex) {
+            throw new TechnicalException(ErrorCode.AI_002, "Gemini circuit breaker is open", ex);
+        }
+    }
 
-        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-            try {
-                return guardedCall.get();
-            } catch (TechnicalException ex) {
-                lastError = ex;
-                if (!shouldRetry(ex) || attempt == maxAttempts) {
-                    throw ex;
-                }
-                sleepBackoff();
+    @Override
+    public GroundedChatResult groundedChat(GroundedChatRequest request) {
+        String model = request.model() != null ? request.model() : supportedModels.get(0);
+        Supplier<GroundedChatResult> guardedCall = CircuitBreaker.decorateSupplier(
+                circuitBreaker, () -> callGroundedChat(request, model));
+        try {
+            return executeWithRetry(guardedCall);
+        } catch (CallNotPermittedException ex) {
+            throw new TechnicalException(ErrorCode.AI_002, "Gemini circuit breaker is open", ex);
+        }
+    }
+
+    // ─── Chat ─────────────────────────────────────────────
+
+    private ChatResult callChat(ChatRequest request, String model) {
+        try {
+            Map<String, Object> body = buildGeminiBody(request.prompt(), request.systemPrompt());
+            if (request.temperature() != null) {
+                body.put("generationConfig", Map.of("temperature", request.temperature()));
             }
-        }
 
-        throw lastError == null
-                ? new TechnicalException(ErrorCode.AI_002, "Gemini request failed after retries")
-                : lastError;
+            String endpoint = geminiEndpoint(model, "generateContent");
+            JsonNode root = sendGeminiPost(endpoint, body);
+
+            String content = root.path("candidates").path(0).path("content")
+                    .path("parts").path(0).path("text").asText(null);
+            if (content == null || content.isBlank()) {
+                throw new TechnicalException(ErrorCode.AI_005, "Gemini returned empty response content");
+            }
+
+            Integer totalTokens = root.path("usageMetadata").has("totalTokenCount")
+                    ? root.path("usageMetadata").path("totalTokenCount").asInt() : null;
+
+            return new ChatResult(content, model, PROVIDER_NAME, false, 1,
+                    null, null, "stop");
+        } catch (TechnicalException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new TechnicalException(ErrorCode.AI_002, "Gemini chat request failed", ex);
+        }
     }
 
-    private boolean shouldRetry(TechnicalException ex) {
-        return ex.getErrorCode() == ErrorCode.AI_002
-                || ex.getErrorCode() == ErrorCode.AI_003
-                || ex.getErrorCode() == ErrorCode.AI_005;
-    }
+    // ─── Embeddings ───────────────────────────────────────
 
-    private void sleepBackoff() {
-        if (retryBackoffMs <= 0) {
-            return;
-        }
+    private EmbeddingResult callEmbed(EmbeddingRequest request, String model) {
         try {
-            Thread.sleep(retryBackoffMs);
-        } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-            throw new TechnicalException(ErrorCode.AI_002, "Gemini retry interrupted", interruptedException);
+            // Gemini uses batchEmbedContents for multiple texts
+            List<Map<String, Object>> requests = new ArrayList<>();
+            for (String text : request.input()) {
+                Map<String, Object> req = new LinkedHashMap<>();
+                req.put("model", "models/" + model);
+                req.put("content", Map.of("parts", List.of(Map.of("text", text))));
+                if (request.dimensions() != null) {
+                    req.put("outputDimensionality", request.dimensions());
+                }
+                requests.add(req);
+            }
+
+            Map<String, Object> body = Map.of("requests", requests);
+            String endpoint = geminiEndpoint(model, "batchEmbedContents");
+            JsonNode root = sendGeminiPost(endpoint, body);
+
+            List<float[]> embeddings = new ArrayList<>();
+            int dimensions = 0;
+            JsonNode embeddingsNode = root.path("embeddings");
+            if (embeddingsNode.isArray()) {
+                for (JsonNode emb : embeddingsNode) {
+                    JsonNode values = emb.path("values");
+                    float[] vector = new float[values.size()];
+                    for (int i = 0; i < values.size(); i++) {
+                        vector[i] = (float) values.get(i).asDouble();
+                    }
+                    embeddings.add(vector);
+                    if (dimensions == 0) dimensions = vector.length;
+                }
+            }
+
+            return new EmbeddingResult(embeddings, model, PROVIDER_NAME, dimensions, null);
+        } catch (TechnicalException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new TechnicalException(ErrorCode.AI_002, "Gemini embedding request failed", ex);
         }
     }
 
-    private String callGemini(String prompt, String model) {
-        try {
-            String payload = objectMapper.writeValueAsString(new GeminiRequest(prompt));
-            String encodedApiKey = URLEncoder.encode(apiKey, StandardCharsets.UTF_8);
-            String endpoint = String.format("%s/v1beta/models/%s:generateContent?key=%s", baseUrl, model, encodedApiKey);
+    // ─── Grounded Chat (Google Search grounding) ──────────
 
+    private GroundedChatResult callGroundedChat(GroundedChatRequest request, String model) {
+        try {
+            Map<String, Object> body = buildGeminiBody(request.query(), request.systemPrompt());
+
+            // Enable Google Search grounding
+            body.put("tools", List.of(Map.of("google_search_retrieval", Map.of())));
+
+            if (request.temperature() != null) {
+                body.put("generationConfig", Map.of("temperature", request.temperature()));
+            }
+
+            String endpoint = geminiEndpoint(model, "generateContent");
+            JsonNode root = sendGeminiPost(endpoint, body);
+
+            String content = root.path("candidates").path(0).path("content")
+                    .path("parts").path(0).path("text").asText(null);
+            if (content == null || content.isBlank()) {
+                throw new TechnicalException(ErrorCode.AI_005, "Gemini grounded chat returned empty");
+            }
+
+            // Parse grounding metadata citations
+            List<GroundedChatResult.Citation> citations = new ArrayList<>();
+            JsonNode groundingMeta = root.path("candidates").path(0).path("groundingMetadata");
+            JsonNode groundingChunks = groundingMeta.path("groundingChunks");
+            if (groundingChunks.isArray()) {
+                for (JsonNode chunk : groundingChunks) {
+                    JsonNode web = chunk.path("web");
+                    citations.add(new GroundedChatResult.Citation(
+                            web.path("title").asText(null),
+                            web.path("uri").asText(null),
+                            null
+                    ));
+                }
+            }
+
+            return new GroundedChatResult(content, citations, model, PROVIDER_NAME);
+        } catch (TechnicalException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new TechnicalException(ErrorCode.AI_002, "Gemini grounded chat request failed", ex);
+        }
+    }
+
+    // ─── Helpers ──────────────────────────────────────────
+
+    private Map<String, Object> buildGeminiBody(String prompt, String systemPrompt) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        if (systemPrompt != null) {
+            body.put("systemInstruction", Map.of("parts", List.of(Map.of("text", systemPrompt))));
+        }
+        body.put("contents", List.of(
+                Map.of("parts", List.of(Map.of("text", prompt)))
+        ));
+        return body;
+    }
+
+    private String geminiEndpoint(String model, String method) {
+        String encodedKey = URLEncoder.encode(apiKey, StandardCharsets.UTF_8);
+        return String.format("%s/v1beta/models/%s:%s?key=%s", baseUrl, model, method, encodedKey);
+    }
+
+    // ─── HTTP infrastructure ──────────────────────────────
+
+    private JsonNode sendGeminiPost(String endpoint, Map<String, Object> body) {
+        try {
+            String payload = objectMapper.writeValueAsString(body);
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(endpoint))
                     .timeout(Duration.ofMillis(timeoutMs))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(payload))
                     .build();
-
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 429) {
-                throw new TechnicalException(ErrorCode.AI_003, "Gemini rate limit exceeded");
-            }
-            if (response.statusCode() >= 500) {
-                throw new TechnicalException(ErrorCode.AI_002, "Gemini provider unavailable");
-            }
-            if (response.statusCode() >= 400) {
-                throw new TechnicalException(ErrorCode.AI_007, "Gemini rejected request with status " + response.statusCode());
-            }
-
-            JsonNode root = objectMapper.readTree(response.body());
-            JsonNode content = root.path("candidates").path(0).path("content").path("parts").path(0).path("text");
-            if (content.isMissingNode() || content.asText().isBlank()) {
-                throw new TechnicalException(ErrorCode.AI_005, "Gemini returned empty response content");
-            }
-
-            return content.asText();
+            handleHttpErrors(response);
+            return objectMapper.readTree(response.body());
         } catch (TechnicalException ex) {
             throw ex;
         } catch (IOException ex) {
@@ -170,15 +281,44 @@ public class GeminiModelProvider implements AiModelProvider {
         }
     }
 
-    private record GeminiRequest(List<GeminiContent> contents) {
-        private GeminiRequest(String prompt) {
-            this(List.of(new GeminiContent(List.of(new GeminiPart(prompt)))));
+    private void handleHttpErrors(HttpResponse<String> response) {
+        if (response.statusCode() == 429)
+            throw new TechnicalException(ErrorCode.AI_003, "Gemini rate limit exceeded");
+        if (response.statusCode() >= 500)
+            throw new TechnicalException(ErrorCode.AI_002, "Gemini provider unavailable");
+        if (response.statusCode() >= 400)
+            throw new TechnicalException(ErrorCode.AI_007, "Gemini rejected request: " + response.statusCode());
+    }
+
+    private <T> T executeWithRetry(Supplier<T> guardedCall) {
+        TechnicalException lastError = null;
+        int maxAttempts = Math.max(1, retryAttempts);
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                return guardedCall.get();
+            } catch (TechnicalException ex) {
+                lastError = ex;
+                if (!shouldRetry(ex) || attempt == maxAttempts) throw ex;
+                sleepBackoff();
+            }
         }
+        throw lastError == null
+                ? new TechnicalException(ErrorCode.AI_002, "Gemini request failed after retries")
+                : lastError;
     }
 
-    private record GeminiContent(List<GeminiPart> parts) {
+    private boolean shouldRetry(TechnicalException ex) {
+        return ex.getErrorCode() == ErrorCode.AI_002
+                || ex.getErrorCode() == ErrorCode.AI_003
+                || ex.getErrorCode() == ErrorCode.AI_005;
     }
 
-    private record GeminiPart(String text) {
+    private void sleepBackoff() {
+        if (retryBackoffMs <= 0) return;
+        try { Thread.sleep(retryBackoffMs); }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new TechnicalException(ErrorCode.AI_002, "Gemini retry interrupted", e);
+        }
     }
 }

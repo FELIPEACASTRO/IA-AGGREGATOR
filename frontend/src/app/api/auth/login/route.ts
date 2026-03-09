@@ -44,16 +44,17 @@ export async function POST(request: Request) {
     data: payload.data,
     timestamp: new Date().toISOString(),
   });
+  const isProduction = process.env.NODE_ENV === 'production';
   res.cookies.set('access_token', accessToken, {
-    httpOnly: false,
-    secure: false,
+    httpOnly: true,
+    secure: isProduction,
     sameSite: 'lax',
     path: '/',
     maxAge: payload?.data?.expiresIn ?? 900,
   });
   res.cookies.set('refresh_token', refreshToken, {
-    httpOnly: false,
-    secure: false,
+    httpOnly: true,
+    secure: isProduction,
     sameSite: 'lax',
     path: '/',
     maxAge: 60 * 60 * 24 * 7,

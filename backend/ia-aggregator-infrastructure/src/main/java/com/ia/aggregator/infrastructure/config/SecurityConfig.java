@@ -1,5 +1,6 @@
 package com.ia.aggregator.infrastructure.config;
 
+import com.ia.aggregator.infrastructure.security.RateLimitFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -22,10 +23,14 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitFilter rateLimitFilter;
     private final CorsProperties corsProperties;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, CorsProperties corsProperties) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          RateLimitFilter rateLimitFilter,
+                          CorsProperties corsProperties) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.rateLimitFilter = rateLimitFilter;
         this.corsProperties = corsProperties;
     }
 
@@ -39,13 +44,22 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
-                    .requestMatchers("/api/v1/analytics/events").permitAll()
+                        .requestMatchers("/api/v1/analytics/events").permitAll()
                         .requestMatchers("/api/v1/auth/verify-email/**").permitAll()
                         .requestMatchers("/api/v1/auth/password-reset/**").permitAll()
+                        .requestMatchers("/api/v1/auth/sso/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/billing/plans/**").permitAll()
 
-                        // Webhooks (authenticated by signature)
+                        // Webhooks (authenticated by HMAC signature, not JWT)
+                        .requestMatchers("/api/v1/webhooks/**").permitAll()
                         .requestMatchers("/api/v1/billing/webhooks/**").permitAll()
+
+                        // OpenAI-compatible API (authenticated via Virtual Keys in header)
+                        .requestMatchers("/v1/chat/completions", "/v1/embeddings",
+                                "/v1/images/generations", "/v1/audio/**", "/v1/models").permitAll()
+
+                        // Public marketplace catalog
+                        .requestMatchers(HttpMethod.GET, "/api/v1/marketplace/catalog/**").permitAll()
 
                         // OpenAPI / Swagger
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
@@ -60,6 +74,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(rateLimitFilter, JwtAuthenticationFilter.class)
                 .build();
     }
 

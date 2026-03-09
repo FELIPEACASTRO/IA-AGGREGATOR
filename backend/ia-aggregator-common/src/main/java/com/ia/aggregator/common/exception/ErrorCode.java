@@ -33,7 +33,7 @@ public enum ErrorCode {
     CHAT_003("CHAT_003", "Invalid model for plan", 403),
     CHAT_004("CHAT_004", "Conversation archived", 410),
 
-    // AI GATEWAY (001-007)
+    // AI GATEWAY (001-020)
     AI_001("AI_001", "No suitable model found", 404),
     AI_002("AI_002", "Provider unavailable", 503),
     AI_003("AI_003", "Model rate limit exceeded", 429),
@@ -41,6 +41,23 @@ public enum ErrorCode {
     AI_005("AI_005", "Streaming connection failed", 502),
     AI_006("AI_006", "Model deprecated", 410),
     AI_007("AI_007", "Invalid model configuration", 422),
+    AI_008("AI_008", "Embedding generation failed", 502),
+    AI_009("AI_009", "Rerank operation failed", 502),
+    AI_010("AI_010", "Image generation failed", 502),
+    AI_011("AI_011", "Image editing failed", 502),
+    AI_012("AI_012", "Video generation failed", 502),
+    AI_013("AI_013", "Speech-to-text transcription failed", 502),
+    AI_014("AI_014", "Text-to-speech synthesis failed", 502),
+    AI_015("AI_015", "Async job polling timeout", 504),
+    AI_016("AI_016", "Binary I/O error", 502),
+    AI_017("AI_017", "OCR processing failed", 502),
+    AI_018("AI_018", "Web search failed", 502),
+    AI_019("AI_019", "Compliance check blocked request", 403),
+    AI_020("AI_020", "Threat intelligence search disabled", 403),
+    AI_021("AI_021", "Translation failed", 502),
+    AI_022("AI_022", "Document parsing failed", 502),
+    AI_023("AI_023", "3D generation failed", 502),
+    AI_024("AI_024", "Avatar video generation failed", 502),
 
     // PARTNERS (001-007)
     PART_001("PART_001", "Partner not found", 404),

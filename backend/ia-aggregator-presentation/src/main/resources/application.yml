@@ -6,6 +6,13 @@ spring:
   application:
     name: ia-aggregator
 
+  # --- Virtual Threads (Java 21 / Project Loom) ---
+  # Enables VTs for all servlet requests — equivalent I/O throughput to WebFlux
+  # at 500 TPS: 500 req/s x 200ms latency = 100 VTs in flight = ~1MB heap
+  threads:
+    virtual:
+      enabled: true
+
   # --- PostgreSQL ---
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ia_aggregator}?stringtype=unspecified
@@ -77,6 +84,29 @@ app:
       secret: ${JWT_SECRET:bXktc3VwZXItc2VjcmV0LWtleS1mb3ItZGV2ZWxvcG1lbnQtb25seS0yNTYtYml0cw==}
       access-token-expiry: 15m
       refresh-token-expiry: 7d
+    rate-limit:
+      requests-per-minute: ${RATE_LIMIT_RPM:60}
+      requests-per-hour: ${RATE_LIMIT_RPH:600}
+    webhooks:
+      github-secret: ${GITHUB_WEBHOOK_SECRET:}
+      slack-signing-secret: ${SLACK_SIGNING_SECRET:}
+      linear-webhook-secret: ${LINEAR_WEBHOOK_SECRET:}
+      stripe-webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+  sso:
+    google:
+      client-id: ${GOOGLE_CLIENT_ID:}
+      client-secret: ${GOOGLE_CLIENT_SECRET:}
+    github:
+      client-id: ${GITHUB_CLIENT_ID:}
+      client-secret: ${GITHUB_CLIENT_SECRET:}
+  billing:
+    stripe:
+      secret-key: ${STRIPE_SECRET_KEY:}
+      prices:
+        starter: ${STRIPE_PRICE_STARTER:}
+        pro: ${STRIPE_PRICE_PRO:}
+        business: ${STRIPE_PRICE_BUSINESS:}
+        enterprise: ${STRIPE_PRICE_ENTERPRISE:}
   cors:
     allowed-origins:
       - http://localhost:3000
@@ -91,9 +121,42 @@ app:
       max-output-length: ${AI_MAX_OUTPUT_LENGTH:8000}
       output-blocked-patterns: ${AI_OUTPUT_BLOCKED_PATTERNS:(?i).*\\b(api\\s*key|private\\s*key|token)\\b.*}
       output-action: ${AI_OUTPUT_ACTION:block}
+      pii-detection:
+        enabled: ${AI_PII_DETECTION_ENABLED:true}
+        action: ${AI_PII_ACTION:mask}
+        custom-patterns: ${AI_PII_CUSTOM_PATTERNS:}
+      content-filter:
+        enabled: ${AI_CONTENT_FILTER_ENABLED:true}
+        action: ${AI_CONTENT_FILTER_ACTION:block}
+        blocked-keywords: ${AI_CONTENT_BLOCKED_KEYWORDS:}
+        blocked-regex: ${AI_CONTENT_BLOCKED_REGEX:}
     routing:
       default-model: ${AI_DEFAULT_MODEL:gpt-4o-mini}
       fallback-models: ${AI_FALLBACK_MODELS:claude-3-5-haiku,gemini-1.5-flash}
+      rules:
+        - name: cost-optimized-chat
+          priority: 10
+          strategy: cost-optimized
+          capabilities: [CHAT]
+          allowed-models: [gpt-4o-mini, claude-3-5-haiku, gemini-1.5-flash]
+          conditions:
+            user-role: USER
+          enabled: true
+        - name: quality-first-admin
+          priority: 5
+          strategy: quality-optimized
+          capabilities: [CHAT, RESPONSES]
+          allowed-models: [gpt-4o, claude-3-5-sonnet, gemini-1.5-pro]
+          conditions:
+            user-role: ADMIN
+          enabled: true
+        - name: default-balanced
+          priority: 100
+          strategy: balanced-default
+          enabled: true
+      semantic-cache:
+        enabled: ${AI_SEMANTIC_CACHE_ENABLED:true}
+        ttl-seconds: ${AI_SEMANTIC_CACHE_TTL:300}
     providers:
       openai:
         api-key: ${OPENAI_API_KEY:}
@@ -216,9 +279,604 @@ app:
         retry-attempts: ${NOVITA_RETRY_ATTEMPTS:2}
         retry-backoff-ms: ${NOVITA_RETRY_BACKOFF_MS:250}
         supported-models: ${NOVITA_SUPPORTED_MODELS:meta-llama/llama-3.1-8b-instruct,meta-llama/llama-3.1-70b-instruct}
+      # --- Phase 2: OpenAI-Compatible ---
+      siliconflow:
+        api-key: ${SILICONFLOW_API_KEY:}
+        base-url: ${SILICONFLOW_BASE_URL:https://api.siliconflow.cn/v1}
+        timeout-ms: ${SILICONFLOW_TIMEOUT_MS:15000}
+        retry-attempts: ${SILICONFLOW_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${SILICONFLOW_RETRY_BACKOFF_MS:250}
+        supported-models: ${SILICONFLOW_SUPPORTED_MODELS:deepseek-ai/DeepSeek-V2.5,Qwen/Qwen2.5-72B-Instruct}
+      github-models:
+        api-key: ${GITHUB_MODELS_API_KEY:}
+        base-url: ${GITHUB_MODELS_BASE_URL:https://models.inference.ai.azure.com}
+        timeout-ms: ${GITHUB_MODELS_TIMEOUT_MS:15000}
+        retry-attempts: ${GITHUB_MODELS_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${GITHUB_MODELS_RETRY_BACKOFF_MS:250}
+        supported-models: ${GITHUB_MODELS_SUPPORTED_MODELS:gpt-4o-mini,Meta-Llama-3.1-8B-Instruct}
+      deepinfra:
+        api-key: ${DEEPINFRA_API_KEY:}
+        base-url: ${DEEPINFRA_BASE_URL:https://api.deepinfra.com/v1/openai}
+        timeout-ms: ${DEEPINFRA_TIMEOUT_MS:15000}
+        retry-attempts: ${DEEPINFRA_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${DEEPINFRA_RETRY_BACKOFF_MS:250}
+        supported-models: ${DEEPINFRA_SUPPORTED_MODELS:meta-llama/Meta-Llama-3.1-8B-Instruct,meta-llama/Meta-Llama-3.1-70B-Instruct}
+      # --- Phase 3: Native LLM ---
+      cloudflare:
+        api-key: ${CLOUDFLARE_API_KEY:}
+        account-id: ${CLOUDFLARE_ACCOUNT_ID:}
+        base-url: ${CLOUDFLARE_BASE_URL:https://api.cloudflare.com/client/v4}
+        timeout-ms: ${CLOUDFLARE_TIMEOUT_MS:15000}
+        retry-attempts: ${CLOUDFLARE_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${CLOUDFLARE_RETRY_BACKOFF_MS:250}
+        supported-models: ${CLOUDFLARE_SUPPORTED_MODELS:@cf/meta/llama-3.1-8b-instruct}
+      huggingface:
+        api-key: ${HUGGINGFACE_API_KEY:}
+        base-url: ${HUGGINGFACE_BASE_URL:https://api-inference.huggingface.co}
+        timeout-ms: ${HUGGINGFACE_TIMEOUT_MS:30000}
+        retry-attempts: ${HUGGINGFACE_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${HUGGINGFACE_RETRY_BACKOFF_MS:1000}
+        supported-models: ${HUGGINGFACE_SUPPORTED_MODELS:meta-llama/Llama-3.1-8B-Instruct}
+      ai21:
+        api-key: ${AI21_API_KEY:}
+        base-url: ${AI21_BASE_URL:https://api.ai21.com/studio/v1}
+        timeout-ms: ${AI21_TIMEOUT_MS:15000}
+        retry-attempts: ${AI21_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${AI21_RETRY_BACKOFF_MS:250}
+        supported-models: ${AI21_SUPPORTED_MODELS:jamba-1.5-mini,jamba-1.5-large}
+      aws-bedrock:
+        access-key: ${AWS_BEDROCK_ACCESS_KEY:}
+        secret-key: ${AWS_BEDROCK_SECRET_KEY:}
+        region: ${AWS_BEDROCK_REGION:us-east-1}
+        timeout-ms: ${AWS_BEDROCK_TIMEOUT_MS:15000}
+        retry-attempts: ${AWS_BEDROCK_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${AWS_BEDROCK_RETRY_BACKOFF_MS:250}
+        supported-models: ${AWS_BEDROCK_SUPPORTED_MODELS:anthropic.claude-3-haiku-20240307-v1:0,meta.llama3-1-8b-instruct-v1:0}
+      # --- Phase 4: Media ---
+      stability:
+        api-key: ${STABILITY_API_KEY:}
+        base-url: ${STABILITY_BASE_URL:https://api.stability.ai}
+        timeout-ms: ${STABILITY_TIMEOUT_MS:60000}
+        retry-attempts: ${STABILITY_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${STABILITY_RETRY_BACKOFF_MS:1000}
+        supported-models: ${STABILITY_SUPPORTED_MODELS:stable-diffusion-xl-1024-v1-0,stable-image-ultra}
+      fal:
+        api-key: ${FAL_API_KEY:}
+        base-url: ${FAL_BASE_URL:https://queue.fal.run}
+        timeout-ms: ${FAL_TIMEOUT_MS:60000}
+        retry-attempts: ${FAL_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${FAL_RETRY_BACKOFF_MS:1000}
+        max-poll-attempts: ${FAL_MAX_POLL_ATTEMPTS:60}
+        poll-interval-ms: ${FAL_POLL_INTERVAL_MS:2000}
+        supported-models: ${FAL_SUPPORTED_MODELS:fal-ai/flux/dev,fal-ai/minimax-video}
+      # --- Phase 5: Audio ---
+      deepgram:
+        api-key: ${DEEPGRAM_API_KEY:}
+        base-url: ${DEEPGRAM_BASE_URL:https://api.deepgram.com}
+        timeout-ms: ${DEEPGRAM_TIMEOUT_MS:30000}
+        retry-attempts: ${DEEPGRAM_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${DEEPGRAM_RETRY_BACKOFF_MS:1000}
+        supported-models: ${DEEPGRAM_SUPPORTED_MODELS:nova-2,aura-asteria-en}
+      assemblyai:
+        api-key: ${ASSEMBLYAI_API_KEY:}
+        base-url: ${ASSEMBLYAI_BASE_URL:https://api.assemblyai.com}
+        timeout-ms: ${ASSEMBLYAI_TIMEOUT_MS:30000}
+        retry-attempts: ${ASSEMBLYAI_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${ASSEMBLYAI_RETRY_BACKOFF_MS:1000}
+        max-poll-attempts: ${ASSEMBLYAI_MAX_POLL_ATTEMPTS:60}
+        poll-interval-ms: ${ASSEMBLYAI_POLL_INTERVAL_MS:3000}
+        supported-models: ${ASSEMBLYAI_SUPPORTED_MODELS:assemblyai-default}
+      elevenlabs:
+        api-key: ${ELEVENLABS_API_KEY:}
+        base-url: ${ELEVENLABS_BASE_URL:https://api.elevenlabs.io}
+        timeout-ms: ${ELEVENLABS_TIMEOUT_MS:30000}
+        retry-attempts: ${ELEVENLABS_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${ELEVENLABS_RETRY_BACKOFF_MS:1000}
+        supported-models: ${ELEVENLABS_SUPPORTED_MODELS:eleven_multilingual_v2}
+      gladia:
+        api-key: ${GLADIA_API_KEY:}
+        base-url: ${GLADIA_BASE_URL:https://api.gladia.io}
+        timeout-ms: ${GLADIA_TIMEOUT_MS:30000}
+        retry-attempts: ${GLADIA_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${GLADIA_RETRY_BACKOFF_MS:1000}
+        max-poll-attempts: ${GLADIA_MAX_POLL_ATTEMPTS:60}
+        poll-interval-ms: ${GLADIA_POLL_INTERVAL_MS:3000}
+        supported-models: ${GLADIA_SUPPORTED_MODELS:gladia-default}
+      # --- Phase 6: Google Cloud ---
+      google-cloud:
+        client-id: ${GOOGLE_CLOUD_CLIENT_ID:}
+        client-secret: ${GOOGLE_CLOUD_CLIENT_SECRET:}
+        project-id: ${GOOGLE_CLOUD_PROJECT_ID:}
+        token-endpoint: ${GOOGLE_CLOUD_TOKEN_ENDPOINT:https://oauth2.googleapis.com/token}
+        timeout-ms: ${GOOGLE_CLOUD_TIMEOUT_MS:30000}
+        retry-attempts: ${GOOGLE_CLOUD_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${GOOGLE_CLOUD_RETRY_BACKOFF_MS:1000}
+      # --- Phase 7: Search ---
+      exa:
+        api-key: ${EXA_API_KEY:}
+        base-url: ${EXA_BASE_URL:https://api.exa.ai}
+        timeout-ms: ${EXA_TIMEOUT_MS:15000}
+        retry-attempts: ${EXA_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${EXA_RETRY_BACKOFF_MS:250}
+      newscatcher:
+        api-key: ${NEWSCATCHER_API_KEY:}
+        base-url: ${NEWSCATCHER_BASE_URL:https://v3-api.newscatcherapi.com}
+        timeout-ms: ${NEWSCATCHER_TIMEOUT_MS:15000}
+        retry-attempts: ${NEWSCATCHER_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${NEWSCATCHER_RETRY_BACKOFF_MS:250}
+      tavily:
+        api-key: ${TAVILY_API_KEY:}
+        base-url: ${TAVILY_BASE_URL:https://api.tavily.com}
+        timeout-ms: ${TAVILY_TIMEOUT_MS:15000}
+        retry-attempts: ${TAVILY_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${TAVILY_RETRY_BACKOFF_MS:250}
+      jina:
+        api-key: ${JINA_API_KEY:}
+        base-url: ${JINA_BASE_URL:https://api.jina.ai}
+        timeout-ms: ${JINA_TIMEOUT_MS:15000}
+        retry-attempts: ${JINA_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${JINA_RETRY_BACKOFF_MS:250}
+        supported-models: ${JINA_SUPPORTED_MODELS:jina-embeddings-v3,jina-reranker-v2-base-multilingual}
+      # --- Phase 7: Threat Intel (compliance-gated) ---
+      onionsearch:
+        api-key: ${ONIONSEARCH_API_KEY:}
+        base-url: ${ONIONSEARCH_BASE_URL:https://api.onionsearchengine.com}
+        timeout-ms: ${ONIONSEARCH_TIMEOUT_MS:30000}
+        retry-attempts: ${ONIONSEARCH_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${ONIONSEARCH_RETRY_BACKOFF_MS:1000}
+      darkowl:
+        api-key: ${DARKOWL_API_KEY:}
+        base-url: ${DARKOWL_BASE_URL:https://api.darkowl.com}
+        timeout-ms: ${DARKOWL_TIMEOUT_MS:30000}
+        retry-attempts: ${DARKOWL_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${DARKOWL_RETRY_BACKOFF_MS:1000}
+      twingly:
+        api-key: ${TWINGLY_API_KEY:}
+        base-url: ${TWINGLY_BASE_URL:https://api.twingly.com}
+        timeout-ms: ${TWINGLY_TIMEOUT_MS:30000}
+        retry-attempts: ${TWINGLY_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${TWINGLY_RETRY_BACKOFF_MS:1000}
+      fullhunt:
+        api-key: ${FULLHUNT_API_KEY:}
+        base-url: ${FULLHUNT_BASE_URL:https://fullhunt.io/api/v1}
+        timeout-ms: ${FULLHUNT_TIMEOUT_MS:30000}
+        retry-attempts: ${FULLHUNT_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${FULLHUNT_RETRY_BACKOFF_MS:1000}
+      darknetsearch:
+        api-key: ${DARKNETSEARCH_API_KEY:}
+        base-url: ${DARKNETSEARCH_BASE_URL:https://api.darknetsearch.io}
+        timeout-ms: ${DARKNETSEARCH_TIMEOUT_MS:30000}
+        retry-attempts: ${DARKNETSEARCH_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${DARKNETSEARCH_RETRY_BACKOFF_MS:1000}
+      flare:
+        api-key: ${FLARE_API_KEY:}
+        base-url: ${FLARE_BASE_URL:https://api.flare.io}
+        timeout-ms: ${FLARE_TIMEOUT_MS:30000}
+        retry-attempts: ${FLARE_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${FLARE_RETRY_BACKOFF_MS:1000}
+      # --- Phase 8: Asian/EU LLMs ---
+      moonshot:
+        api-key: ${MOONSHOT_API_KEY:}
+        base-url: ${MOONSHOT_BASE_URL:https://api.moonshot.cn}
+        timeout-ms: ${MOONSHOT_TIMEOUT_MS:30000}
+        retry-attempts: ${MOONSHOT_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${MOONSHOT_RETRY_BACKOFF_MS:500}
+        supported-models: ${MOONSHOT_SUPPORTED_MODELS:moonshot-v1-128k,moonshot-v1-32k,moonshot-v1-8k}
+      stepfun:
+        api-key: ${STEPFUN_API_KEY:}
+        base-url: ${STEPFUN_BASE_URL:https://api.stepfun.com}
+        timeout-ms: ${STEPFUN_TIMEOUT_MS:30000}
+        retry-attempts: ${STEPFUN_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${STEPFUN_RETRY_BACKOFF_MS:500}
+        supported-models: ${STEPFUN_SUPPORTED_MODELS:step-2-16k,step-1-256k,step-1-32k}
+      zero-one-ai:
+        api-key: ${ZERO_ONE_AI_API_KEY:}
+        base-url: ${ZERO_ONE_AI_BASE_URL:https://api.lingyiwanwu.com}
+        timeout-ms: ${ZERO_ONE_AI_TIMEOUT_MS:30000}
+        retry-attempts: ${ZERO_ONE_AI_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${ZERO_ONE_AI_RETRY_BACKOFF_MS:500}
+        supported-models: ${ZERO_ONE_AI_SUPPORTED_MODELS:yi-lightning,yi-large,yi-medium}
+      baichuan:
+        api-key: ${BAICHUAN_API_KEY:}
+        base-url: ${BAICHUAN_BASE_URL:https://api.baichuan-ai.com}
+        timeout-ms: ${BAICHUAN_TIMEOUT_MS:30000}
+        retry-attempts: ${BAICHUAN_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${BAICHUAN_RETRY_BACKOFF_MS:500}
+        supported-models: ${BAICHUAN_SUPPORTED_MODELS:Baichuan4,Baichuan3-Turbo,Baichuan2-Turbo}
+      writer:
+        api-key: ${WRITER_API_KEY:}
+        base-url: ${WRITER_BASE_URL:https://api.writer.com}
+        timeout-ms: ${WRITER_TIMEOUT_MS:30000}
+        retry-attempts: ${WRITER_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${WRITER_RETRY_BACKOFF_MS:500}
+        supported-models: ${WRITER_SUPPORTED_MODELS:palmyra-x-004,palmyra-x-003-instruct}
+      reka:
+        api-key: ${REKA_API_KEY:}
+        base-url: ${REKA_BASE_URL:https://api.reka.ai}
+        timeout-ms: ${REKA_TIMEOUT_MS:30000}
+        retry-attempts: ${REKA_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${REKA_RETRY_BACKOFF_MS:500}
+        supported-models: ${REKA_SUPPORTED_MODELS:reka-core,reka-flash,reka-edge}
+      minimax:
+        api-key: ${MINIMAX_API_KEY:}
+        base-url: ${MINIMAX_BASE_URL:https://api.minimax.chat}
+        timeout-ms: ${MINIMAX_TIMEOUT_MS:30000}
+        retry-attempts: ${MINIMAX_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${MINIMAX_RETRY_BACKOFF_MS:500}
+        supported-models: ${MINIMAX_SUPPORTED_MODELS:abab6.5s-chat,abab6.5-chat,abab5.5-chat}
+      zhipu:
+        api-key: ${ZHIPU_API_KEY:}
+        base-url: ${ZHIPU_BASE_URL:https://open.bigmodel.cn/api/paas}
+        timeout-ms: ${ZHIPU_TIMEOUT_MS:30000}
+        retry-attempts: ${ZHIPU_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${ZHIPU_RETRY_BACKOFF_MS:500}
+        supported-models: ${ZHIPU_SUPPORTED_MODELS:glm-4-plus,glm-4,glm-4-flash}
+      sensenova:
+        api-key: ${SENSENOVA_API_KEY:}
+        base-url: ${SENSENOVA_BASE_URL:https://api.sensenova.cn}
+        timeout-ms: ${SENSENOVA_TIMEOUT_MS:30000}
+        retry-attempts: ${SENSENOVA_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${SENSENOVA_RETRY_BACKOFF_MS:500}
+        supported-models: ${SENSENOVA_SUPPORTED_MODELS:SenseChat-5,SenseChat-Turbo,SenseChat}
+      naver-clova:
+        api-key: ${NAVER_CLOVA_API_KEY:}
+        gateway-key: ${NAVER_CLOVA_GATEWAY_KEY:}
+        base-url: ${NAVER_CLOVA_BASE_URL:https://clovastudio.stream.ntruss.com}
+        timeout-ms: ${NAVER_CLOVA_TIMEOUT_MS:30000}
+        retry-attempts: ${NAVER_CLOVA_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${NAVER_CLOVA_RETRY_BACKOFF_MS:500}
+        supported-models: ${NAVER_CLOVA_SUPPORTED_MODELS:HCX-003,HCX-DASH-001}
+      aleph-alpha:
+        api-key: ${ALEPH_ALPHA_API_KEY:}
+        base-url: ${ALEPH_ALPHA_BASE_URL:https://api.aleph-alpha.com}
+        timeout-ms: ${ALEPH_ALPHA_TIMEOUT_MS:30000}
+        retry-attempts: ${ALEPH_ALPHA_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${ALEPH_ALPHA_RETRY_BACKOFF_MS:500}
+        supported-models: ${ALEPH_ALPHA_SUPPORTED_MODELS:luminous-supreme-control,luminous-extended-control,luminous-base-control}
+      tencent-hunyuan:
+        secret-id: ${TENCENT_HUNYUAN_SECRET_ID:}
+        secret-key: ${TENCENT_HUNYUAN_SECRET_KEY:}
+        base-url: ${TENCENT_HUNYUAN_BASE_URL:https://hunyuan.tencentcloudapi.com}
+        timeout-ms: ${TENCENT_HUNYUAN_TIMEOUT_MS:30000}
+        retry-attempts: ${TENCENT_HUNYUAN_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${TENCENT_HUNYUAN_RETRY_BACKOFF_MS:500}
+        supported-models: ${TENCENT_HUNYUAN_SUPPORTED_MODELS:hunyuan-pro,hunyuan-standard,hunyuan-lite}
+      baidu-qianfan:
+        api-key: ${BAIDU_QIANFAN_API_KEY:}
+        secret-key: ${BAIDU_QIANFAN_SECRET_KEY:}
+        token-url: ${BAIDU_QIANFAN_TOKEN_URL:https://aip.baidubce.com/oauth/2.0/token}
+        base-url: ${BAIDU_QIANFAN_BASE_URL:https://qianfan.baidubce.com}
+        timeout-ms: ${BAIDU_QIANFAN_TIMEOUT_MS:30000}
+        retry-attempts: ${BAIDU_QIANFAN_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${BAIDU_QIANFAN_RETRY_BACKOFF_MS:500}
+        supported-models: ${BAIDU_QIANFAN_SUPPORTED_MODELS:ERNIE-4.0-8K,ERNIE-3.5-8K,ERNIE-Speed-8K}
+      # --- Phase 9: Embeddings/Rerank ---
+      voyage:
+        api-key: ${VOYAGE_API_KEY:}
+        base-url: ${VOYAGE_BASE_URL:https://api.voyageai.com}
+        timeout-ms: ${VOYAGE_TIMEOUT_MS:15000}
+        retry-attempts: ${VOYAGE_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${VOYAGE_RETRY_BACKOFF_MS:250}
+        supported-models: ${VOYAGE_SUPPORTED_MODELS:voyage-3,voyage-3-lite,voyage-code-3}
+      mixedbread:
+        api-key: ${MIXEDBREAD_API_KEY:}
+        base-url: ${MIXEDBREAD_BASE_URL:https://api.mixedbread.ai}
+        timeout-ms: ${MIXEDBREAD_TIMEOUT_MS:15000}
+        retry-attempts: ${MIXEDBREAD_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${MIXEDBREAD_RETRY_BACKOFF_MS:250}
+        supported-models: ${MIXEDBREAD_SUPPORTED_MODELS:mxbai-embed-large-v1,mxbai-embed-2d-large-v1}
+      # --- Phase 10: Image Generation ---
+      recraft:
+        api-key: ${RECRAFT_API_KEY:}
+        base-url: ${RECRAFT_BASE_URL:https://external.api.recraft.ai}
+        timeout-ms: ${RECRAFT_TIMEOUT_MS:60000}
+        retry-attempts: ${RECRAFT_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${RECRAFT_RETRY_BACKOFF_MS:1000}
+        supported-models: ${RECRAFT_SUPPORTED_MODELS:recraftv3,recraft20b}
+      luma:
+        api-key: ${LUMA_API_KEY:}
+        base-url: ${LUMA_BASE_URL:https://api.lumalabs.ai/dream-machine/v1}
+        timeout-ms: ${LUMA_TIMEOUT_MS:120000}
+        retry-attempts: ${LUMA_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${LUMA_RETRY_BACKOFF_MS:2000}
+        max-poll-attempts: ${LUMA_MAX_POLL_ATTEMPTS:60}
+        poll-interval-ms: ${LUMA_POLL_INTERVAL_MS:5000}
+        supported-models: ${LUMA_SUPPORTED_MODELS:dream-machine}
+      getimg:
+        api-key: ${GETIMG_API_KEY:}
+        base-url: ${GETIMG_BASE_URL:https://api.getimg.ai}
+        timeout-ms: ${GETIMG_TIMEOUT_MS:60000}
+        retry-attempts: ${GETIMG_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${GETIMG_RETRY_BACKOFF_MS:1000}
+        supported-models: ${GETIMG_SUPPORTED_MODELS:stable-diffusion-xl-v1-0,essential-v2}
+      bria:
+        api-key: ${BRIA_API_KEY:}
+        base-url: ${BRIA_BASE_URL:https://engine.prod.bria-api.com}
+        timeout-ms: ${BRIA_TIMEOUT_MS:60000}
+        retry-attempts: ${BRIA_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${BRIA_RETRY_BACKOFF_MS:1000}
+        supported-models: ${BRIA_SUPPORTED_MODELS:bria-2.3,bria-2.2}
+      scenario:
+        api-key: ${SCENARIO_API_KEY:}
+        model-id: ${SCENARIO_MODEL_ID:}
+        base-url: ${SCENARIO_BASE_URL:https://api.cloud.scenario.com}
+        timeout-ms: ${SCENARIO_TIMEOUT_MS:60000}
+        retry-attempts: ${SCENARIO_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${SCENARIO_RETRY_BACKOFF_MS:1000}
+        max-poll-attempts: ${SCENARIO_MAX_POLL_ATTEMPTS:40}
+        poll-interval-ms: ${SCENARIO_POLL_INTERVAL_MS:3000}
+        supported-models: ${SCENARIO_SUPPORTED_MODELS:scenario-custom}
+      segmind:
+        api-key: ${SEGMIND_API_KEY:}
+        base-url: ${SEGMIND_BASE_URL:https://api.segmind.com}
+        timeout-ms: ${SEGMIND_TIMEOUT_MS:60000}
+        retry-attempts: ${SEGMIND_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${SEGMIND_RETRY_BACKOFF_MS:1000}
+        supported-models: ${SEGMIND_SUPPORTED_MODELS:sdxl1.0-txt2img,flux-schnell}
+      runware:
+        api-key: ${RUNWARE_API_KEY:}
+        base-url: ${RUNWARE_BASE_URL:https://api.runware.ai}
+        timeout-ms: ${RUNWARE_TIMEOUT_MS:60000}
+        retry-attempts: ${RUNWARE_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${RUNWARE_RETRY_BACKOFF_MS:1000}
+        supported-models: ${RUNWARE_SUPPORTED_MODELS:runware:100@1,civitai:133005@288982}
+      photoroom:
+        api-key: ${PHOTOROOM_API_KEY:}
+        base-url: ${PHOTOROOM_BASE_URL:https://sdk.photoroom.com}
+        timeout-ms: ${PHOTOROOM_TIMEOUT_MS:30000}
+        retry-attempts: ${PHOTOROOM_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${PHOTOROOM_RETRY_BACKOFF_MS:1000}
+        supported-models: ${PHOTOROOM_SUPPORTED_MODELS:photoroom-v1}
+      # --- Phase 11: Avatar Video ---
+      heygen:
+        api-key: ${HEYGEN_API_KEY:}
+        base-url: ${HEYGEN_BASE_URL:https://api.heygen.com}
+        timeout-ms: ${HEYGEN_TIMEOUT_MS:120000}
+        max-poll-attempts: ${HEYGEN_MAX_POLL_ATTEMPTS:60}
+        poll-interval-ms: ${HEYGEN_POLL_INTERVAL_MS:5000}
+      synthesia:
+        api-key: ${SYNTHESIA_API_KEY:}
+        base-url: ${SYNTHESIA_BASE_URL:https://api.synthesia.io}
+        timeout-ms: ${SYNTHESIA_TIMEOUT_MS:120000}
+        max-poll-attempts: ${SYNTHESIA_MAX_POLL_ATTEMPTS:60}
+        poll-interval-ms: ${SYNTHESIA_POLL_INTERVAL_MS:10000}
+      tavus:
+        api-key: ${TAVUS_API_KEY:}
+        base-url: ${TAVUS_BASE_URL:https://api.tavus.io}
+        timeout-ms: ${TAVUS_TIMEOUT_MS:120000}
+        max-poll-attempts: ${TAVUS_MAX_POLL_ATTEMPTS:60}
+        poll-interval-ms: ${TAVUS_POLL_INTERVAL_MS:5000}
+      d-id:
+        api-key: ${DID_API_KEY:}
+        base-url: ${DID_BASE_URL:https://api.d-id.com}
+        timeout-ms: ${DID_TIMEOUT_MS:120000}
+        max-poll-attempts: ${DID_MAX_POLL_ATTEMPTS:60}
+        poll-interval-ms: ${DID_POLL_INTERVAL_MS:5000}
+      # --- Phase 12: 3D Generation ---
+      meshy:
+        api-key: ${MESHY_API_KEY:}
+        base-url: ${MESHY_BASE_URL:https://api.meshy.ai}
+        timeout-ms: ${MESHY_TIMEOUT_MS:120000}
+        max-poll-attempts: ${MESHY_MAX_POLL_ATTEMPTS:60}
+        poll-interval-ms: ${MESHY_POLL_INTERVAL_MS:5000}
+      tripo:
+        api-key: ${TRIPO_API_KEY:}
+        base-url: ${TRIPO_BASE_URL:https://api.tripo3d.ai}
+        timeout-ms: ${TRIPO_TIMEOUT_MS:120000}
+        max-poll-attempts: ${TRIPO_MAX_POLL_ATTEMPTS:60}
+        poll-interval-ms: ${TRIPO_POLL_INTERVAL_MS:5000}
+      # --- Phase 13: Audio/Speech ---
+      cartesia:
+        api-key: ${CARTESIA_API_KEY:}
+        base-url: ${CARTESIA_BASE_URL:https://api.cartesia.ai}
+        timeout-ms: ${CARTESIA_TIMEOUT_MS:60000}
+        retry-attempts: ${CARTESIA_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${CARTESIA_RETRY_BACKOFF_MS:1000}
+        supported-models: ${CARTESIA_SUPPORTED_MODELS:sonic-2,sonic-1}
+      fish-audio:
+        api-key: ${FISH_AUDIO_API_KEY:}
+        base-url: ${FISH_AUDIO_BASE_URL:https://api.fish.audio}
+        timeout-ms: ${FISH_AUDIO_TIMEOUT_MS:60000}
+        retry-attempts: ${FISH_AUDIO_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${FISH_AUDIO_RETRY_BACKOFF_MS:1000}
+        supported-models: ${FISH_AUDIO_SUPPORTED_MODELS:fish-speech-1.5,fish-speech-1.4}
+      azure-speech:
+        api-key: ${AZURE_SPEECH_API_KEY:}
+        region: ${AZURE_SPEECH_REGION:eastus}
+        timeout-ms: ${AZURE_SPEECH_TIMEOUT_MS:60000}
+        retry-attempts: ${AZURE_SPEECH_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${AZURE_SPEECH_RETRY_BACKOFF_MS:1000}
+        supported-models: ${AZURE_SPEECH_SUPPORTED_MODELS:azure-tts,azure-stt}
+      resemble:
+        api-key: ${RESEMBLE_API_KEY:}
+        project-id: ${RESEMBLE_PROJECT_ID:}
+        base-url: ${RESEMBLE_BASE_URL:https://app.resemble.ai/api/v2}
+        timeout-ms: ${RESEMBLE_TIMEOUT_MS:60000}
+        retry-attempts: ${RESEMBLE_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${RESEMBLE_RETRY_BACKOFF_MS:1000}
+        supported-models: ${RESEMBLE_SUPPORTED_MODELS:resemble-v2}
+      hume:
+        api-key: ${HUME_API_KEY:}
+        base-url: ${HUME_BASE_URL:https://api.hume.ai}
+        timeout-ms: ${HUME_TIMEOUT_MS:60000}
+        retry-attempts: ${HUME_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${HUME_RETRY_BACKOFF_MS:1000}
+        supported-models: ${HUME_SUPPORTED_MODELS:hume-evi2}
+      murf:
+        api-key: ${MURF_API_KEY:}
+        base-url: ${MURF_BASE_URL:https://api.murf.ai/v1}
+        timeout-ms: ${MURF_TIMEOUT_MS:60000}
+        retry-attempts: ${MURF_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${MURF_RETRY_BACKOFF_MS:1000}
+        supported-models: ${MURF_SUPPORTED_MODELS:murf-pro,murf-enterprise}
+      lmnt:
+        api-key: ${LMNT_API_KEY:}
+        base-url: ${LMNT_BASE_URL:https://api.lmnt.com}
+        timeout-ms: ${LMNT_TIMEOUT_MS:60000}
+        retry-attempts: ${LMNT_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${LMNT_RETRY_BACKOFF_MS:1000}
+        supported-models: ${LMNT_SUPPORTED_MODELS:lmnt-1}
+      playht:
+        api-key: ${PLAYHT_API_KEY:}
+        user-id: ${PLAYHT_USER_ID:}
+        base-url: ${PLAYHT_BASE_URL:https://api.play.ht/api/v2}
+        timeout-ms: ${PLAYHT_TIMEOUT_MS:60000}
+        retry-attempts: ${PLAYHT_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${PLAYHT_RETRY_BACKOFF_MS:1000}
+        supported-models: ${PLAYHT_SUPPORTED_MODELS:playht-2.0,playht-turbo}
+      soniox:
+        api-key: ${SONIOX_API_KEY:}
+        base-url: ${SONIOX_BASE_URL:https://api.soniox.com}
+        timeout-ms: ${SONIOX_TIMEOUT_MS:60000}
+        retry-attempts: ${SONIOX_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${SONIOX_RETRY_BACKOFF_MS:1000}
+        supported-models: ${SONIOX_SUPPORTED_MODELS:soniox-whisper}
+      palabra:
+        api-key: ${PALABRA_API_KEY:}
+        base-url: ${PALABRA_BASE_URL:https://api.palabra.ai}
+        timeout-ms: ${PALABRA_TIMEOUT_MS:60000}
+        retry-attempts: ${PALABRA_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${PALABRA_RETRY_BACKOFF_MS:1000}
+        supported-models: ${PALABRA_SUPPORTED_MODELS:palabra-v1}
+      speechmatics:
+        api-key: ${SPEECHMATICS_API_KEY:}
+        base-url: ${SPEECHMATICS_BASE_URL:https://asr.api.speechmatics.com}
+        timeout-ms: ${SPEECHMATICS_TIMEOUT_MS:60000}
+        retry-attempts: ${SPEECHMATICS_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${SPEECHMATICS_RETRY_BACKOFF_MS:1000}
+        supported-models: ${SPEECHMATICS_SUPPORTED_MODELS:speechmatics-enhanced}
+      rev-ai:
+        api-key: ${REV_AI_API_KEY:}
+        base-url: ${REV_AI_BASE_URL:https://api.rev.ai}
+        timeout-ms: ${REV_AI_TIMEOUT_MS:60000}
+        retry-attempts: ${REV_AI_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${REV_AI_RETRY_BACKOFF_MS:1000}
+        supported-models: ${REV_AI_SUPPORTED_MODELS:rev-ai-english}
+      # --- Phase 14: Search ---
+      brave-search:
+        api-key: ${BRAVE_SEARCH_API_KEY:}
+        base-url: ${BRAVE_SEARCH_BASE_URL:https://api.search.brave.com}
+        timeout-ms: ${BRAVE_SEARCH_TIMEOUT_MS:30000}
+        retry-attempts: ${BRAVE_SEARCH_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${BRAVE_SEARCH_RETRY_BACKOFF_MS:1000}
+      vectara:
+        api-key: ${VECTARA_API_KEY:}
+        customer-id: ${VECTARA_CUSTOMER_ID:}
+        base-url: ${VECTARA_BASE_URL:https://api.vectara.io}
+        timeout-ms: ${VECTARA_TIMEOUT_MS:30000}
+        retry-attempts: ${VECTARA_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${VECTARA_RETRY_BACKOFF_MS:1000}
+      # --- Phase 15: Document AI / Translation ---
+      deepl:
+        api-key: ${DEEPL_API_KEY:}
+        base-url: ${DEEPL_BASE_URL:https://api.deepl.com}
+        timeout-ms: ${DEEPL_TIMEOUT_MS:15000}
+        retry-attempts: ${DEEPL_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${DEEPL_RETRY_BACKOFF_MS:250}
+        supported-models: ${DEEPL_SUPPORTED_MODELS:deepl-pro}
+      veryfi:
+        api-key: ${VERYFI_API_KEY:}
+        client-id: ${VERYFI_CLIENT_ID:}
+        base-url: ${VERYFI_BASE_URL:https://api.veryfi.com/api/v8}
+        timeout-ms: ${VERYFI_TIMEOUT_MS:60000}
+        retry-attempts: ${VERYFI_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${VERYFI_RETRY_BACKOFF_MS:1000}
+      llamaparse:
+        api-key: ${LLAMAPARSE_API_KEY:}
+        base-url: ${LLAMAPARSE_BASE_URL:https://api.cloud.llamaindex.ai}
+        timeout-ms: ${LLAMAPARSE_TIMEOUT_MS:120000}
+        retry-attempts: ${LLAMAPARSE_RETRY_ATTEMPTS:3}
+        retry-backoff-ms: ${LLAMAPARSE_RETRY_BACKOFF_MS:2000}
+      unstructured:
+        api-key: ${UNSTRUCTURED_API_KEY:}
+        base-url: ${UNSTRUCTURED_BASE_URL:https://api.unstructured.io}
+        timeout-ms: ${UNSTRUCTURED_TIMEOUT_MS:120000}
+        retry-attempts: ${UNSTRUCTURED_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${UNSTRUCTURED_RETRY_BACKOFF_MS:1000}
+      upstage:
+        api-key: ${UPSTAGE_API_KEY:}
+        base-url: ${UPSTAGE_BASE_URL:https://api.upstage.ai}
+        timeout-ms: ${UPSTAGE_TIMEOUT_MS:60000}
+        retry-attempts: ${UPSTAGE_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${UPSTAGE_RETRY_BACKOFF_MS:1000}
+      mathpix:
+        api-key: ${MATHPIX_API_KEY:}
+        app-id: ${MATHPIX_APP_ID:}
+        base-url: ${MATHPIX_BASE_URL:https://api.mathpix.com}
+        timeout-ms: ${MATHPIX_TIMEOUT_MS:60000}
+        retry-attempts: ${MATHPIX_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${MATHPIX_RETRY_BACKOFF_MS:1000}
+      nanonets:
+        api-key: ${NANONETS_API_KEY:}
+        model-id: ${NANONETS_MODEL_ID:}
+        base-url: ${NANONETS_BASE_URL:https://app.nanonets.com}
+        timeout-ms: ${NANONETS_TIMEOUT_MS:120000}
+        retry-attempts: ${NANONETS_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${NANONETS_RETRY_BACKOFF_MS:2000}
+      # --- Phase 16: Threat Intel ---
+      breachsense:
+        api-key: ${BREACHSENSE_API_KEY:}
+        base-url: ${BREACHSENSE_BASE_URL:https://breachsense.com/api}
+        timeout-ms: ${BREACHSENSE_TIMEOUT_MS:30000}
+        retry-attempts: ${BREACHSENSE_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${BREACHSENSE_RETRY_BACKOFF_MS:1000}
+      # --- Phase 17: Enterprise Gateways ---
+      vertex-ai:
+        client-id: ${VERTEX_AI_CLIENT_ID:}
+        client-secret: ${VERTEX_AI_CLIENT_SECRET:}
+        project-id: ${VERTEX_AI_PROJECT_ID:}
+        region: ${VERTEX_AI_REGION:us-central1}
+        base-url: ${VERTEX_AI_BASE_URL:}
+        timeout-ms: ${VERTEX_AI_TIMEOUT_MS:30000}
+        retry-attempts: ${VERTEX_AI_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${VERTEX_AI_RETRY_BACKOFF_MS:500}
+        supported-models: ${VERTEX_AI_SUPPORTED_MODELS:gemini-1.5-pro,gemini-1.5-flash}
+      ibm-watsonx:
+        api-key: ${IBM_WATSONX_API_KEY:}
+        project-id: ${IBM_WATSONX_PROJECT_ID:}
+        region: ${IBM_WATSONX_REGION:us-south}
+        base-url: ${IBM_WATSONX_BASE_URL:}
+        timeout-ms: ${IBM_WATSONX_TIMEOUT_MS:30000}
+        retry-attempts: ${IBM_WATSONX_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${IBM_WATSONX_RETRY_BACKOFF_MS:500}
+        supported-models: ${IBM_WATSONX_SUPPORTED_MODELS:ibm/granite-3-8b-instruct,meta-llama/llama-3-70b-instruct}
+      oracle-oci-genai:
+        api-key: ${ORACLE_OCI_GENAI_API_KEY:}
+        compartment-id: ${ORACLE_OCI_GENAI_COMPARTMENT_ID:}
+        region: ${ORACLE_OCI_GENAI_REGION:us-chicago-1}
+        base-url: ${ORACLE_OCI_GENAI_BASE_URL:}
+        timeout-ms: ${ORACLE_OCI_GENAI_TIMEOUT_MS:30000}
+        retry-attempts: ${ORACLE_OCI_GENAI_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${ORACLE_OCI_GENAI_RETRY_BACKOFF_MS:500}
+        supported-models: ${ORACLE_OCI_GENAI_SUPPORTED_MODELS:cohere.command-r-plus,meta.llama-3.1-405b-instruct}
+      alibaba-dashscope:
+        api-key: ${ALIBABA_DASHSCOPE_API_KEY:}
+        base-url: ${ALIBABA_DASHSCOPE_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode}
+        timeout-ms: ${ALIBABA_DASHSCOPE_TIMEOUT_MS:30000}
+        retry-attempts: ${ALIBABA_DASHSCOPE_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${ALIBABA_DASHSCOPE_RETRY_BACKOFF_MS:500}
+        supported-models: ${ALIBABA_DASHSCOPE_SUPPORTED_MODELS:qwen-max,qwen-plus,qwen-turbo}
+      azure-ai-foundry:
+        api-key: ${AZURE_AI_FOUNDRY_API_KEY:}
+        endpoint: ${AZURE_AI_FOUNDRY_ENDPOINT:}
+        base-url: ${AZURE_AI_FOUNDRY_BASE_URL:}
+        timeout-ms: ${AZURE_AI_FOUNDRY_TIMEOUT_MS:30000}
+        retry-attempts: ${AZURE_AI_FOUNDRY_RETRY_ATTEMPTS:2}
+        retry-backoff-ms: ${AZURE_AI_FOUNDRY_RETRY_BACKOFF_MS:500}
+        supported-models: ${AZURE_AI_FOUNDRY_SUPPORTED_MODELS:}
+    compliance:
+      dark-web-enabled: ${AI_DARK_WEB_ENABLED:false}
+      threat-intel-audit-log: ${AI_THREAT_INTEL_AUDIT_LOG:true}
 
 resilience4j:
   circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 5
     instances:
       aiProviderOpenai:
         sliding-window-size: 20
