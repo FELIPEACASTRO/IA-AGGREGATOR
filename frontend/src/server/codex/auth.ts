@@ -1,41 +1,40 @@
 import { cookies } from 'next/headers';
+import { backendGet } from '@/server/backend-proxy';
 
 type CodexUserSession = {
   userId: string;
   email: string;
   name: string;
+  role?: string;
+  status?: string;
 };
 
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-  const parts = token.split('.');
-  if (parts.length < 2) return null;
-
-  try {
-    const raw = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const payload = Buffer.from(raw, 'base64').toString('utf-8');
-    return JSON.parse(payload) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
+type BackendCurrentUser = {
+  id: string;
+  email: string;
+  fullName?: string | null;
+  role?: string | null;
+  status?: string | null;
+};
 
 export async function getServerSession(): Promise<CodexUserSession | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get('access_token')?.value;
   if (!token) return null;
 
-  const decoded = decodeJwtPayload(token);
-  if (!decoded) return null;
+  try {
+    const currentUser = await backendGet<BackendCurrentUser>('/api/v1/auth/me', token);
+    if (!currentUser?.id || !currentUser?.email) return null;
 
-  const userId = String(decoded.sub ?? '');
-  const email = String(decoded.email ?? '');
-  const name = String(decoded.name ?? decoded.email ?? 'Codex User');
-  if (!userId || !email) return null;
-
-  return {
-    userId,
-    email,
-    name,
-  };
+    return {
+      userId: String(currentUser.id),
+      email: currentUser.email,
+      name: currentUser.fullName || currentUser.email,
+      role: currentUser.role ?? undefined,
+      status: currentUser.status ?? undefined,
+    };
+  } catch {
+    return null;
+  }
 }
 

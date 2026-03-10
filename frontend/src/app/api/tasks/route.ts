@@ -4,6 +4,7 @@ import { codexDb } from '@/server/codex/db';
 import { enqueueTask } from '@/server/codex/queue';
 import { fail, ok, requireCodexContext } from '@/server/codex/http';
 import { appendTaskEvent } from '@/server/codex/events';
+import { resolveProjectContext } from '@/server/codex/projects';
 
 export const runtime = 'nodejs';
 
@@ -15,6 +16,10 @@ const createTaskSchema = z.object({
   baseBranch: z.string().optional(),
   bestOfN: z.number().int().min(1).max(5).optional(),
   sourceRef: z.string().optional(),
+  projectContextId: z.string().optional(),
+  projectName: z.string().optional(),
+  projectSlug: z.string().optional(),
+  projectDescription: z.string().optional(),
   imageInputs: z.array(z.string()).default([]),
   attachments: z.array(z.string()).default([]),
   voiceTranscript: z.string().optional(),
@@ -61,6 +66,9 @@ export async function GET(request: Request) {
       environment: {
         select: { id: true, name: true, internetMode: true },
       },
+      projectContext: {
+        select: { id: true, slug: true, name: true, status: true },
+      },
       pullRequest: {
         select: { id: true, status: true, url: true },
       },
@@ -89,6 +97,10 @@ export async function POST(request: Request) {
     baseBranch,
     bestOfN = 1,
     sourceRef,
+    projectContextId,
+    projectName,
+    projectSlug,
+    projectDescription,
     imageInputs,
     attachments,
     voiceTranscript,
@@ -97,12 +109,35 @@ export async function POST(request: Request) {
   const fallbackRepositoryId = repositoryId || context.context.repository.id;
   const fallbackEnvironmentId = environmentId || context.context.environment.id;
   const title = prompt.slice(0, 80);
+  let projectContext = context.context.projectContext;
+
+  try {
+    const shouldResolveCustomProject =
+      Boolean(projectContextId || projectName || projectSlug || projectDescription)
+      || fallbackRepositoryId !== context.context.repository.id;
+
+    if (shouldResolveCustomProject) {
+      projectContext = await resolveProjectContext({
+        workspaceId: context.context.workspace.id,
+        repositoryId: fallbackRepositoryId,
+        ownerUserId: context.session.userId,
+        projectContextId,
+        projectName,
+        projectSlug,
+        projectDescription,
+        sourceRef,
+      });
+    }
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : 'Falha ao resolver projeto da task', 400);
+  }
 
   const task = await codexDb.task.create({
     data: {
       workspaceId: context.context.workspace.id,
       repositoryId: fallbackRepositoryId,
       environmentId: fallbackEnvironmentId,
+      projectContextId: projectContext?.id,
       createdById: context.session.userId,
       title,
       prompt,
@@ -131,6 +166,7 @@ export async function POST(request: Request) {
     metadata: {
       mode: task.mode,
       bestOfN,
+      projectContextId: projectContext?.id ?? null,
     },
   });
 

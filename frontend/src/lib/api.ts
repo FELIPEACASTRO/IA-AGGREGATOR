@@ -58,18 +58,6 @@ const showGlobalErrorToast = (payload: { title: string; description: string }) =
   toast.error(payload.title, payload.description);
 };
 
-export const setAuthCookies = (accessToken: string, refreshToken: string) => {
-  if (typeof document === 'undefined') return;
-  document.cookie = `access_token=${accessToken}; Path=/; SameSite=Lax`;
-  document.cookie = `refresh_token=${refreshToken}; Path=/; SameSite=Lax`;
-};
-
-export const clearAuthCookies = () => {
-  if (typeof document === 'undefined') return;
-  document.cookie = 'access_token=; Path=/; Max-Age=0; SameSite=Lax';
-  document.cookie = 'refresh_token=; Path=/; Max-Age=0; SameSite=Lax';
-};
-
 export const api = axios.create({
   baseURL: `${API_BASE_URL}/api/v1`,
   headers: {
@@ -78,18 +66,6 @@ export const api = axios.create({
   timeout: 30000,
 });
 
-// Request interceptor: attach JWT
-api.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
-  return config;
-});
-
-// Response interceptor: handle 401 and refresh
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -99,25 +75,10 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (!refreshToken) {
-          throw new Error('No refresh token');
-        }
-
-        const { data } = await axios.post(`${API_BASE_URL}/api/v1/auth/refresh`, {
-          refreshToken,
-        });
-
-        localStorage.setItem('access_token', data.data.accessToken);
-        localStorage.setItem('refresh_token', data.data.refreshToken);
-        setAuthCookies(data.data.accessToken, data.data.refreshToken);
-
-        originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`;
+        await axios.post('/api/auth/refresh', {});
         return api(originalRequest);
       } catch {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        clearAuthCookies();
+        void axios.post('/api/auth/logout').catch(() => undefined);
         toast.info('Sessão expirada', 'Faça login novamente para continuar.');
         if (typeof window !== 'undefined') {
           window.location.href = '/login';

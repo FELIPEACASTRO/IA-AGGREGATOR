@@ -1,11 +1,41 @@
 import { codexDb } from '@/server/codex/db';
 import { enqueueTask } from '@/server/codex/queue';
-import { ok } from '@/server/codex/http';
+import { fail, ok } from '@/server/codex/http';
+import { verifyLinearWebhookSignature } from '@/server/codex/webhook-signature';
 
 export const runtime = 'nodejs';
 
+type LinearWebhookPayload = {
+  action?: string;
+  type?: string;
+  data?: {
+    title?: string;
+    body?: string;
+    identifier?: string;
+  };
+};
+
 export async function POST(request: Request) {
-  const payload = await request.json().catch(() => ({}));
+  const rawBody = await request.text();
+  const isValidSignature = verifyLinearWebhookSignature({
+    payload: rawBody,
+    signatureHeader: request.headers.get('linear-signature') || request.headers.get('x-linear-signature'),
+    authorizationHeader: request.headers.get('authorization'),
+    secret: process.env.LINEAR_WEBHOOK_SECRET,
+    token: process.env.LINEAR_WEBHOOK_TOKEN,
+  });
+  if (!isValidSignature) {
+    return fail('Assinatura Linear invalida', 401);
+  }
+
+  let payload: LinearWebhookPayload = {};
+  if (rawBody) {
+    try {
+      payload = (JSON.parse(rawBody) as LinearWebhookPayload) ?? {};
+    } catch {
+      return fail('Payload Linear invalido', 400);
+    }
+  }
   const workspace = await codexDb.workspace.findFirst({
     orderBy: { createdAt: 'asc' },
   });

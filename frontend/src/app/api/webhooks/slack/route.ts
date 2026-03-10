@@ -1,11 +1,46 @@
 import { codexDb } from '@/server/codex/db';
 import { enqueueTask } from '@/server/codex/queue';
-import { ok } from '@/server/codex/http';
+import { fail, ok } from '@/server/codex/http';
+import { verifySlackWebhookSignature } from '@/server/codex/webhook-signature';
 
 export const runtime = 'nodejs';
 
+type SlackWebhookPayload = {
+  type?: string;
+  challenge?: string;
+  event?: {
+    text?: string;
+    channel?: string;
+  };
+};
+
 export async function POST(request: Request) {
-  const payload = await request.json().catch(() => ({}));
+  const rawBody = await request.text();
+  const isValidSignature = verifySlackWebhookSignature({
+    payload: rawBody,
+    signatureHeader: request.headers.get('x-slack-signature'),
+    timestampHeader: request.headers.get('x-slack-request-timestamp'),
+    secret: process.env.SLACK_SIGNING_SECRET,
+  });
+  if (!isValidSignature) {
+    return fail('Assinatura Slack invalida', 401);
+  }
+
+  let payload: SlackWebhookPayload = {};
+  if (rawBody) {
+    try {
+      payload = (JSON.parse(rawBody) as SlackWebhookPayload) ?? {};
+    } catch {
+      return fail('Payload Slack invalido', 400);
+    }
+  }
+  if (payload?.type === 'url_verification' && typeof payload?.challenge === 'string') {
+    return new Response(payload.challenge, {
+      status: 200,
+      headers: { 'Content-Type': 'text/plain' },
+    });
+  }
+
   const workspace = await codexDb.workspace.findFirst({
     orderBy: { createdAt: 'asc' },
   });

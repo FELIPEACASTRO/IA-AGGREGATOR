@@ -8,6 +8,7 @@ import com.ia.aggregator.application.auth.dto.TokenResponse;
 import com.ia.aggregator.application.auth.dto.UserResponse;
 import com.ia.aggregator.application.auth.port.in.GetCurrentUserUseCase;
 import com.ia.aggregator.application.auth.port.in.LoginUseCase;
+import com.ia.aggregator.application.auth.port.in.LogoutUseCase;
 import com.ia.aggregator.application.auth.port.in.RefreshTokenUseCase;
 import com.ia.aggregator.application.auth.port.in.RegisterUserUseCase;
 import com.ia.aggregator.common.exception.BusinessException;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -52,6 +54,8 @@ class AuthControllerTest {
     private LoginUseCase loginUseCase;
     @Mock
     private RefreshTokenUseCase refreshTokenUseCase;
+    @Mock
+    private LogoutUseCase logoutUseCase;
     @Mock
     private GetCurrentUserUseCase getCurrentUserUseCase;
 
@@ -205,6 +209,73 @@ class AuthControllerTest {
     }
 
     // ── Get Current User ─────────────────────────────────────────────────
+
+    @Test
+    void logout_shouldReturn200AndRevokeRefreshToken() throws Exception {
+        UUID userId = UUID.randomUUID();
+        var command = new RefreshTokenCommand("refresh-token");
+        var principal = new AuthenticatedUser(
+                userId, "user@test.com", "hash",
+                List.of(new SimpleGrantedAuthority("ROLE_USER")),
+                true, true
+        );
+        var auth = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        try {
+            mockMvc.perform(post("/api/v1/auth/logout")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(command)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Logout successful"));
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+
+        verify(logoutUseCase).execute(eq(userId), any(RefreshTokenCommand.class));
+    }
+
+    @Test
+    void logout_blankToken_shouldReturn400() throws Exception {
+        UUID userId = UUID.randomUUID();
+        var principal = new AuthenticatedUser(
+                userId, "user@test.com", "hash",
+                List.of(new SimpleGrantedAuthority("ROLE_USER")),
+                true, true
+        );
+        var auth = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        try {
+            mockMvc.perform(post("/api/v1/auth/logout")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {"refreshToken": ""}
+                                    """))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+
+        verifyNoInteractions(logoutUseCase);
+    }
+
+    @Test
+    void logout_withoutAuthentication_shouldReturn401() throws Exception {
+        SecurityContextHolder.clearContext();
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"refreshToken": "refresh-token"}
+                                """))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.errorCode").value("AUTH_008"));
+
+        verifyNoInteractions(logoutUseCase);
+    }
 
     @Test
     void me_shouldReturn200WithUserResponse() throws Exception {

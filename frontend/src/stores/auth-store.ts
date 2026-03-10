@@ -1,5 +1,5 @@
+import axios from 'axios';
 import { create } from 'zustand';
-import api, { clearAuthCookies, setAuthCookies } from '@/lib/api';
 
 interface User {
   id: string;
@@ -26,55 +26,35 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
 
   login: async (email, password) => {
-    const { data } = await api.post('/auth/login', { email, password });
-    localStorage.setItem('access_token', data.data.accessToken);
-    localStorage.setItem('refresh_token', data.data.refreshToken);
-    setAuthCookies(data.data.accessToken, data.data.refreshToken);
+    await axios.post('/api/auth/login', { email, password });
     set({ isAuthenticated: true });
 
     // Fetch user profile
-    const userRes = await api.get('/auth/me');
+    const userRes = await axios.get('/api/auth/session');
     set({ user: userRes.data.data });
   },
 
   register: async (email, password, fullName) => {
-    const { data } = await api.post('/auth/register', { email, password, fullName });
-    localStorage.setItem('access_token', data.data.accessToken);
-    localStorage.setItem('refresh_token', data.data.refreshToken);
-    setAuthCookies(data.data.accessToken, data.data.refreshToken);
+    await axios.post('/api/auth/register', { email, password, fullName });
     set({ isAuthenticated: true });
 
-    const userRes = await api.get('/auth/me');
+    const userRes = await axios.get('/api/auth/session');
     set({ user: userRes.data.data });
   },
 
   logout: async () => {
     try {
-      const refreshToken = localStorage.getItem('refresh_token');
-      if (refreshToken) {
-        await api.post('/auth/logout', { refreshToken }).catch(() => {});
-      }
+      await axios.post('/api/auth/logout', {}).catch(() => {});
     } finally {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      clearAuthCookies();
       set({ user: null, isAuthenticated: false });
     }
   },
 
   fetchUser: async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        set({ isLoading: false });
-        return;
-      }
-      const { data } = await api.get('/auth/me');
+      const { data } = await axios.get('/api/auth/session');
       set({ user: data.data, isAuthenticated: true, isLoading: false });
     } catch {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      clearAuthCookies();
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },

@@ -1,10 +1,12 @@
 ﻿import '@testing-library/jest-dom';
 import messages from './src/i18n/messages/pt-BR.json';
 
-Object.defineProperty(window.HTMLElement.prototype, 'scrollIntoView', {
-	writable: true,
-	value: jest.fn(),
-});
+if (typeof window !== 'undefined' && window.HTMLElement) {
+  Object.defineProperty(window.HTMLElement.prototype, 'scrollIntoView', {
+    writable: true,
+    value: jest.fn(),
+  });
+}
 
 function resolveKey(path: string): string | undefined {
   const parts = path.split('.');

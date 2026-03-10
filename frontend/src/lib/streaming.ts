@@ -2,8 +2,7 @@
  * SSE streaming utility for real-time AI chat responses.
  * Connects to the backend streaming endpoint and yields tokens as they arrive.
  */
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const STREAM_API_PATH = '/api/ai/chat/stream';
 
 export interface StreamCallbacks {
   onToken: (token: string) => void;
@@ -22,14 +21,12 @@ export async function streamChat(
   signal: AbortSignal,
   callbacks: StreamCallbacks
 ): Promise<void> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-
-  const response = await fetch(`${API_BASE_URL}/api/v1/ai/chat/stream`, {
+  const response = await fetch(STREAM_API_PATH, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
+    credentials: 'include',
     body: JSON.stringify({ prompt, preferredModel: model }),
     signal,
   });

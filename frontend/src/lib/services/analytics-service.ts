@@ -41,6 +41,10 @@ const getBaseEventsEndpoint = () => {
       : '/api/v1/analytics/events');
 };
 
+const getReportsEndpoint = () => {
+  return process.env.NEXT_PUBLIC_ANALYTICS_REPORTS_ENDPOINT || '/api/analytics/reports';
+};
+
 const withSuffix = (suffix: string) => {
   const base = getBaseEventsEndpoint();
   if (suffix === 'events') return base;
@@ -61,9 +65,8 @@ export const analyticsService = {
     if (params.sortBy) qs.set('sortBy', params.sortBy);
     if (params.sortDir) qs.set('sortDir', params.sortDir);
 
-    const { data } = await api.get<{ data?: AnalyticsPersistedReport[] }>(
-      `${withSuffix('reports')}?${qs.toString()}`
-    );
+    const reportsEndpoint = getReportsEndpoint();
+    const { data } = await api.get<{ data?: AnalyticsPersistedReport[] }>(`${reportsEndpoint}?${qs.toString()}`);
 
     return Array.isArray(data?.data) ? data.data : [];
   },
@@ -74,8 +77,9 @@ export const analyticsService = {
     qs.set('limit', String(params.limit ?? 50));
     if (params.category && params.category !== 'all') qs.set('category', params.category);
 
+    const reportsEndpoint = getReportsEndpoint();
     const { data } = await api.get<{ data?: AnalyticsPersistedReportEvent[] }>(
-      `${withSuffix(`reports/${reportId}/events`)}?${qs.toString()}`
+      `${reportsEndpoint}/${reportId}/events?${qs.toString()}`
     );
 
     return Array.isArray(data?.data) ? data.data : [];

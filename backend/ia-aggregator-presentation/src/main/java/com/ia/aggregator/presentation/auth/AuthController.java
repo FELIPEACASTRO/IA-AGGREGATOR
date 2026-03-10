@@ -7,8 +7,11 @@ import com.ia.aggregator.application.auth.dto.TokenResponse;
 import com.ia.aggregator.application.auth.dto.UserResponse;
 import com.ia.aggregator.application.auth.port.in.GetCurrentUserUseCase;
 import com.ia.aggregator.application.auth.port.in.LoginUseCase;
+import com.ia.aggregator.application.auth.port.in.LogoutUseCase;
 import com.ia.aggregator.application.auth.port.in.RefreshTokenUseCase;
 import com.ia.aggregator.application.auth.port.in.RegisterUserUseCase;
+import com.ia.aggregator.common.exception.BusinessException;
+import com.ia.aggregator.common.exception.ErrorCode;
 import com.ia.aggregator.infrastructure.auth.security.AuthenticatedUser;
 import com.ia.aggregator.presentation.shared.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -33,15 +36,18 @@ public class AuthController {
     private final RegisterUserUseCase registerUserUseCase;
     private final LoginUseCase loginUseCase;
     private final RefreshTokenUseCase refreshTokenUseCase;
+    private final LogoutUseCase logoutUseCase;
     private final GetCurrentUserUseCase getCurrentUserUseCase;
 
     public AuthController(RegisterUserUseCase registerUserUseCase,
                           LoginUseCase loginUseCase,
                           RefreshTokenUseCase refreshTokenUseCase,
+                          LogoutUseCase logoutUseCase,
                           GetCurrentUserUseCase getCurrentUserUseCase) {
         this.registerUserUseCase = registerUserUseCase;
         this.loginUseCase = loginUseCase;
         this.refreshTokenUseCase = refreshTokenUseCase;
+        this.logoutUseCase = logoutUseCase;
         this.getCurrentUserUseCase = getCurrentUserUseCase;
     }
 
@@ -65,6 +71,17 @@ public class AuthController {
             @Valid @RequestBody RefreshTokenCommand command) {
         TokenResponse token = refreshTokenUseCase.execute(command);
         return ResponseEntity.ok(ApiResponse.ok(token));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @Valid @RequestBody RefreshTokenCommand command) {
+        if (principal == null) {
+            throw new BusinessException(ErrorCode.AUTH_008, "Authentication required");
+        }
+        logoutUseCase.execute(principal.getUserId(), command);
+        return ResponseEntity.ok(ApiResponse.ok("Logout successful"));
     }
 
     @GetMapping("/me")

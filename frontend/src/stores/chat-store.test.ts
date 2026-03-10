@@ -1,15 +1,31 @@
 import { useChatStore } from '@/stores/chat-store';
-import api from '@/lib/api';
+import { streamChat } from '@/lib/streaming';
 
-jest.mock('@/lib/api', () => ({
-  __esModule: true,
-  default: {
-    post: jest.fn(),
-  },
+jest.mock('@/lib/model-catalog', () => ({
+  MODEL_CATALOG: [
+    {
+      id: 'gpt-4o-mini',
+      label: 'GPT-4o Mini',
+      provider: 'openai',
+      maxContextTokens: 128000,
+    },
+  ],
+  fetchModelCatalog: jest.fn().mockResolvedValue([
+    {
+      id: 'gpt-4o-mini',
+      label: 'GPT-4o Mini',
+      provider: 'openai',
+      maxContextTokens: 128000,
+    },
+  ]),
+}));
+
+jest.mock('@/lib/streaming', () => ({
+  streamChat: jest.fn(),
 }));
 
 describe('useChatStore', () => {
-  const mockedApi = api as unknown as { post: jest.Mock };
+  const mockedStreamChat = streamChat as jest.MockedFunction<typeof streamChat>;
 
   beforeEach(() => {
     localStorage.removeItem('ia-aggregator-chat-store');
@@ -23,6 +39,14 @@ describe('useChatStore', () => {
       isStreaming: false,
       activeRequestController: null,
       activeStreamId: null,
+      availableModels: [
+        {
+          id: 'gpt-4o-mini',
+          label: 'GPT-4o Mini',
+          provider: 'openai',
+          maxContextTokens: 128000,
+        },
+      ],
     });
   });
 
@@ -50,16 +74,10 @@ describe('useChatStore', () => {
   });
 
   it('sends message and appends assistant response', async () => {
-    mockedApi.post.mockResolvedValue({
-      data: {
-        data: {
-          content: 'Resposta simulada',
-          modelUsed: 'gpt-4o-mini',
-          providerUsed: 'openai',
-          fallbackUsed: false,
-          attempts: 1,
-        },
-      },
+    mockedStreamChat.mockImplementation(async (_prompt, _model, _signal, callbacks) => {
+      callbacks.onModelInfo({ modelUsed: 'gpt-4o-mini', providerUsed: 'openai' });
+      callbacks.onToken('Resposta simulada');
+      callbacks.onDone();
     });
 
     const conversationId = useChatStore.getState().createConversation();
@@ -69,15 +87,23 @@ describe('useChatStore', () => {
       .getState()
       .conversations.find((item) => item.id === conversationId);
 
-    expect(mockedApi.post).toHaveBeenCalledWith(
-      '/ai/chat',
-      expect.objectContaining({ prompt: 'Olá IA', preferredModel: 'gpt-4o-mini' }),
-      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    expect(mockedStreamChat).toHaveBeenCalledWith(
+      'Olá IA',
+      'gpt-4o-mini',
+      expect.any(AbortSignal),
+      expect.objectContaining({
+        onToken: expect.any(Function),
+        onModelInfo: expect.any(Function),
+        onDone: expect.any(Function),
+        onError: expect.any(Function),
+      })
     );
     expect(conversation?.messages).toHaveLength(2);
     expect(conversation?.messages[0].role).toBe('user');
     expect(conversation?.messages[1].role).toBe('assistant');
     expect(conversation?.messages[1].content).toBe('Resposta simulada');
+    expect(conversation?.messages[1].modelUsed).toBe('gpt-4o-mini');
+    expect(conversation?.messages[1].providerUsed).toBe('openai');
     expect(useChatStore.getState().isSending).toBe(false);
     expect(useChatStore.getState().isStreaming).toBe(false);
   });

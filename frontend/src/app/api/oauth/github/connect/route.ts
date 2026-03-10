@@ -1,4 +1,6 @@
-import { fail, ok, requireCodexContext } from '@/server/codex/http';
+import { randomBytes } from 'node:crypto';
+import { NextResponse } from 'next/server';
+import { fail, requireCodexContext } from '@/server/codex/http';
 
 export const runtime = 'nodejs';
 
@@ -12,14 +14,28 @@ export async function POST() {
   if (!clientId) {
     return fail('GITHUB_CLIENT_ID nao configurado', 400);
   }
+  const state = randomBytes(24).toString('hex');
 
   const url =
     `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId)}` +
     `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+    `&state=${encodeURIComponent(state)}` +
     '&scope=repo,read:user,user:email';
-
-  return ok({
-    authorizeUrl: url,
+  const response = NextResponse.json({
+    success: true,
+    data: {
+      authorizeUrl: url,
+      state,
+    },
+    timestamp: new Date().toISOString(),
   });
+  response.cookies.set('github_oauth_state', state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/api/oauth/github/callback',
+    maxAge: 60 * 10,
+  });
+  return response;
 }
 

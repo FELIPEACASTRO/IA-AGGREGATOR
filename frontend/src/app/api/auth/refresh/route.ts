@@ -1,29 +1,36 @@
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { fail, ok } from '@/server/codex/http';
 import { applyAuthCookies } from '@/server/codex/auth-cookies';
+import { fail } from '@/server/codex/http';
 
 export const runtime = 'nodejs';
 
 const schema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
+  refreshToken: z.string().min(1).optional(),
 });
 
 export async function POST(request: Request) {
-  const parsed = schema.safeParse(await request.json());
+  const cookieStore = await cookies();
+  const rawBody = await request.json().catch(() => ({}));
+  const parsed = schema.safeParse(rawBody);
   if (!parsed.success) return fail('Payload invalido', 400, parsed.error.flatten());
 
+  const refreshToken = parsed.data.refreshToken || cookieStore.get('refresh_token')?.value;
+  if (!refreshToken) {
+    return fail('Refresh token ausente', 401);
+  }
+
   const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-  const response = await fetch(`${backendUrl}/api/v1/auth/login`, {
+  const response = await fetch(`${backendUrl}/api/v1/auth/refresh`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(parsed.data),
+    body: JSON.stringify({ refreshToken }),
   });
 
   if (!response.ok) {
     const text = await response.text();
-    return fail('Falha de autenticacao', response.status, text);
+    return fail('Falha ao renovar sessao', response.status, text);
   }
 
   const payload = (await response.json()) as {
@@ -35,8 +42,8 @@ export async function POST(request: Request) {
   };
 
   const accessToken = payload?.data?.accessToken;
-  const refreshToken = payload?.data?.refreshToken;
-  if (!accessToken || !refreshToken) {
+  const nextRefreshToken = payload?.data?.refreshToken;
+  if (!accessToken || !nextRefreshToken) {
     return fail('Backend nao retornou tokens esperados', 502);
   }
 
@@ -45,13 +52,6 @@ export async function POST(request: Request) {
     data: payload.data,
     timestamp: new Date().toISOString(),
   });
-  applyAuthCookies(res, { accessToken, refreshToken, expiresIn: payload?.data?.expiresIn });
+  applyAuthCookies(res, { accessToken, refreshToken: nextRefreshToken, expiresIn: payload?.data?.expiresIn });
   return res;
 }
-
-export async function GET() {
-  return ok({
-    info: 'Use POST /api/auth/login',
-  });
-}
-

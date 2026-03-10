@@ -98,6 +98,26 @@ enum BillingIntentStatus {
   CANCELLED
 }
 
+enum ProjectContextStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum RouteServiceClass {
+  FAST
+  BALANCED
+  PREMIUM
+  RESEARCH
+  MULTIMODAL
+}
+
+enum RouteExecutionStatus {
+  PLANNED
+  STARTED
+  COMPLETED
+  FAILED
+}
+
 enum ReviewSeverity {
   P0
   P1
@@ -116,6 +136,7 @@ model User {
   sessions          Session[]
   oauthConnections  OAuthConnection[]
   tasks             Task[]
+  ownedProjectContexts ProjectContext[]
   githubReviews     GitHubReviewRun[]
   auditLogs         AuditLog[]
 }
@@ -129,8 +150,12 @@ model Workspace {
   memberships             Membership[]
   githubInstallations     GitHubInstallation[]
   repositories            GitRepository[]
+  projectContexts         ProjectContext[]
   environments            Environment[]
   tasks                   Task[]
+  routeDecisions          RouteDecision[]
+  modelRuns               ModelRun[]
+  costLedgerEntries       CostLedgerEntry[]
   codeReviewPolicies      CodeReviewPolicy[]
   reviewGuidelineSources  ReviewGuidelineSource[]
   slackInstalls           SlackInstall[]
@@ -209,6 +234,7 @@ model GitRepository {
   permissions   RepositoryPermission[]
   branchCache   RepositoryBranchCache[]
   environments  EnvironmentRepoMap[]
+  projectContexts ProjectContext[]
   tasks         Task[]
   policies      CodeReviewPolicy[]
   triageRules   TriageRule[]
@@ -346,11 +372,36 @@ model EnvironmentExecutionHistory {
   environment        Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
 }
 
+model ProjectContext {
+  id                String               @id @default(cuid())
+  workspaceId       String
+  repositoryId      String?
+  ownerUserId       String?
+  slug              String
+  name              String
+  description       String?
+  sourceRef         String?
+  status            ProjectContextStatus @default(ACTIVE)
+  metadata          Json?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  workspace         Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  repository        GitRepository?       @relation(fields: [repositoryId], references: [id], onDelete: SetNull)
+  owner             User?                @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
+  tasks             Task[]
+  routeDecisions    RouteDecision[]
+  modelRuns         ModelRun[]
+  costLedgerEntries CostLedgerEntry[]
+
+  @@unique([workspaceId, slug])
+}
+
 model Task {
   id                    String                @id @default(cuid())
   workspaceId           String
   repositoryId          String?
   environmentId         String?
+  projectContextId      String?
   createdById           String
   title                 String
   prompt                String
@@ -373,9 +424,13 @@ model Task {
   workspace             Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   repository            GitRepository?        @relation(fields: [repositoryId], references: [id], onDelete: SetNull)
   environment           Environment?          @relation(fields: [environmentId], references: [id], onDelete: SetNull)
+  projectContext        ProjectContext?       @relation(fields: [projectContextId], references: [id], onDelete: SetNull)
   createdBy             User                  @relation(fields: [createdById], references: [id], onDelete: Cascade)
   input                 TaskInput?
   runs                  TaskRun[]
+  routeDecisions        RouteDecision[]
+  modelRuns             ModelRun[]
+  costLedgerEntries     CostLedgerEntry[]
   followUps             TaskFollowUp[]
   events                TaskEvent[]
   logs                  TaskLogChunk[]
@@ -406,8 +461,108 @@ model TaskRun {
   failureReason     String?
   createdAt         DateTime   @default(now())
   task              Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  routeDecision     RouteDecision?
+  modelRuns         ModelRun[]
+  costLedgerEntries CostLedgerEntry[]
 
   @@unique([taskId, runNumber])
+}
+
+model RouteDecision {
+  id                    String               @id @default(cuid())
+  workspaceId           String
+  taskId                String
+  taskRunId             String?              @unique
+  projectContextId      String?
+  serviceClass          RouteServiceClass    @default(BALANCED)
+  policyKey             String               @default("default")
+  policyVersion         String               @default("2026-03-09")
+  requestedMode         TaskMode?
+  selectedProvider      String
+  selectedModel         String
+  fallbackProvider      String?
+  fallbackModel         String?
+  fallbackUsed          Boolean              @default(false)
+  reason                String?
+  estimatedInputTokens  Int                  @default(0)
+  estimatedOutputTokens Int                  @default(0)
+  estimatedCost         Float                @default(0)
+  status                RouteExecutionStatus @default(PLANNED)
+  metadata              Json?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  workspace             Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  task                  Task                 @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskRun               TaskRun?             @relation(fields: [taskRunId], references: [id], onDelete: SetNull)
+  projectContext        ProjectContext?      @relation(fields: [projectContextId], references: [id], onDelete: SetNull)
+  modelRuns             ModelRun[]
+  costLedgerEntries     CostLedgerEntry[]
+
+  @@index([workspaceId, createdAt])
+  @@index([taskId, createdAt])
+  @@index([serviceClass, selectedProvider, selectedModel])
+}
+
+model ModelRun {
+  id                String               @id @default(cuid())
+  workspaceId       String
+  taskId            String
+  taskRunId         String?
+  routeDecisionId   String?
+  projectContextId  String?
+  provider          String
+  model             String
+  taskClass         String
+  inputTokens       Int                  @default(0)
+  outputTokens      Int                  @default(0)
+  latencyMs         Int?
+  estimatedCost     Float                @default(0)
+  actualCost        Float                @default(0)
+  currency          String               @default("USD")
+  fallbackUsed      Boolean              @default(false)
+  routePolicyVersion String?
+  status            RouteExecutionStatus @default(STARTED)
+  metadata          Json?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  workspace         Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  task              Task                 @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskRun           TaskRun?             @relation(fields: [taskRunId], references: [id], onDelete: SetNull)
+  routeDecision     RouteDecision?       @relation(fields: [routeDecisionId], references: [id], onDelete: SetNull)
+  projectContext    ProjectContext?      @relation(fields: [projectContextId], references: [id], onDelete: SetNull)
+  costLedgerEntries CostLedgerEntry[]
+
+  @@index([workspaceId, createdAt])
+  @@index([provider, model, createdAt])
+  @@index([taskId, taskRunId])
+}
+
+model CostLedgerEntry {
+  id                String          @id @default(cuid())
+  workspaceId       String
+  taskId            String?
+  taskRunId         String?
+  projectContextId  String?
+  routeDecisionId   String?
+  modelRunId        String?
+  category          String
+  amount            Float
+  currency          String          @default("USD")
+  quantity          Float           @default(0)
+  unit              String?
+  description       String
+  metadata          Json?
+  createdAt         DateTime        @default(now())
+  workspace         Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  task              Task?           @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  taskRun           TaskRun?        @relation(fields: [taskRunId], references: [id], onDelete: SetNull)
+  projectContext    ProjectContext? @relation(fields: [projectContextId], references: [id], onDelete: SetNull)
+  routeDecision     RouteDecision?  @relation(fields: [routeDecisionId], references: [id], onDelete: SetNull)
+  modelRun          ModelRun?       @relation(fields: [modelRunId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, createdAt])
+  @@index([category, currency, createdAt])
+  @@index([taskId, taskRunId])
 }
 
 model TaskFollowUp {

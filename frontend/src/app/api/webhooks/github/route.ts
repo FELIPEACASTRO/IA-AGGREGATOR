@@ -1,10 +1,38 @@
 import { codexDb } from '@/server/codex/db';
-import { ok } from '@/server/codex/http';
+import { fail, ok } from '@/server/codex/http';
+import { verifyGitHubWebhookSignature } from '@/server/codex/webhook-signature';
 
 export const runtime = 'nodejs';
 
+type GitHubWebhookPayload = {
+  repository?: {
+    full_name?: string;
+  };
+  comment?: {
+    body?: string;
+  };
+};
+
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => ({}));
+  const rawBody = await request.text();
+  const signature = request.headers.get('x-hub-signature-256');
+  const isValidSignature = verifyGitHubWebhookSignature({
+    payload: rawBody,
+    signatureHeader: signature,
+    secret: process.env.GITHUB_WEBHOOK_SECRET,
+  });
+  if (!isValidSignature) {
+    return fail('Assinatura GitHub invalida', 401);
+  }
+
+  let body: GitHubWebhookPayload = {};
+  if (rawBody) {
+    try {
+      body = (JSON.parse(rawBody) as GitHubWebhookPayload) ?? {};
+    } catch {
+      return fail('Payload GitHub invalido', 400);
+    }
+  }
   const event = request.headers.get('x-github-event') || 'unknown';
   const workspace = await codexDb.workspace.findFirst({
     orderBy: { createdAt: 'asc' },

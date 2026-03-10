@@ -1,4 +1,5 @@
 import { codexDb } from '@/server/codex/db';
+import { ensureDefaultProjectContext } from '@/server/codex/projects';
 
 export async function ensureWorkspaceForUser(input: {
   userId: string;
@@ -116,6 +117,13 @@ export async function ensureWorkspaceForUser(input: {
     },
   });
 
-  return { user, workspace, repository, environment };
+  const projectContext = await ensureDefaultProjectContext({
+    workspaceId: workspace.id,
+    repositoryId: repository.id,
+    ownerUserId: user.id,
+    workspaceName: workspace.name,
+  });
+
+  return { user, workspace, repository, environment, projectContext };
 }
 

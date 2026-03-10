@@ -10,7 +10,7 @@ export async function GET() {
   const workspaceId = context.context.workspace.id;
   const since = startOfDay(subDays(new Date(), 30));
 
-  const [taskCounts, reviewFindings, usage, precomputed] = await Promise.all([
+  const [taskCounts, reviewFindings, usage, routing, costs, precomputed] = await Promise.all([
     codexDb.task.groupBy({
       by: ['status'],
       where: { workspaceId, createdAt: { gte: since } },
@@ -29,6 +29,17 @@ export async function GET() {
       where: { workspaceId, createdAt: { gte: since } },
       _sum: { amount: true },
     }),
+    codexDb.routeDecision.groupBy({
+      by: ['serviceClass'],
+      where: { workspaceId, createdAt: { gte: since } },
+      _count: { serviceClass: true },
+      _sum: { estimatedCost: true },
+    }),
+    codexDb.costLedgerEntry.groupBy({
+      by: ['category'],
+      where: { workspaceId, createdAt: { gte: since } },
+      _sum: { amount: true, quantity: true },
+    }),
     codexDb.analyticsAggregate.findMany({
       where: { workspaceId },
       orderBy: { metricDate: 'desc' },
@@ -40,6 +51,8 @@ export async function GET() {
     taskCounts,
     reviewFindings,
     usage,
+    routing,
+    costs,
     precomputed,
   });
 }
